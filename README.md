@@ -55,8 +55,7 @@ If a workflow fails or crashes at any point then it can be resumed from that poi
 
 ```php
 $workflow = WorkflowStub::load(1);
-$workflow->reset();
-$workflow->start();
+$workflow->resume();
 while ($workflow->running());
 $workflow->output();
 => 'activity'
