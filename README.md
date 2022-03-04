@@ -4,10 +4,11 @@ Durable workflow engine that allows users to write long running persistent distr
 
 ## Installation
 
-This library is installable via [Composer](https://getcomposer.org).
+This library is installable via [Composer](https://getcomposer.org). You must also publish the migrations for the `workflows` table.
 
 ```bash
 composer require laravel-workflow/laravel-workflow
+php artisan vendor:publish --provider="Workflow\Providers\WorkflowServiceProvider" --tag="migrations"
 ```
 
 ## Requirements
