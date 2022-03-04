@@ -1,0 +1,38 @@
+{
+    "name": "laravel-workflow/laravel-workflow",
+    "description": "Durable workflow engine that allows users to write long running persistent distributed workflows (orchestrations) in PHP powered by Laravel queues.",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Workflow\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit"
+    },
+    "authors": [
+        {
+            "name": "Richard McDaniel",
+            "email": "richard.lee.mcdaniel@gmail.com"
+        }
+    ],
+    "require": {
+        "spatie/laravel-model-states": "^2.1"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^7.1"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Workflow\\WorkflowServiceProvider"
+            ]
+        }
+    }
+}
