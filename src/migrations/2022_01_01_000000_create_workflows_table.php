@@ -14,11 +14,10 @@ class CreateWorkflowsTable extends Migration
     public function up()
     {
         Schema::create('workflows', function (Blueprint $table) {
-            $table->bigIncrements('id');
+            $table->id('id');
             $table->text('class');
-            $table->json('arguments')->nullable();
-            $table->json('log')->nullable();
-            $table->json('output')->nullable();
+            $table->text('arguments')->nullable();
+            $table->text('output')->nullable();
             $table->string('status')->default('pending');
             $table->timestamps();
         });

@@ -48,8 +48,6 @@ abstract class Workflow implements ShouldBeEncrypted, ShouldQueue
 
     public function handle()
     {
-        $this->model->log = is_null($this->model->log) ? collect() : $this->model->log;
-
         $this->model->status->transitionTo(WorkflowRunningStatus::class);
 
         $this->coroutine = $this->execute(...$this->arguments);
@@ -59,11 +57,15 @@ abstract class Workflow implements ShouldBeEncrypted, ShouldQueue
 
             $current = $this->coroutine->current();
 
-            if ($this->model->log->has($index)) {
-                $this->coroutine->send(unserialize($this->model->log->get($index)));
+            $log = $this->model->logs()->whereIndex($index)->first();
+
+            if ($log) {
+                $this->coroutine->send(unserialize($log->result));
             } else {
                 $this->model->status->transitionTo(WorkflowWaitingStatus::class);
-                $current->activity()::dispatch($index, $this->model->fresh(), ...$current->arguments());
+
+                $current->activity()::dispatch($index, $this->model, ...$current->arguments());
+
                 return;
             }
         }

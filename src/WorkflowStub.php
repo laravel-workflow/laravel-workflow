@@ -48,7 +48,7 @@ class WorkflowStub
 
     public function running()
     {
-        return ! in_array(get_class($this->model->fresh()->status), [
+        return ! in_array($this->status(), [
             WorkflowCompletedStatus::class,
             WorkflowFailedStatus::class,
         ]);
@@ -59,28 +59,55 @@ class WorkflowStub
         return get_class($this->model->fresh()->status);
     }
 
-    public function reset()
+    public function fresh()
     {
-        $this->model->fresh()->status->transitionTo(WorkflowPendingStatus::class);
+        $this->model->refresh();
+
+        return $this;
+    }
+
+    public function restart(...$arguments)
+    {
+        $this->model->arguments = serialize($arguments);
+        $this->model->output = null;
+        $this->model->logs()->delete();
+
+        $this->dispatch();
+    }
+
+    public function resume()
+    {
+        $this->dispatch();
     }
 
     public function start(...$arguments)
     {
         $this->model->arguments = serialize($arguments);
-        $this->model->save();
-        $this->model->class::dispatch($this->model, ...$arguments);
+
+        $this->dispatch();
     }
 
     public function fail($exception)
     {
         $this->model->output = serialize((string) $exception);
+
         $this->model->status->transitionTo(WorkflowFailedStatus::class);
     }
 
     public function next($index, $result)
     {
-        $this->model->log->put($index, serialize($result));
-        $this->model->save();
+        $this->model->logs()->create([
+            'index' => $index,
+            'result' => serialize($result),
+        ]);
+
+        $this->dispatch();
+    }
+
+    private function dispatch()
+    {
+        $this->model->status->transitionTo(WorkflowPendingStatus::class);
+
         $this->model->class::dispatch($this->model, ...unserialize($this->model->arguments));
     }
 }

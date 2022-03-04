@@ -2,7 +2,6 @@
 
 namespace Workflow\Models;
 
-use Illuminate\Database\Eloquent\Casts\AsCollection;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\ModelStates\HasStates;
 use Workflow\States\WorkflowStatus;
@@ -17,14 +16,16 @@ class StoredWorkflow extends Model
     protected $guarded = [];
 
     protected $casts = [
-        'arguments' => 'array',
-        'log' => AsCollection::class,
-        'output' => 'array',
         'status' => WorkflowStatus::class,
     ];
 
     public function toWorkflow()
     {
         return WorkflowStub::fromStoredWorkflow($this);
+    }
+
+    public function logs()
+    {
+        return $this->hasMany(StoredWorkflowLog::class);
     }
 }

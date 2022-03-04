@@ -47,8 +47,7 @@ class WorkflowTest extends TestCase
         $this->assertSame(WorkflowFailedStatus::class, $workflow->status());
         $this->assertStringContainsString('TestFailingActivity', $workflow->output());
 
-        $workflow->reset();
-        $workflow->start();
+        $workflow->fresh()->start();
 
         while ($workflow->running());
 
