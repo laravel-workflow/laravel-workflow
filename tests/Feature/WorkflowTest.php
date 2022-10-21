@@ -18,6 +18,24 @@ class WorkflowTest extends TestCase
 
         $workflow->start();
 
+        $workflow->cancel();
+
+        while ($workflow->running());
+
+        $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
+        $this->assertSame('workflow_activity_other', $workflow->output());
+    }
+
+    public function testCompletedDelay()
+    {
+        $workflow = WorkflowStub::make(TestWorkflow::class);
+
+        $workflow->start(false, true);
+
+        sleep(5);
+
+        $workflow->cancel();
+
         while ($workflow->running());
 
         $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
@@ -48,6 +66,8 @@ class WorkflowTest extends TestCase
         $this->assertStringContainsString('TestFailingActivity', $workflow->output());
 
         $workflow->fresh()->start();
+
+        $workflow->cancel();
 
         while ($workflow->running());
 

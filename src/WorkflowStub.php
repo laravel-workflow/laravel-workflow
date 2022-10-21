@@ -2,15 +2,19 @@
 
 namespace Workflow;
 
+use React\Promise\Deferred;
+use React\Promise\PromiseInterface;
+use ReflectionClass;
 use Workflow\Models\StoredWorkflow;
-
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowFailedStatus;
 use Workflow\States\WorkflowPendingStatus;
+use function React\Promise\resolve;
 
 class WorkflowStub
 {
     protected $model;
+    protected $await;
 
     private function __construct($model)
     {
@@ -36,6 +40,19 @@ class WorkflowStub
         return new static($model);
     }
 
+    public static function await($condition): PromiseInterface
+    {
+        $result = $condition();
+
+        if ($result === true) {
+            return resolve(true);
+        }
+
+        $deferred = new Deferred();
+
+        return $deferred->promise();
+    }
+
     public function id()
     {
         return $this->model->id;
@@ -48,7 +65,7 @@ class WorkflowStub
 
     public function running()
     {
-        return ! in_array($this->status(), [
+        return !in_array($this->status(), [
             WorkflowCompletedStatus::class,
             WorkflowFailedStatus::class,
         ]);
@@ -109,5 +126,34 @@ class WorkflowStub
         $this->model->status->transitionTo(WorkflowPendingStatus::class);
 
         $this->model->class::dispatch($this->model, ...unserialize($this->model->arguments));
+    }
+
+    public function __call($method, $arguments)
+    {
+        if (collect((new ReflectionClass($this->model->class))->getMethods())
+            ->filter(function ($method) {
+                return collect($method->getAttributes())
+                    ->contains(function ($attribute) {
+                        return $attribute->getName() === SignalMethod::class;
+                    });
+            })
+            ->map(function ($method) {
+                return $method->getName();
+            })->contains($method)
+        ) {
+            $this->model->signals()->create([
+                'method' => $method,
+                'arguments' => serialize($arguments),
+            ]);
+
+            while (true) {
+                try {
+                    $this->fresh()->dispatch();
+                    break;
+                } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound $th) {
+                    usleep(1000);
+                }
+            }
+        }
     }
 }

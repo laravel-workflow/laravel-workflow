@@ -28,4 +28,9 @@ class StoredWorkflow extends Model
     {
         return $this->hasMany(StoredWorkflowLog::class);
     }
+
+    public function signals()
+    {
+        return $this->hasMany(StoredWorkflowSignal::class);
+    }
 }

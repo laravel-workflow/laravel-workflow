@@ -8,11 +8,10 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use React\Promise\PromiseInterface;
 use Throwable;
-use Workflow\Exceptions\WorkflowFailedException;
 use Workflow\Models\StoredWorkflow;
 use Workflow\States\WorkflowCompletedStatus;
-use Workflow\States\WorkflowFailedStatus;
 use Workflow\States\WorkflowRunningStatus;
 use Workflow\States\WorkflowWaitingStatus;
 
@@ -53,20 +52,71 @@ abstract class Workflow implements ShouldBeEncrypted, ShouldQueue
         $this->coroutine = $this->execute(...$this->arguments);
 
         while ($this->coroutine->valid()) {
+            $log = $this->model->logs()->whereIndex($this->index)->first();
+
+            if ($log) {
+                $previousLog = $this->model->logs()->whereIndex($this->index - 1)->first();
+
+                $this->model
+                    ->signals()
+                    ->where('created_at', '<=', $log->created_at)
+                    ->when($previousLog, function($query, $previousLog) {
+                        $query->where('created_at', '>', $previousLog);
+                    })
+                    ->each(function ($signal) {
+                        $this->{$signal->method}(...unserialize($signal->arguments));
+                    });
+            }
+
             $index = $this->index++;
 
             $current = $this->coroutine->current();
 
-            $log = $this->model->logs()->whereIndex($index)->first();
+            if ($current instanceof PromiseInterface) {
+                $resolved = false;
 
-            if ($log) {
-                $this->coroutine->send(unserialize($log->result));
+                $current->then(function ($value) use ($index, &$resolved) {
+                    $resolved = true;
+
+                    $this->model->logs()->create([
+                        'index' => $index,
+                        'result' => serialize(true),
+                    ]);
+
+                    $log = $this->model->logs()->whereIndex($index)->first();
+
+                    $this->coroutine->send(unserialize($log->result));
+                });
+
+                if (!$resolved) {
+                    $this->model->status->transitionTo(WorkflowWaitingStatus::class);
+
+                    return;
+                }
             } else {
-                $this->model->status->transitionTo(WorkflowWaitingStatus::class);
+                $log = $this->model->logs()->whereIndex($index)->first();
 
-                $current->activity()::dispatch($index, $this->model, ...$current->arguments());
+                if ($log) {
+                    $nextLog = $this->model->logs()->whereIndex($index + 1)->first();
 
-                return;
+                    $this->model
+                        ->signals()
+                        ->where('created_at', '>=', $log->created_at)
+                        ->when($nextLog, function($query, $nextLog) {
+                            $query->where('created_at', '<', $nextLog);
+                        })
+                        ->each(function ($signal) {
+                            $this->{$signal->method}(...unserialize($signal->arguments));
+                        });
+
+                    $this->coroutine->send(unserialize($log->result));
+                } else {
+                    $this->model->status->transitionTo(WorkflowWaitingStatus::class);
+
+                    $current->activity()::dispatch($index, $this->model, ...$current->arguments());
+
+                    return;
+                }
             }
         }
 
