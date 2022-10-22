@@ -145,14 +145,7 @@ class WorkflowStub
                 'arguments' => serialize($arguments),
             ]);
 
-            while ($this->running()) {
-                try {
-                    $this->fresh()->dispatch();
-                    break;
-                } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound $th) {
-                    usleep(1000);
-                }
-            }
+            Signal::dispatch($this->model);
         }
     }
 }
