@@ -14,7 +14,6 @@ use function React\Promise\resolve;
 class WorkflowStub
 {
     protected $model;
-    protected $await;
 
     private function __construct($model)
     {
