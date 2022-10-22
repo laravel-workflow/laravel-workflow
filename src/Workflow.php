@@ -49,41 +49,49 @@ abstract class Workflow implements ShouldBeEncrypted, ShouldQueue
     {
         $this->model->status->transitionTo(WorkflowRunningStatus::class);
 
+        $log = $this->model->logs()->whereIndex($this->index)->first();
+
+        $this->model
+            ->signals()
+            ->when($log, function($query, $log) {
+                $query->where('created_at', '<=', $log->created_at);
+            })
+            ->each(function ($signal) {
+                $this->{$signal->method}(...unserialize($signal->arguments));
+            });
+
         $this->coroutine = $this->execute(...$this->arguments);
 
         while ($this->coroutine->valid()) {
-            $log = $this->model->logs()->whereIndex($this->index)->first();
+            $previousLog = $log;
+            $nextLog = $this->model->logs()->whereIndex($this->index + 1)->first();
 
-            if ($log) {
-                $previousLog = $this->model->logs()->whereIndex($this->index - 1)->first();
-
-                $this->model
-                    ->signals()
-                    ->where('created_at', '<=', $log->created_at)
-                    ->when($previousLog, function($query, $previousLog) {
-                        $query->where('created_at', '>', $previousLog);
-                    })
-                    ->each(function ($signal) {
-                        $this->{$signal->method}(...unserialize($signal->arguments));
-                    });
-            }
-
-            $index = $this->index++;
+            $this->model
+                ->signals()
+                ->when($nextLog, function($query, $nextLog) {
+                    $query->where('created_at', '<=', $nextLog->created_at);
+                })
+                ->when($previousLog, function($query, $previousLog) {
+                    $query->where('created_at', '>', $previousLog->created_at);
+                })
+                ->each(function ($signal) {
+                    $this->{$signal->method}(...unserialize($signal->arguments));
+                });
 
             $current = $this->coroutine->current();
 
             if ($current instanceof PromiseInterface) {
                 $resolved = false;
 
-                $current->then(function ($value) use ($index, &$resolved) {
+                $current->then(function ($value) use (&$resolved) {
                     $resolved = true;
 
                     $this->model->logs()->create([
-                        'index' => $index,
+                        'index' => $this->index,
                         'result' => serialize(true),
                     ]);
 
-                    $log = $this->model->logs()->whereIndex($index)->first();
+                    $log = $this->model->logs()->whereIndex($this->index)->first();
 
                     $this->coroutine->send(unserialize($log->result));
                 });
@@ -94,30 +102,20 @@ abstract class Workflow implements ShouldBeEncrypted, ShouldQueue
                     return;
                 }
             } else {
-                $log = $this->model->logs()->whereIndex($index)->first();
+                $log = $this->model->logs()->whereIndex($this->index)->first();
 
                 if ($log) {
-                    $nextLog = $this->model->logs()->whereIndex($index + 1)->first();
-
-                    $this->model
-                        ->signals()
-                        ->where('created_at', '>=', $log->created_at)
-                        ->when($nextLog, function($query, $nextLog) {
-                            $query->where('created_at', '<', $nextLog);
-                        })
-                        ->each(function ($signal) {
-                            $this->{$signal->method}(...unserialize($signal->arguments));
-                        });
-
                     $this->coroutine->send(unserialize($log->result));
                 } else {
                     $this->model->status->transitionTo(WorkflowWaitingStatus::class);
 
-                    $current->activity()::dispatch($index, $this->model, ...$current->arguments());
+                    $current->activity()::dispatch($this->index, $this->model, ...$current->arguments());
 
                     return;
                 }
             }
+
+            $this->index++;
         }
 
         $this->model->output = serialize($this->coroutine->getReturn());

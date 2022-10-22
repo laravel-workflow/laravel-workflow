@@ -19,11 +19,13 @@ class TestWorkflow extends Workflow
 
     public function execute($shouldFail = false, $shouldAssert = false)
     {
+        if ($shouldAssert)
+            assert($this->canceled === false);
+
         $otherResult = yield ActivityStub::make(TestOtherActivity::class, 'other');
 
-        if ($shouldAssert) {
+        if ($shouldAssert)
             assert($this->canceled === false);
-        }
 
         if ($shouldFail) {
             $result = yield ActivityStub::make(TestFailingActivity::class);

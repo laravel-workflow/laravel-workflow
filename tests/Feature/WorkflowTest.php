@@ -3,15 +3,44 @@
 namespace Tests\Feature;
 
 use Tests\TestCase;
-
+use Tests\TestSimpleWorkflow;
 use Tests\TestWorkflow;
-use Workflow\Exceptions\WorkflowFailedException;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowFailedStatus;
 use Workflow\WorkflowStub;
 
 class WorkflowTest extends TestCase
 {
+    public function testSimple()
+    {
+        $workflow = WorkflowStub::make(TestSimpleWorkflow::class);
+
+        $workflow->start();
+
+        $workflow->cancel();
+
+        while ($workflow->running());
+
+        $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
+        $this->assertSame('workflow', $workflow->output());
+    }
+
+    public function testSimpleDelay()
+    {
+        $workflow = WorkflowStub::make(TestSimpleWorkflow::class);
+
+        $workflow->start();
+
+        sleep(5);
+
+        $workflow->cancel();
+
+        while ($workflow->running());
+
+        $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
+        $this->assertSame('workflow', $workflow->output());
+    }
+
     public function testCompleted()
     {
         $workflow = WorkflowStub::make(TestWorkflow::class);

@@ -146,7 +146,7 @@ class WorkflowStub
                 'arguments' => serialize($arguments),
             ]);
 
-            while (true) {
+            while ($this->running()) {
                 try {
                     $this->fresh()->dispatch();
                     break;
