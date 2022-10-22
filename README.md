@@ -13,7 +13,7 @@ php artisan vendor:publish --provider="Workflow\Providers\WorkflowServiceProvide
 
 ## Requirements
 
-You can use any queue driver that Laravel supports but this is heavily tested against Redis.
+You can use any queue driver that Laravel supports but this is heavily tested against Redis. Your cache driver must support locks. (Read: [Laravel Queues](https://laravel.com/docs/9.x/queues#unique-jobs))
 
 ## Usage
 
@@ -47,6 +47,40 @@ $workflow->start();
 while ($workflow->running());
 $workflow->output();
 => 'activity'
+```
+
+## Signals
+
+Using `WorkflowStub::await()` along with signal methods allows a workflow to wait for an external event.
+
+```
+class MyWorkflow extends Workflow
+{
+    private bool $isReady = false;
+
+    #[SignalMethod]
+    public function ready()
+    {
+        $this->isReady = true;
+    }
+
+    public function execute()
+    {
+        $result = yield ActivityStub::make(MyActivity::class);
+
+        yield WorkflowStub::await(fn () => $this->isReady);
+
+        $otherResult = yield ActivityStub::make(MyOtherActivity::class);
+
+        return $result . $otherResult;
+    }
+}
+```
+
+The workflow will reach the call to `WorkflowStub::await()` and then hibernate until some external code signals the workflow like this.
+
+```
+$workflow->ready();
 ```
 
 ## Failed Workflows
