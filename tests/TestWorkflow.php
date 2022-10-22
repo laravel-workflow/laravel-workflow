@@ -9,7 +9,7 @@ use Workflow\WorkflowStub;
 
 class TestWorkflow extends Workflow
 {
-    private bool $canceled;
+    private bool $canceled = false;
 
     #[SignalMethod]
     public function cancel()
@@ -19,8 +19,6 @@ class TestWorkflow extends Workflow
 
     public function execute($shouldFail = false, $shouldAssert = false)
     {
-        $this->canceled = false;
-
         $otherResult = yield ActivityStub::make(TestOtherActivity::class, 'other');
 
         if ($shouldAssert) {
