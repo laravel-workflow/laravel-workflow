@@ -5,6 +5,7 @@ namespace Workflow;
 use BadMethodCallException;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -13,7 +14,7 @@ use Throwable;
 use Workflow\Middleware\WorkflowMiddleware;
 use Workflow\Models\StoredWorkflow;
 
-class Activity implements ShouldBeEncrypted, ShouldQueue
+class Activity implements ShouldBeEncrypted, ShouldQueue, ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     
@@ -32,6 +33,11 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
         $this->index = $index;
         $this->model = $model;
         $this->arguments = $arguments;
+    }
+
+    public function uniqueId()
+    {
+        return $this->model->id;
     }
 
     public function handle()
