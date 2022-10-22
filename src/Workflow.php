@@ -63,7 +63,6 @@ abstract class Workflow implements ShouldBeEncrypted, ShouldQueue
         $this->coroutine = $this->execute(...$this->arguments);
 
         while ($this->coroutine->valid()) {
-            $previousLog = $log;
             $nextLog = $this->model->logs()->whereIndex($this->index + 1)->first();
 
             $this->model
@@ -71,8 +70,8 @@ abstract class Workflow implements ShouldBeEncrypted, ShouldQueue
                 ->when($nextLog, function($query, $nextLog) {
                     $query->where('created_at', '<=', $nextLog->created_at);
                 })
-                ->when($previousLog, function($query, $previousLog) {
-                    $query->where('created_at', '>', $previousLog->created_at);
+                ->when($log, function($query, $log) {
+                    $query->where('created_at', '>', $log->created_at);
                 })
                 ->each(function ($signal) {
                     $this->{$signal->method}(...unserialize($signal->arguments));
