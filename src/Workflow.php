@@ -82,7 +82,7 @@ abstract class Workflow implements ShouldBeEncrypted, ShouldQueue
                     $this->{$signal->method}(...unserialize($signal->arguments));
                 });
 
-            WorkflowStub::setContext((object) [
+            WorkflowStub::setContext([
                 'model' => $this->model,
                 'index' => $this->index,
             ]);
