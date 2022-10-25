@@ -14,13 +14,13 @@ abstract class TestCase extends BaseTestCase
     {
         Dotenv::createImmutable(__DIR__.'/..')->safeLoad();
 
-        // self::$process = new Process(['php', 'artisan', 'queue:work']);
-        // self::$process->start();
+        self::$process = new Process(['php', 'artisan', 'queue:work']);
+        self::$process->start();
     }
 
     public static function tearDownAfterClass(): void
     {
-        // self::$process->stop();
+        self::$process->stop();
     }
 
     protected function defineDatabaseMigrations()
