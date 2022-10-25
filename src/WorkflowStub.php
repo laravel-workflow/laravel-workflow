@@ -76,19 +76,19 @@ class WorkflowStub
         if (is_null($timer)) {
             $when = now()->addSeconds($seconds);
 
-            $context->model->timers()->create([
+            $timer = $context->model->timers()->create([
                 'index' => $context->index,
                 'stop_at' => $when,
             ]);
-
-            Signal::dispatch($context->model)->delay($when);
         } else {
-            $result = $timer->stop_at->isBefore(now()->addSeconds($seconds));
+            $result = $timer->stop_at->lessThanOrEqualTo(now()->addSeconds($seconds));
 
             if ($result === true) {
                 return resolve(true);
             }
         }
+
+        Signal::dispatch($context->model)->delay($timer->stop_at);
 
         $deferred = new Deferred();
 
