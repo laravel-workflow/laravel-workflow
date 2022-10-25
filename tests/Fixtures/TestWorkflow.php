@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests;
+namespace Tests\Fixtures;
 
 use Workflow\ActivityStub;
 use Workflow\SignalMethod;

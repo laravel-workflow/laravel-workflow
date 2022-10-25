@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests;
+namespace Tests\Fixtures;
 
 use Workflow\SignalMethod;
 use Workflow\Workflow;

@@ -3,8 +3,8 @@
 namespace Tests\Feature;
 
 use Tests\TestCase;
-use Tests\TestSimpleWorkflow;
-use Tests\TestWorkflow;
+use Tests\Fixtures\TestSimpleWorkflow;
+use Tests\Fixtures\TestWorkflow;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowFailedStatus;
 use Workflow\WorkflowStub;
