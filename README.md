@@ -83,6 +83,28 @@ The workflow will reach the call to `WorkflowStub::await()` and then hibernate u
 $workflow->ready();
 ```
 
+## Timers
+
+Using `WorkflowStub::timer($seconds)` allows a workflow to wait for a fixed amount of time in seconds.
+
+```
+class MyWorkflow extends Workflow
+{
+    public function execute()
+    {
+        $result = yield ActivityStub::make(MyActivity::class);
+
+        yield WorkflowStub::timer(300);
+
+        $otherResult = yield ActivityStub::make(MyOtherActivity::class);
+
+        return $result . $otherResult;
+    }
+}
+```
+
+The workflow will reach the call to `WorkflowStub::timer()` and then hibernate for 5 minutes. After that time has passed, it will continute execution.
+
 ## Failed Workflows
 
 If a workflow fails or crashes at any point then it can be resumed from that point. Any activities that were successfully completed during the previous execution of the workflow will not be ran again.
