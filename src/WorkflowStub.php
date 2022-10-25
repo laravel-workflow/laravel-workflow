@@ -13,6 +13,8 @@ use function React\Promise\resolve;
 
 class WorkflowStub
 {
+    private static $context = null;
+
     protected $model;
 
     private function __construct($model)
@@ -39,6 +41,16 @@ class WorkflowStub
         return new static($model);
     }
 
+    public static function getContext()
+    {
+        return self::$context;
+    }
+
+    public static function setContext($context)
+    {
+        self::$context = (object) $context;
+    }
+
     public static function await($condition): PromiseInterface
     {
         $result = $condition();
@@ -46,6 +58,37 @@ class WorkflowStub
         if ($result === true) {
             return resolve(true);
         }
+
+        $deferred = new Deferred();
+
+        return $deferred->promise();
+    }
+
+    public static function timer($seconds): PromiseInterface
+    {
+        if ($seconds <= 0)
+            return resolve(true);
+
+        $context = WorkflowStub::getContext();
+
+        $timer = $context->model->timers()->whereIndex($context->index)->first();
+
+        if (is_null($timer)) {
+            $when = now()->addSeconds($seconds);
+
+            $timer = $context->model->timers()->create([
+                'index' => $context->index,
+                'stop_at' => $when,
+            ]);
+        } else {
+            $result = $timer->stop_at->lessThanOrEqualTo(now()->addSeconds($seconds));
+
+            if ($result === true) {
+                return resolve(true);
+            }
+        }
+
+        Signal::dispatch($context->model)->delay($timer->stop_at);
 
         $deferred = new Deferred();
 

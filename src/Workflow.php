@@ -60,6 +60,11 @@ abstract class Workflow implements ShouldBeEncrypted, ShouldQueue
                 $this->{$signal->method}(...unserialize($signal->arguments));
             });
 
+        WorkflowStub::setContext([
+            'model' => $this->model,
+            'index' => $this->index,
+        ]);
+
         $this->coroutine = $this->execute(...$this->arguments);
 
         while ($this->coroutine->valid()) {
@@ -76,6 +81,11 @@ abstract class Workflow implements ShouldBeEncrypted, ShouldQueue
                 ->each(function ($signal) {
                     $this->{$signal->method}(...unserialize($signal->arguments));
                 });
+
+            WorkflowStub::setContext([
+                'model' => $this->model,
+                'index' => $this->index,
+            ]);
 
             $current = $this->coroutine->current();
 

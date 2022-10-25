@@ -33,4 +33,9 @@ class StoredWorkflow extends Model
     {
         return $this->hasMany(StoredWorkflowSignal::class);
     }
+
+    public function timers()
+    {
+        return $this->hasMany(StoredWorkflowTimer::class);
+    }
 }
