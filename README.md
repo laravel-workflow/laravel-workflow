@@ -1,6 +1,6 @@
 # Laravel Workflow [![PHP Composer](https://github.com/laravel-workflow/laravel-workflow/actions/workflows/php.yml/badge.svg)](https://github.com/laravel-workflow/laravel-workflow/actions/workflows/php.yml)
 
-Durable workflow engine that allows users to write long running persistent distributed workflows (orchestrations) in PHP powered by [Laravel queues](https://laravel.com/docs/9.x/queues).
+Durable workflow engine that allows users to write long running persistent distributed workflows (orchestrations) in PHP powered by [Laravel Queues](https://laravel.com/docs/9.x/queues).
 
 ## Installation
 
@@ -8,6 +8,7 @@ This library is installable via [Composer](https://getcomposer.org). You must al
 
 ```bash
 composer require laravel-workflow/laravel-workflow
+
 php artisan vendor:publish --provider="Workflow\Providers\WorkflowServiceProvider" --tag="migrations"
 ```
 
@@ -103,11 +104,23 @@ class MyWorkflow extends Workflow
 }
 ```
 
-The workflow will reach the call to `WorkflowStub::timer()` and then hibernate for 5 minutes. After that time has passed, it will continute execution.
+The workflow will reach the call to `WorkflowStub::timer()` and then hibernate for 5 minutes. After that time has passed, it will continue execution.
+
+## Signal + Timer
+
+In most cases you don't want to wait forever for a signal.
+
+Instead, you want to wait for some amount of time and then give up. It's possible to combine a signal with a timer yourself to achieve this but a convenience method exists to do this for you, `WorkflowStub::awaitWithTimeout()`.
+
+```
+$result = yield WorkflowStub::awaitWithTimeout(300, fn () => $this->isReady);
+```
+
+This will wait like the previous signal example but it will timeout after 5 minutes. If a timeout occurs, the result will be `false`.
 
 ## Failed Workflows
 
-If a workflow fails or crashes at any point then it can be resumed from that point. Any activities that were successfully completed during the previous execution of the workflow will not be ran again.
+If a workflow fails or crashes at any point then it can be resumed from that point. Any activities that were successfully completed during the previous execution of the workflow will not be run again.
 
 ```php
 $workflow = WorkflowStub::load(1);
@@ -119,12 +132,9 @@ $workflow->output();
 
 ## Retries
 
-A workflow will only fail when the retries on the workflow or a failing activity have been exhausted.
+A workflow will only fail when the retries on the failing activity have been exhausted.
 
-Workflows and activies are based on Laravel jobs so you can use any options you normally would.
+The default activity retry policy is to retry activities forever with an exponential backoff that decays to 2 minutes. If your activity fails because of a transient error (something that fixes itself ) then it will keep retrying and eventually recover automatically. However, if your activity fails because of a permanent error then you will have to fix it manually via a code deploy and restart your queue workers. The activity will then retry again using the new code and complete successfully.
 
-```php
-public $tries = 3;
+Workflows and activities are based on [Laravel Queues](https://laravel.com/docs/9.x/queues) so you can use any options you normally would.
 
-public $maxExceptions = 3;
-```
