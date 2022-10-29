@@ -134,7 +134,7 @@ $workflow->output();
 
 A workflow will only fail when the retries on the failing activity have been exhausted.
 
-The default activity retry policy is to retry activities forever with an exponential backoff that decays to 2 minutes. If your activity fails because of a transient error (something that fixes itself ) then it will keep retrying and eventually recover automatically. However, if your activity fails because of a permanent error then you will have to fix it manually via a code deploy and restart your queue workers. The activity will then retry again using the new code and complete successfully.
+The default activity retry policy is to retry activities forever with an exponential backoff that decays to 2 minutes. If your activity fails because of a transient error (something that fixes itself) then it will keep retrying and eventually recover automatically. However, if your activity fails because of a permanent error then you will have to fix it manually via a code deploy and restart your queue workers. The activity will then retry again using the new code and complete successfully.
 
 Workflows and activities are based on [Laravel Queues](https://laravel.com/docs/9.x/queues) so you can use any options you normally would.
 
