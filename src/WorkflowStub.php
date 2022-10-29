@@ -64,6 +64,17 @@ class WorkflowStub
         return $deferred->promise();
     }
 
+    public static function awaitWithTimeout($seconds, $condition): PromiseInterface
+    {
+        $result = $condition();
+
+        if ($result === true) {
+            return resolve(true);
+        }
+
+        return self::timer($seconds)->then(fn ($completed) => !$completed);
+    }
+
     public static function timer($seconds): PromiseInterface
     {
         if ($seconds <= 0)
