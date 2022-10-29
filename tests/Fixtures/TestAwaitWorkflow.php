@@ -6,7 +6,7 @@ use Workflow\SignalMethod;
 use Workflow\Workflow;
 use Workflow\WorkflowStub;
 
-class TestSimpleWorkflow extends Workflow
+class TestAwaitWorkflow extends Workflow
 {
     private bool $canceled = false;
 
@@ -16,7 +16,7 @@ class TestSimpleWorkflow extends Workflow
         $this->canceled = true;
     }
 
-    public function execute()
+    public function execute($shouldTimeout = false)
     {
         yield WorkflowStub::await(fn () => $this->canceled);
 

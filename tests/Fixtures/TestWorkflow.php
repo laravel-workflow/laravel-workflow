@@ -17,7 +17,7 @@ class TestWorkflow extends Workflow
         $this->canceled = true;
     }
 
-    public function execute($shouldFail = false, $shouldAssert = false)
+    public function execute($shouldAssert = false)
     {
         if ($shouldAssert)
             assert($this->canceled === false);
@@ -27,11 +27,7 @@ class TestWorkflow extends Workflow
         if ($shouldAssert)
             assert($this->canceled === false);
 
-        if ($shouldFail) {
-            $result = yield ActivityStub::make(TestFailingActivity::class);
-        } else {
-            $result = yield ActivityStub::make(TestActivity::class);
-        }
+        $result = yield ActivityStub::make(TestActivity::class);
 
         yield WorkflowStub::await(fn () => $this->canceled);
 

@@ -19,9 +19,9 @@ abstract class Workflow implements ShouldBeEncrypted, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $tries = 3;
+    public $tries = 1;
 
-    public $maxExceptions = 3;
+    public $maxExceptions = 1;
 
     public $arguments;
 
