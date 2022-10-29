@@ -2,14 +2,15 @@
 
 namespace Tests\Fixtures;
 
+use Exception;
 use Workflow\Activity;
 
-class TestFailingActivity extends Activity
+class TestExceptionActivity extends Activity
 {
     public function execute()
     {
         if ($this->attempts() === 1) {
-            $this->model->toWorkflow()->fail('failed');
+            throw new Exception('failed');
         }
 
         return 'activity';

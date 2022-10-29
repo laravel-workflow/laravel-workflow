@@ -15,7 +15,7 @@ class AwaitWithTimeoutWorkflowTest extends TestCase
 
         $now = now();
 
-        $workflow->start();
+        $workflow->start(shouldTimeout: false);
 
         while ($workflow->running());
 
@@ -30,7 +30,7 @@ class AwaitWithTimeoutWorkflowTest extends TestCase
 
         $now = now();
 
-        $workflow->start(true);
+        $workflow->start(shouldTimeout: true);
 
         while ($workflow->running());
 

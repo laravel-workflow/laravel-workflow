@@ -17,10 +17,10 @@ use Workflow\Models\StoredWorkflow;
 class Activity implements ShouldBeEncrypted, ShouldQueue, ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-    
-    public $tries = 3;
 
-    public $maxExceptions = 3;
+    public $tries = PHP_INT_MAX;
+
+    public $maxExceptions = PHP_INT_MAX;
 
     public $arguments;
 
@@ -33,6 +33,11 @@ class Activity implements ShouldBeEncrypted, ShouldQueue, ShouldBeUnique
         $this->index = $index;
         $this->model = $model;
         $this->arguments = $arguments;
+    }
+
+    public function backoff()
+    {
+        return [1, 2, 5, 10, 15, 30, 60, 120];
     }
 
     public function uniqueId()

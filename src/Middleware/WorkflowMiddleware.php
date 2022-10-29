@@ -8,6 +8,12 @@ class WorkflowMiddleware
     {
         $result = $next($job);
 
-        $job->model->toWorkflow()->next($job->index, $result);
+        try {
+            $job->model->toWorkflow()->next($job->index, $result);
+        } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
+            if ($job->model->toWorkflow()->running()) {
+                $job->release();
+            }
+        }
     }
 }
