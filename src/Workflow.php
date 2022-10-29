@@ -97,7 +97,7 @@ abstract class Workflow implements ShouldBeEncrypted, ShouldQueue
 
                     $this->model->logs()->create([
                         'index' => $this->index,
-                        'result' => serialize(true),
+                        'result' => serialize($value),
                     ]);
 
                     $log = $this->model->logs()->whereIndex($this->index)->first();
