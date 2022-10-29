@@ -16,7 +16,7 @@ class TestAwaitWorkflow extends Workflow
         $this->canceled = true;
     }
 
-    public function execute($shouldTimeout = false)
+    public function execute()
     {
         yield WorkflowStub::await(fn () => $this->canceled);
 
