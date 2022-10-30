@@ -22,6 +22,8 @@ class Activity implements ShouldBeEncrypted, ShouldQueue, ShouldBeUnique
 
     public $maxExceptions = PHP_INT_MAX;
 
+    public $timeout = 0;
+
     public $arguments;
 
     public $index;
@@ -62,5 +64,12 @@ class Activity implements ShouldBeEncrypted, ShouldQueue, ShouldBeUnique
     public function failed(Throwable $exception)
     {
         $this->model->toWorkflow()->fail($exception);
+    }
+
+    public function heartbeat()
+    {
+        pcntl_alarm(
+            max($this->timeout, 0)
+        );
     }
 }
