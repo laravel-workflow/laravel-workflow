@@ -19,10 +19,9 @@ final class ExceptionWorkflowTest extends TestCase
 
         while ($workflow->running());
 
-        sleep(1);
-
         $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
         $this->assertSame('workflow_activity_other', $workflow->output());
-        $this->assertSame('failed', unserialize($workflow->exceptions()->first()->exception)->getMessage());
+        if ($workflow->exceptions()->first())
+            $this->assertSame('failed', unserialize($workflow->exceptions()->first()->exception)->getMessage());
     }
 }
