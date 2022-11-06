@@ -46,6 +46,11 @@ class Activity implements ShouldBeEncrypted, ShouldQueue, ShouldBeUnique
 
     public function uniqueId()
     {
+        return $this->workflowId();
+    }
+
+    public function workflowId()
+    {
         return $this->storedWorkflow->id;
     }
 
