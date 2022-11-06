@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Workflow;
 
+use Illuminate\Database\QueryException;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use function React\Promise\resolve;
@@ -134,6 +135,11 @@ final class WorkflowStub
         return $this->storedWorkflow->id;
     }
 
+    public function logs()
+    {
+        return $this->storedWorkflow->logs;
+    }
+
     public function output()
     {
         return unserialize($this->storedWorkflow->fresh()->output);
@@ -147,7 +153,7 @@ final class WorkflowStub
     public function status(): string|bool
     {
         return $this->storedWorkflow->fresh()
-->status::class;
+            ->status::class;
     }
 
     public function fresh(): static
@@ -186,13 +192,20 @@ final class WorkflowStub
         $this->storedWorkflow->status->transitionTo(WorkflowFailedStatus::class);
     }
 
-    public function next($index, $result): void
+    public function next($index, $class, $result): void
     {
-        $this->storedWorkflow->logs()
-            ->create([
-                'index' => $index,
-                'result' => serialize($result),
-            ]);
+        try {
+            $this->storedWorkflow->logs()
+                ->create([
+                    'index' => $index,
+                    'class' => $class,
+                    'result' => serialize($result),
+                ]);
+        } catch (QueryException $exception) {
+            if (! str_contains($exception->getMessage(), 'Duplicate')) {
+                throw $exception;
+            }
+        }
 
         $this->dispatch();
     }

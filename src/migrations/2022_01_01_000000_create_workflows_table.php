@@ -22,7 +22,7 @@ final class CreateWorkflowsTable extends Migration
                 ->nullable();
             $blueprint->string('status')
                 ->default('pending');
-            $blueprint->timestamps();
+            $blueprint->timestamps(6);
         });
     }
 

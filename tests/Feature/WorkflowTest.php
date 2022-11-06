@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use Tests\Fixtures\TestActivity;
+use Tests\Fixtures\TestOtherActivity;
 use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
+use Workflow\Signal;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\WorkflowStub;
 
@@ -23,6 +26,9 @@ final class WorkflowTest extends TestCase
 
         $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
         $this->assertSame('workflow_activity_other', $workflow->output());
+        $this->assertSame([TestOtherActivity::class, TestActivity::class, Signal::class], $workflow->logs()
+            ->pluck('class')
+            ->toArray());
     }
 
     public function testCompletedDelay(): void
@@ -39,5 +45,8 @@ final class WorkflowTest extends TestCase
 
         $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
         $this->assertSame('workflow_activity_other', $workflow->output());
+        $this->assertSame([TestOtherActivity::class, TestActivity::class, Signal::class], $workflow->logs()
+            ->pluck('class')
+            ->toArray());
     }
 }
