@@ -140,6 +140,11 @@ final class WorkflowStub
         return $this->storedWorkflow->logs;
     }
 
+    public function exceptions()
+    {
+        return $this->storedWorkflow->exceptions;
+    }
+
     public function output()
     {
         return unserialize($this->storedWorkflow->fresh()->output);
