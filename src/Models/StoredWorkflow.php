@@ -70,4 +70,9 @@ final class StoredWorkflow extends Model
     {
         return $this->hasMany(StoredWorkflowTimer::class);
     }
+
+    public function exceptions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(StoredWorkflowException::class);
+    }
 }

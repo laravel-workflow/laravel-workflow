@@ -55,7 +55,17 @@ class Activity implements ShouldBeEncrypted, ShouldQueue, ShouldBeUnique
             throw new BadMethodCallException('Execute method mot implemented.');
         }
 
-        return $this->{'execute'}(...$this->arguments);
+        try {
+            return $this->{'execute'}(...$this->arguments);
+        } catch (\Throwable $throwable) {
+            $this->storedWorkflow->exceptions()
+                ->create([
+                    'class' => $this::class,
+                    'exception' => serialize($throwable),
+                ]);
+
+            throw $throwable;
+        }
     }
 
     public function middleware()
