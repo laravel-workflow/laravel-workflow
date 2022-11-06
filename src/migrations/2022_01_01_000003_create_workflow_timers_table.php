@@ -17,10 +17,9 @@ final class CreateWorkflowTimersTable extends Migration
             $blueprint->id('id');
             $blueprint->foreignId('stored_workflow_id')
                 ->index();
-            $blueprint->integer('index')
-                ->nullable();
-            $blueprint->timestamp('stop_at');
-            $blueprint->timestamps();
+            $blueprint->integer('index');
+            $blueprint->timestamp('stop_at', 6);
+            $blueprint->timestamp('created_at', 6);
             $blueprint->index(['stored_workflow_id', 'created_at']);
             $blueprint->foreign('stored_workflow_id')
                 ->references('id')

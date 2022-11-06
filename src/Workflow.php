@@ -104,6 +104,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
                     $this->storedWorkflow->logs()
                         ->create([
                             'index' => $this->index,
+                            'class' => Signal::class,
                             'result' => serialize($value),
                         ]);
 

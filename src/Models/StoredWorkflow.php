@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Workflow\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 use Spatie\ModelStates\HasStates;
 use Workflow\States\WorkflowStatus;
 use Workflow\WorkflowStub;
@@ -29,6 +30,26 @@ final class StoredWorkflow extends Model
     protected $casts = [
         'status' => WorkflowStatus::class,
     ];
+
+    public function getCreatedAtAttribute(string $value): Carbon
+    {
+        return Carbon::createFromFormat('Y-m-d H:i:s.u', $value);
+    }
+
+    public function setCreatedAtAttribute(Carbon $value): void
+    {
+        $this->attributes['created_at'] = $value->format('Y-m-d H:i:s.u');
+    }
+
+    public function getUpdatedAtAttribute(string $value): Carbon
+    {
+        return Carbon::createFromFormat('Y-m-d H:i:s.u', $value);
+    }
+
+    public function setUpdatedAtAttribute(Carbon $value): void
+    {
+        $this->attributes['updated_at'] = now()->format('Y-m-d H:i:s.u');
+    }
 
     public function toWorkflow()
     {
