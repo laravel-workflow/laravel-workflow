@@ -1,15 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Fixtures;
 
 use Workflow\Activity;
 
-class TestFailingActivity extends Activity
+final class TestFailingActivity extends Activity
 {
     public function execute()
     {
         if ($this->attempts() === 1) {
-            $this->model->toWorkflow()->fail('failed');
+            $this->storedWorkflow->toWorkflow()
+                ->fail('failed');
         }
 
         return 'activity';

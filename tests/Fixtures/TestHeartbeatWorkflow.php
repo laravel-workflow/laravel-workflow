@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Fixtures;
 
 use Workflow\ActivityStub;
 use Workflow\Workflow;
 
-class TestHeartbeatWorkflow extends Workflow
+final class TestHeartbeatWorkflow extends Workflow
 {
     public function execute()
     {

@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Fixtures;
 
 use Workflow\Workflow;
 use Workflow\WorkflowStub;
 
-class TestTimerWorkflow extends Workflow
+final class TestTimerWorkflow extends Workflow
 {
     public function execute($seconds = 1)
     {

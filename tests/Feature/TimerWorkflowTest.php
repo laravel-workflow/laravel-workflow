@@ -1,15 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature;
 
-use Tests\TestCase;
 use Tests\Fixtures\TestTimerWorkflow;
+use Tests\TestCase;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\WorkflowStub;
 
-class TimerWorkflowTest extends TestCase
+final class TimerWorkflowTest extends TestCase
 {
-    public function testTimerWorkflow()
+    public function testTimerWorkflow(): void
     {
         $workflow = WorkflowStub::make(TestTimerWorkflow::class);
 
@@ -24,7 +26,7 @@ class TimerWorkflowTest extends TestCase
         $this->assertSame('workflow', $workflow->output());
     }
 
-    public function testTimerWorkflowDelay()
+    public function testTimerWorkflowDelay(): void
     {
         $workflow = WorkflowStub::make(TestTimerWorkflow::class);
 

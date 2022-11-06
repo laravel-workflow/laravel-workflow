@@ -1,34 +1,35 @@
 <?php
 
+declare(strict_types=1);
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateWorkflowsTable extends Migration
+final class CreateWorkflowsTable extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
-    public function up()
+    public function up(): void
     {
-        Schema::create('workflows', function (Blueprint $table) {
-            $table->id('id');
-            $table->text('class');
-            $table->text('arguments')->nullable();
-            $table->text('output')->nullable();
-            $table->string('status')->default('pending');
-            $table->timestamps();
+        Schema::create('workflows', static function (Blueprint $blueprint): void {
+            $blueprint->id('id');
+            $blueprint->text('class');
+            $blueprint->text('arguments')
+                ->nullable();
+            $blueprint->text('output')
+                ->nullable();
+            $blueprint->string('status')
+                ->default('pending');
+            $blueprint->timestamps();
         });
     }
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('workflows');
     }

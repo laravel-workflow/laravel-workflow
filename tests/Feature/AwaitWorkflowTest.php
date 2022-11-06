@@ -1,15 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature;
 
-use Tests\TestCase;
 use Tests\Fixtures\TestAwaitWorkflow;
+use Tests\TestCase;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\WorkflowStub;
 
-class AwaitWorkflowTest extends TestCase
+final class AwaitWorkflowTest extends TestCase
 {
-    public function testCompleted()
+    public function testCompleted(): void
     {
         $workflow = WorkflowStub::make(TestAwaitWorkflow::class);
 
@@ -23,7 +25,7 @@ class AwaitWorkflowTest extends TestCase
         $this->assertSame('workflow', $workflow->output());
     }
 
-    public function testCompletedWithDelay()
+    public function testCompletedWithDelay(): void
     {
         $workflow = WorkflowStub::make(TestAwaitWorkflow::class);
 

@@ -1,34 +1,52 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Workflow;
 
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
+use function React\Promise\resolve;
 use ReflectionClass;
 use Workflow\Models\StoredWorkflow;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowFailedStatus;
 use Workflow\States\WorkflowPendingStatus;
-use function React\Promise\resolve;
 
-class WorkflowStub
+final class WorkflowStub
 {
-    private static $context = null;
+    private static ?\stdClass $context = null;
 
-    protected $model;
-
-    private function __construct($model)
-    {
-        $this->model = $model;
+    private function __construct(
+        protected $storedWorkflow
+    ) {
     }
 
-    public static function make($class)
+    public function __call($method, $arguments)
     {
-        $model = StoredWorkflow::create([
+        if (collect((new ReflectionClass($this->storedWorkflow->class))->getMethods())
+            ->filter(static fn ($method): bool => collect($method->getAttributes())
+                ->contains(static fn ($attribute): bool => $attribute->getName() === SignalMethod::class))
+            ->map(static fn ($method) => $method->getName())
+            ->contains($method)
+        ) {
+            $this->storedWorkflow->signals()
+                ->create([
+                    'method' => $method,
+                    'arguments' => serialize($arguments),
+                ]);
+
+            Signal::dispatch($this->storedWorkflow);
+        }
+    }
+
+    public static function make($class): static
+    {
+        $storedWorkflow = StoredWorkflow::create([
             'class' => $class,
         ]);
 
-        return new static($model);
+        return new self($storedWorkflow);
     }
 
     public static function load($id)
@@ -36,17 +54,17 @@ class WorkflowStub
         return static::fromStoredWorkflow(StoredWorkflow::findOrFail($id));
     }
 
-    public static function fromStoredWorkflow(StoredWorkflow $model)
+    public static function fromStoredWorkflow(StoredWorkflow $storedWorkflow): static
     {
-        return new static($model);
+        return new self($storedWorkflow);
     }
 
-    public static function getContext()
+    public static function getContext(): \stdClass
     {
         return self::$context;
     }
 
-    public static function setContext($context)
+    public static function setContext($context): void
     {
         self::$context = (object) $context;
     }
@@ -72,25 +90,30 @@ class WorkflowStub
             return resolve(true);
         }
 
-        return self::timer($seconds)->then(fn ($completed) => !$completed);
+        return self::timer($seconds)->then(static fn ($completed): bool => ! $completed);
     }
 
     public static function timer($seconds): PromiseInterface
     {
-        if ($seconds <= 0)
+        if ($seconds <= 0) {
             return resolve(true);
+        }
 
-        $context = WorkflowStub::getContext();
+        $context = self::getContext();
 
-        $timer = $context->model->timers()->whereIndex($context->index)->first();
+        $timer = $context->storedWorkflow->timers()
+            ->whereIndex($context->index)
+            ->first();
 
-        if (is_null($timer)) {
-            $when = now()->addSeconds($seconds);
+        if ($timer === null) {
+            $when = now()
+                ->addSeconds($seconds);
 
-            $timer = $context->model->timers()->create([
-                'index' => $context->index,
-                'stop_at' => $when,
-            ]);
+            $timer = $context->storedWorkflow->timers()
+                ->create([
+                    'index' => $context->index,
+                    'stop_at' => $when,
+                ]);
         } else {
             $result = $timer->stop_at->lessThanOrEqualTo(now()->addSeconds($seconds));
 
@@ -99,7 +122,7 @@ class WorkflowStub
             }
         }
 
-        Signal::dispatch($context->model)->delay($timer->stop_at);
+        Signal::dispatch($context->storedWorkflow)->delay($timer->stop_at);
 
         $deferred = new Deferred();
 
@@ -108,98 +131,76 @@ class WorkflowStub
 
     public function id()
     {
-        return $this->model->id;
+        return $this->storedWorkflow->id;
     }
 
     public function output()
     {
-        return unserialize($this->model->fresh()->output);
+        return unserialize($this->storedWorkflow->fresh()->output);
     }
 
-    public function running()
+    public function running(): bool
     {
-        return !in_array($this->status(), [
-            WorkflowCompletedStatus::class,
-            WorkflowFailedStatus::class,
-        ]);
+        return ! in_array($this->status(), [WorkflowCompletedStatus::class, WorkflowFailedStatus::class], true);
     }
 
-    public function status()
+    public function status(): string|bool
     {
-        return get_class($this->model->fresh()->status);
+        return $this->storedWorkflow->fresh()
+->status::class;
     }
 
-    public function fresh()
+    public function fresh(): static
     {
-        $this->model->refresh();
+        $this->storedWorkflow->refresh();
 
         return $this;
     }
 
-    public function restart(...$arguments)
+    public function restart(...$arguments): void
     {
-        $this->model->arguments = serialize($arguments);
-        $this->model->output = null;
-        $this->model->logs()->delete();
+        $this->storedWorkflow->arguments = serialize($arguments);
+        $this->storedWorkflow->output = null;
+        $this->storedWorkflow->logs()
+            ->delete();
 
         $this->dispatch();
     }
 
-    public function resume()
+    public function resume(): void
     {
         $this->dispatch();
     }
 
-    public function start(...$arguments)
+    public function start(...$arguments): void
     {
-        $this->model->arguments = serialize($arguments);
+        $this->storedWorkflow->arguments = serialize($arguments);
 
         $this->dispatch();
     }
 
-    public function fail($exception)
+    public function fail($exception): void
     {
-        $this->model->output = serialize((string) $exception);
+        $this->storedWorkflow->output = serialize((string) $exception);
 
-        $this->model->status->transitionTo(WorkflowFailedStatus::class);
+        $this->storedWorkflow->status->transitionTo(WorkflowFailedStatus::class);
     }
 
-    public function next($index, $result)
+    public function next($index, $result): void
     {
-        $this->model->logs()->create([
-            'index' => $index,
-            'result' => serialize($result),
-        ]);
-
-        $this->dispatch();
-    }
-
-    private function dispatch()
-    {
-        $this->model->status->transitionTo(WorkflowPendingStatus::class);
-
-        $this->model->class::dispatch($this->model, ...unserialize($this->model->arguments));
-    }
-
-    public function __call($method, $arguments)
-    {
-        if (collect((new ReflectionClass($this->model->class))->getMethods())
-            ->filter(function ($method) {
-                return collect($method->getAttributes())
-                    ->contains(function ($attribute) {
-                        return $attribute->getName() === SignalMethod::class;
-                    });
-            })
-            ->map(function ($method) {
-                return $method->getName();
-            })->contains($method)
-        ) {
-            $this->model->signals()->create([
-                'method' => $method,
-                'arguments' => serialize($arguments),
+        $this->storedWorkflow->logs()
+            ->create([
+                'index' => $index,
+                'result' => serialize($result),
             ]);
 
-            Signal::dispatch($this->model);
-        }
+        $this->dispatch();
+    }
+
+    private function dispatch(): void
+    {
+        $this->storedWorkflow->status->transitionTo(WorkflowPendingStatus::class);
+
+        $this->storedWorkflow->class::dispatch($this->storedWorkflow, ...unserialize($this->storedWorkflow->arguments));
     }
 }

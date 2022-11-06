@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests;
 
 use Dotenv\Dotenv;
@@ -8,11 +10,11 @@ use Symfony\Component\Process\Process;
 
 abstract class TestCase extends BaseTestCase
 {
-    private static $process;
+    private static \Symfony\Component\Process\Process $process;
 
     public static function setUpBeforeClass(): void
     {
-        Dotenv::createImmutable(__DIR__.'/..')->safeLoad();
+        Dotenv::createImmutable(__DIR__ . '/..')->safeLoad();
 
         self::$process = new Process(['php', 'artisan', 'queue:work']);
         self::$process->start();
@@ -28,15 +30,13 @@ abstract class TestCase extends BaseTestCase
         $this->loadLaravelMigrations();
 
         $this->artisan('migrate:fresh', [
-            '--path' => dirname(__DIR__).'/src/migrations',
+            '--path' => dirname(__DIR__) . '/src/migrations',
             '--realpath' => true,
         ]);
     }
 
     protected function getPackageProviders($app)
     {
-        return [
-            'Workflow\Providers\WorkflowServiceProvider',
-        ];
+        return [\Workflow\Providers\WorkflowServiceProvider::class];
     }
 }

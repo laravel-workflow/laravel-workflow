@@ -1,16 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature;
 
-use Tests\TestCase;
 use Tests\Fixtures\TestFailingWorkflow;
+use Tests\TestCase;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowFailedStatus;
 use Workflow\WorkflowStub;
 
-class FailingWorkflowTest extends TestCase
+final class FailingWorkflowTest extends TestCase
 {
-    public function testRetry()
+    public function testRetry(): void
     {
         $workflow = WorkflowStub::make(TestFailingWorkflow::class);
 
@@ -21,7 +23,8 @@ class FailingWorkflowTest extends TestCase
         $this->assertSame(WorkflowFailedStatus::class, $workflow->status());
         $this->assertStringContainsString('failed', $workflow->output());
 
-        $workflow->fresh()->start(shouldFail: false);
+        $workflow->fresh()
+            ->start(shouldFail: false);
 
         while ($workflow->running());
 
