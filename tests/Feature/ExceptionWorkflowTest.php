@@ -1,15 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature;
 
-use Tests\TestCase;
 use Tests\Fixtures\TestExceptionWorkflow;
+use Tests\TestCase;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\WorkflowStub;
 
-class ExceptionWorkflowTest extends TestCase
+final class ExceptionWorkflowTest extends TestCase
 {
-    public function testRetry()
+    public function testRetry(): void
     {
         $workflow = WorkflowStub::make(TestExceptionWorkflow::class);
 

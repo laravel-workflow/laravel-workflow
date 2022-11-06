@@ -1,22 +1,23 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Workflow;
 
-class ActivityStub
+final class ActivityStub
 {
-    protected $activity;
+    private $arguments;
 
-    protected $arguments;
-
-    private function __construct($activity, ...$arguments)
-    {
-        $this->activity = $activity;
+    private function __construct(
+        protected $activity,
+        ...$arguments
+    ) {
         $this->arguments = $arguments;
     }
 
-    public static function make($activity, ...$arguments)
+    public static function make($activity, ...$arguments): static
     {
-        return new static($activity, ...$arguments);
+        return new self($activity, ...$arguments);
     }
 
     public function activity()

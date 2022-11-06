@@ -1,15 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature;
 
-use Tests\TestCase;
 use Tests\Fixtures\TestWorkflow;
+use Tests\TestCase;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\WorkflowStub;
 
-class WorkflowTest extends TestCase
+final class WorkflowTest extends TestCase
 {
-    public function testCompleted()
+    public function testCompleted(): void
     {
         $workflow = WorkflowStub::make(TestWorkflow::class);
 
@@ -23,7 +25,7 @@ class WorkflowTest extends TestCase
         $this->assertSame('workflow_activity_other', $workflow->output());
     }
 
-    public function testCompletedDelay()
+    public function testCompletedDelay(): void
     {
         $workflow = WorkflowStub::make(TestWorkflow::class);
 

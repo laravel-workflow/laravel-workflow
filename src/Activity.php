@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Workflow;
 
 use BadMethodCallException;
@@ -16,7 +18,10 @@ use Workflow\Models\StoredWorkflow;
 
 class Activity implements ShouldBeEncrypted, ShouldQueue, ShouldBeUnique
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     public $tries = PHP_INT_MAX;
 
@@ -26,14 +31,11 @@ class Activity implements ShouldBeEncrypted, ShouldQueue, ShouldBeUnique
 
     public $arguments;
 
-    public $index;
-
-    public $model;
-
-    public function __construct(int $index, StoredWorkflow $model, ...$arguments)
-    {
-        $this->index = $index;
-        $this->model = $model;
+    public function __construct(
+        public int $index,
+        public StoredWorkflow $storedWorkflow,
+        ...$arguments
+    ) {
         $this->arguments = $arguments;
     }
 
@@ -44,7 +46,7 @@ class Activity implements ShouldBeEncrypted, ShouldQueue, ShouldBeUnique
 
     public function uniqueId()
     {
-        return $this->model->id;
+        return $this->storedWorkflow->id;
     }
 
     public function handle()
@@ -61,15 +63,14 @@ class Activity implements ShouldBeEncrypted, ShouldQueue, ShouldBeUnique
         return [new WorkflowMiddleware()];
     }
 
-    public function failed(Throwable $exception)
+    public function failed(Throwable $throwable): void
     {
-        $this->model->toWorkflow()->fail($exception);
+        $this->storedWorkflow->toWorkflow()
+            ->fail($throwable);
     }
 
-    public function heartbeat()
+    public function heartbeat(): void
     {
-        pcntl_alarm(
-            max($this->timeout, 0)
-        );
+        pcntl_alarm(max($this->timeout, 0));
     }
 }

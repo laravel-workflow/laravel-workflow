@@ -1,15 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature;
 
-use Tests\TestCase;
 use Tests\Fixtures\TestHeartbeatWorkflow;
+use Tests\TestCase;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\WorkflowStub;
 
-class HeartbeatWorkflowTest extends TestCase
+final class HeartbeatWorkflowTest extends TestCase
 {
-    public function testHeartbeat()
+    public function testHeartbeat(): void
     {
         $workflow = WorkflowStub::make(TestHeartbeatWorkflow::class);
 

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Workflow;
 
 use Illuminate\Bus\Queueable;
@@ -15,75 +17,79 @@ use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowRunningStatus;
 use Workflow\States\WorkflowWaitingStatus;
 
-abstract class Workflow implements ShouldBeEncrypted, ShouldQueue
+class Workflow implements ShouldBeEncrypted, ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
-    public $tries = 1;
+    public int $tries = 1;
 
-    public $maxExceptions = 1;
+    public int $maxExceptions = 1;
 
     public $arguments;
 
     public $coroutine;
 
-    public $index;
+    public int $index = 0;
 
-    public $model;
-
-    abstract public function execute();
-
-    public function __construct(StoredWorkflow $model, ...$arguments)
-    {
-        $this->model = $model;
+    public function __construct(
+        public StoredWorkflow $storedWorkflow,
+        ...$arguments
+    ) {
         $this->arguments = $arguments;
-        $this->index = 0;
     }
 
-    public function failed(Throwable $exception)
+    public function failed(Throwable $throwable): void
     {
-        $this->model->toWorkflow()->fail($this->index, $exception);
+        $this->storedWorkflow->toWorkflow()
+            ->fail($this->index, $throwable);
     }
 
-    public function handle()
+    public function handle(): void
     {
-        $this->model->status->transitionTo(WorkflowRunningStatus::class);
+        $this->storedWorkflow->status->transitionTo(WorkflowRunningStatus::class);
 
-        $log = $this->model->logs()->whereIndex($this->index)->first();
+        $log = $this->storedWorkflow->logs()
+            ->whereIndex($this->index)
+            ->first();
 
-        $this->model
+        $this->storedWorkflow
             ->signals()
-            ->when($log, function($query, $log) {
+            ->when($log, static function ($query, $log): void {
                 $query->where('created_at', '<=', $log->created_at);
             })
-            ->each(function ($signal) {
+            ->each(function ($signal): void {
                 $this->{$signal->method}(...unserialize($signal->arguments));
             });
 
         WorkflowStub::setContext([
-            'model' => $this->model,
+            'storedWorkflow' => $this->storedWorkflow,
             'index' => $this->index,
         ]);
 
-        $this->coroutine = $this->execute(...$this->arguments);
+        $this->coroutine = $this->{'execute'}(...$this->arguments);
 
         while ($this->coroutine->valid()) {
-            $nextLog = $this->model->logs()->whereIndex($this->index + 1)->first();
+            $nextLog = $this->storedWorkflow->logs()
+                ->whereIndex($this->index + 1)
+                ->first();
 
-            $this->model
+            $this->storedWorkflow
                 ->signals()
-                ->when($nextLog, function($query, $nextLog) {
+                ->when($nextLog, static function ($query, $nextLog): void {
                     $query->where('created_at', '<=', $nextLog->created_at);
                 })
-                ->when($log, function($query, $log) {
+                ->when($log, static function ($query, $log): void {
                     $query->where('created_at', '>', $log->created_at);
                 })
-                ->each(function ($signal) {
+                ->each(function ($signal): void {
                     $this->{$signal->method}(...unserialize($signal->arguments));
                 });
 
             WorkflowStub::setContext([
-                'model' => $this->model,
+                'storedWorkflow' => $this->storedWorkflow,
                 'index' => $this->index,
             ]);
 
@@ -92,43 +98,48 @@ abstract class Workflow implements ShouldBeEncrypted, ShouldQueue
             if ($current instanceof PromiseInterface) {
                 $resolved = false;
 
-                $current->then(function ($value) use (&$resolved) {
+                $current->then(function ($value) use (&$resolved): void {
                     $resolved = true;
 
-                    $this->model->logs()->create([
-                        'index' => $this->index,
-                        'result' => serialize($value),
-                    ]);
+                    $this->storedWorkflow->logs()
+                        ->create([
+                            'index' => $this->index,
+                            'result' => serialize($value),
+                        ]);
 
-                    $log = $this->model->logs()->whereIndex($this->index)->first();
+                    $log = $this->storedWorkflow->logs()
+                        ->whereIndex($this->index)
+                        ->first();
 
                     $this->coroutine->send(unserialize($log->result));
                 });
 
-                if (!$resolved) {
-                    $this->model->status->transitionTo(WorkflowWaitingStatus::class);
+                if (! $resolved) {
+                    $this->storedWorkflow->status->transitionTo(WorkflowWaitingStatus::class);
 
                     return;
                 }
             } else {
-                $log = $this->model->logs()->whereIndex($this->index)->first();
+                $log = $this->storedWorkflow->logs()
+                    ->whereIndex($this->index)
+                    ->first();
 
                 if ($log) {
                     $this->coroutine->send(unserialize($log->result));
                 } else {
-                    $this->model->status->transitionTo(WorkflowWaitingStatus::class);
+                    $this->storedWorkflow->status->transitionTo(WorkflowWaitingStatus::class);
 
-                    $current->activity()::dispatch($this->index, $this->model, ...$current->arguments());
+                    $current->activity()::dispatch($this->index, $this->storedWorkflow, ...$current->arguments());
 
                     return;
                 }
             }
 
-            $this->index++;
+            ++$this->index;
         }
 
-        $this->model->output = serialize($this->coroutine->getReturn());
+        $this->storedWorkflow->output = serialize($this->coroutine->getReturn());
 
-        $this->model->status->transitionTo(WorkflowCompletedStatus::class);
+        $this->storedWorkflow->status->transitionTo(WorkflowCompletedStatus::class);
     }
 }

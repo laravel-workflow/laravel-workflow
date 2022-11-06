@@ -1,21 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Workflow\Providers;
 
 use Illuminate\Support\ServiceProvider;
 
-class WorkflowServiceProvider extends ServiceProvider
+final class WorkflowServiceProvider extends ServiceProvider
 {
-    protected $defer = false;
-
-    public function boot()
+    public function boot(): void
     {
         $this->publishes([
-            __DIR__.'/../migrations/' => database_path('/migrations')
+            __DIR__ . '/../migrations/' => database_path('/migrations'),
         ], 'migrations');
     }
 
-    public function register()
+    public function register(): void
     {
         //
     }

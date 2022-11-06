@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Fixtures;
 
 use Exception;
 use Workflow\Activity;
 
-class TestExceptionActivity extends Activity
+final class TestExceptionActivity extends Activity
 {
     public function execute()
     {

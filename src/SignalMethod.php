@@ -1,9 +1,9 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Workflow;
 
-use Spiral\Attributes\NamedArgumentConstructorAttribute;
-
-final class SignalMethod implements NamedArgumentConstructorAttribute
+final class SignalMethod
 {
 }

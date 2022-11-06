@@ -1,37 +1,38 @@
 <?php
 
+declare(strict_types=1);
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateWorkflowTimersTable extends Migration
+final class CreateWorkflowTimersTable extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
-    public function up()
+    public function up(): void
     {
-        Schema::create('workflow_timers', function (Blueprint $table) {
-            $table->id('id');
-            $table->foreignId('stored_workflow_id')->index();
-            $table->integer('index')->nullable();
-            $table->timestamp('stop_at');
-            $table->timestamps();
-
-            $table->index(['stored_workflow_id', 'created_at']);
-
-            $table->foreign('stored_workflow_id')->references('id')->on('workflows')->onDelete('cascade');
+        Schema::create('workflow_timers', static function (Blueprint $blueprint): void {
+            $blueprint->id('id');
+            $blueprint->foreignId('stored_workflow_id')
+                ->index();
+            $blueprint->integer('index')
+                ->nullable();
+            $blueprint->timestamp('stop_at');
+            $blueprint->timestamps();
+            $blueprint->index(['stored_workflow_id', 'created_at']);
+            $blueprint->foreign('stored_workflow_id')
+                ->references('id')
+                ->on('workflows')
+                ->onDelete('cascade');
         });
     }
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('workflow_timers');
     }

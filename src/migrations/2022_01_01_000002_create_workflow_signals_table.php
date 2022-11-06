@@ -1,37 +1,38 @@
 <?php
 
+declare(strict_types=1);
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateWorkflowSignalsTable extends Migration
+final class CreateWorkflowSignalsTable extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
-    public function up()
+    public function up(): void
     {
-        Schema::create('workflow_signals', function (Blueprint $table) {
-            $table->id('id');
-            $table->foreignId('stored_workflow_id')->index();
-            $table->text('method');
-            $table->text('arguments')->nullable();
-            $table->timestamps();
-
-            $table->index(['stored_workflow_id', 'created_at']);
-
-            $table->foreign('stored_workflow_id')->references('id')->on('workflows')->onDelete('cascade');
+        Schema::create('workflow_signals', static function (Blueprint $blueprint): void {
+            $blueprint->id('id');
+            $blueprint->foreignId('stored_workflow_id')
+                ->index();
+            $blueprint->text('method');
+            $blueprint->text('arguments')
+                ->nullable();
+            $blueprint->timestamps();
+            $blueprint->index(['stored_workflow_id', 'created_at']);
+            $blueprint->foreign('stored_workflow_id')
+                ->references('id')
+                ->on('workflows')
+                ->onDelete('cascade');
         });
     }
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('workflow_signals');
     }

@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Workflow\States;
 
-class WorkflowRunningStatus extends WorkflowStatus
+final class WorkflowRunningStatus extends WorkflowStatus
 {
-    public static $name = 'running';
+    public static string $name = 'running';
 }

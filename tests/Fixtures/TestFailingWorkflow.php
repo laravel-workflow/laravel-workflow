@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Fixtures;
 
 use Workflow\ActivityStub;
 use Workflow\Workflow;
 
-class TestFailingWorkflow extends Workflow
+final class TestFailingWorkflow extends Workflow
 {
     public function execute($shouldFail = false)
     {

@@ -1,15 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature;
 
-use Tests\TestCase;
 use Tests\Fixtures\TestAwaitWithTimeoutWorkflow;
+use Tests\TestCase;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\WorkflowStub;
 
-class AwaitWithTimeoutWorkflowTest extends TestCase
+final class AwaitWithTimeoutWorkflowTest extends TestCase
 {
-    public function testCompleted()
+    public function testCompleted(): void
     {
         $workflow = WorkflowStub::make(TestAwaitWithTimeoutWorkflow::class);
 
@@ -24,7 +26,7 @@ class AwaitWithTimeoutWorkflowTest extends TestCase
         $this->assertSame('workflow', $workflow->output());
     }
 
-    public function testTimedout()
+    public function testTimedout(): void
     {
         $workflow = WorkflowStub::make(TestAwaitWithTimeoutWorkflow::class);
 

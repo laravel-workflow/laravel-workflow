@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Workflow\States;
 
-class WorkflowFailedStatus extends WorkflowStatus
+final class WorkflowFailedStatus extends WorkflowStatus
 {
-    public static $name = 'failed';
+    public static string $name = 'failed';
 }
