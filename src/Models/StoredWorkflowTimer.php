@@ -21,32 +21,14 @@ final class StoredWorkflowTimer extends Model
      */
     protected $guarded = [];
 
+    protected $dateFormat = 'Y-m-d H:i:s.u';
+
     /**
      * @var array<string, class-string<\datetime>>
      */
     protected $casts = [
-        'stop_at' => 'datetime',
+        'stop_at' => 'datetime:Y-m-d H:i:s.u',
     ];
-
-    public function getCreatedAtAttribute(string $value): Carbon
-    {
-        return Carbon::createFromFormat('Y-m-d H:i:s.u', $value);
-    }
-
-    public function setCreatedAtAttribute(Carbon $value): void
-    {
-        $this->attributes['created_at'] = $value->format('Y-m-d H:i:s.u');
-    }
-
-    public function getStopAtAttribute(string $value): Carbon
-    {
-        return Carbon::createFromFormat('Y-m-d H:i:s.u', $value);
-    }
-
-    public function setStopAtAttribute(Carbon $value): void
-    {
-        $this->attributes['stop_at'] = $value->format('Y-m-d H:i:s.u');
-    }
 
     public function workflow(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
