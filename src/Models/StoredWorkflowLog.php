@@ -21,15 +21,7 @@ final class StoredWorkflowLog extends Model
      */
     protected $guarded = [];
 
-    public function getCreatedAtAttribute(string $value): Carbon
-    {
-        return Carbon::createFromFormat('Y-m-d H:i:s.u', $value);
-    }
-
-    public function setCreatedAtAttribute(Carbon $value): void
-    {
-        $this->attributes['created_at'] = $value->format('Y-m-d H:i:s.u');
-    }
+    protected $dateFormat = 'Y-m-d H:i:s.u';
 
     public function workflow(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
