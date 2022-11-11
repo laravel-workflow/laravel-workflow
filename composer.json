@@ -23,6 +23,8 @@
         }
     ],
     "require": {
+        "php": "^8.0.2",
+        "laravel/framework": "^9.19",
         "spatie/laravel-model-states": "^2.1",
         "react/promise": "^2.9"
     },

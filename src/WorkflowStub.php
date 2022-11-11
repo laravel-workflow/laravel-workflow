@@ -130,6 +130,11 @@ final class WorkflowStub
         return $deferred->promise();
     }
 
+    public static function now()
+    {
+        return self::getContext()->now;
+    }
+
     public function id()
     {
         return $this->storedWorkflow->id;
@@ -147,7 +152,7 @@ final class WorkflowStub
 
     public function output()
     {
-        return unserialize($this->storedWorkflow->fresh()->output);
+        return unserialize($this->storedWorkflow->fresh()->output ?? serialize(null));
     }
 
     public function running(): bool
@@ -190,19 +195,24 @@ final class WorkflowStub
         $this->dispatch();
     }
 
-    public function fail($exception): void
+    public function fail($throwable): void
     {
-        $this->storedWorkflow->output = serialize((string) $exception);
+        $this->storedWorkflow->exceptions()
+            ->create([
+                'class' => $this->storedWorkflow->class,
+                'exception' => serialize($throwable),
+            ]);
 
         $this->storedWorkflow->status->transitionTo(WorkflowFailedStatus::class);
     }
 
-    public function next($index, $class, $result): void
+    public function next($index, $now, $class, $result): void
     {
         try {
             $this->storedWorkflow->logs()
                 ->create([
                     'index' => $index,
+                    'now' => $now,
                     'class' => $class,
                     'result' => serialize($result),
                 ]);

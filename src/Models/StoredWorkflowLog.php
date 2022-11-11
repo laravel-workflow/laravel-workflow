@@ -23,6 +23,13 @@ final class StoredWorkflowLog extends Model
 
     protected $dateFormat = 'Y-m-d H:i:s.u';
 
+    /**
+     * @var array<string, class-string<\datetime>>
+     */
+    protected $casts = [
+        'now' => 'datetime',
+    ];
+
     public function workflow(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(StoredWorkflow::class);

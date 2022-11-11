@@ -10,6 +10,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Carbon;
 use React\Promise\PromiseInterface;
 use Throwable;
 use Workflow\Models\StoredWorkflow;
@@ -64,9 +65,12 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
                 $this->{$signal->method}(...unserialize($signal->arguments));
             });
 
+        $this->now = $log ? $log->now : Carbon::now();
+
         WorkflowStub::setContext([
             'storedWorkflow' => $this->storedWorkflow,
             'index' => $this->index,
+            'now' => $this->now,
         ]);
 
         $this->coroutine = $this->{'execute'}(...$this->arguments);
@@ -88,9 +92,12 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
                     $this->{$signal->method}(...unserialize($signal->arguments));
                 });
 
+            $this->now = $nextLog ? $nextLog->now : Carbon::now();
+
             WorkflowStub::setContext([
                 'storedWorkflow' => $this->storedWorkflow,
                 'index' => $this->index,
+                'now' => $this->now,
             ]);
 
             $current = $this->coroutine->current();
@@ -101,16 +108,19 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
                 $current->then(function ($value) use (&$resolved): void {
                     $resolved = true;
 
-                    $this->storedWorkflow->logs()
-                        ->create([
-                            'index' => $this->index,
-                            'class' => Signal::class,
-                            'result' => serialize($value),
-                        ]);
-
                     $log = $this->storedWorkflow->logs()
                         ->whereIndex($this->index)
                         ->first();
+
+                    if (! $log) {
+                        $log = $this->storedWorkflow->logs()
+                            ->create([
+                                'index' => $this->index,
+                                'now' => $this->now,
+                                'class' => Signal::class,
+                                'result' => serialize($value),
+                            ]);
+                    }
 
                     $this->coroutine->send(unserialize($log->result));
                 });
@@ -130,7 +140,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
                 } else {
                     $this->storedWorkflow->status->transitionTo(WorkflowWaitingStatus::class);
 
-                    $current->activity()::dispatch($this->index, $this->storedWorkflow, ...$current->arguments());
+                    $current->activity()::dispatch($this->index, $this->now, $this->storedWorkflow, ...$current->arguments());
 
                     return;
                 }

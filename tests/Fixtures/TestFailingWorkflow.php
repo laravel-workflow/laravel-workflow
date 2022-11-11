@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
+use Exception;
 use Workflow\ActivityStub;
 use Workflow\Workflow;
 
@@ -14,10 +15,10 @@ final class TestFailingWorkflow extends Workflow
         $otherResult = yield ActivityStub::make(TestOtherActivity::class, 'other');
 
         if ($shouldFail) {
-            $result = yield ActivityStub::make(TestFailingActivity::class);
-        } else {
-            $result = yield ActivityStub::make(TestActivity::class);
+            throw new Exception('failed');
         }
+
+        $result = yield ActivityStub::make(TestActivity::class);
 
         return 'workflow_' . $result . '_' . $otherResult;
     }

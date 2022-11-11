@@ -21,7 +21,7 @@ final class FailingWorkflowTest extends TestCase
         while ($workflow->running());
 
         $this->assertSame(WorkflowFailedStatus::class, $workflow->status());
-        $this->assertStringContainsString('failed', $workflow->output());
+        $this->assertNull($workflow->output());
 
         $workflow->fresh()
             ->start(shouldFail: false);
