@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Workflow\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Carbon;
 use Spatie\ModelStates\HasStates;
 use Workflow\States\WorkflowStatus;
 use Workflow\WorkflowStub;

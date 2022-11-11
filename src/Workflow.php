@@ -35,6 +35,8 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
 
     public int $index = 0;
 
+    public $now;
+
     public function __construct(
         public StoredWorkflow $storedWorkflow,
         ...$arguments
@@ -140,7 +142,12 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
                 } else {
                     $this->storedWorkflow->status->transitionTo(WorkflowWaitingStatus::class);
 
-                    $current->activity()::dispatch($this->index, $this->now, $this->storedWorkflow, ...$current->arguments());
+                    $current->activity()::dispatch(
+                        $this->index,
+                        $this->now,
+                        $this->storedWorkflow,
+                        ...$current->arguments()
+                    );
 
                     return;
                 }

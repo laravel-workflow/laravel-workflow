@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Workflow\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Carbon;
 
 final class StoredWorkflowLog extends Model
 {
