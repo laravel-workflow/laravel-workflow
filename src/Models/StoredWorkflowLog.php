@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Workflow\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Carbon;
 
 final class StoredWorkflowLog extends Model
 {
@@ -22,6 +21,13 @@ final class StoredWorkflowLog extends Model
     protected $guarded = [];
 
     protected $dateFormat = 'Y-m-d H:i:s.u';
+
+    /**
+     * @var array<string, class-string<\datetime>>
+     */
+    protected $casts = [
+        'now' => 'datetime',
+    ];
 
     public function workflow(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {

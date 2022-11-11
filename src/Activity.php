@@ -33,6 +33,7 @@ class Activity implements ShouldBeEncrypted, ShouldQueue, ShouldBeUnique
 
     public function __construct(
         public int $index,
+        public string $now,
         public StoredWorkflow $storedWorkflow,
         ...$arguments
     ) {
