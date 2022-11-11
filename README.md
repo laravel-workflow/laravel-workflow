@@ -138,3 +138,24 @@ The default activity retry policy is to retry activities forever with an exponen
 
 Workflows and activities are based on [Laravel Queues](https://laravel.com/docs/9.x/queues) so you can use any options you normally would.
 
+## Workflow Constraints
+
+Workflows and activities have a key difference. Workflows cannot have any side effects other than running activities and they must be deterministic. The following list only applies to workflows, not activities.
+
+- No IO.
+- No mutable global variables.
+- No non-deterministic functions like non-seeded `rand()` or `Str::uuid()`.
+- No `Carbon::now()`, use `WorkflowStub::now()` to get the current time.
+- No `sleep()`, use `yield WorkflowStub::timer()` to wait.
+
+All of these types of operations should be done in activities.
+
+## Activity Constraints
+
+Activities have none of the above constraints. However, because activities are retryable they should be idempotent. If your activity creates a charge for a customer then retrying it should not create a duplicate charge.
+
+Many external APIs support passing an `Idempotency-Key`. See [Stripe](https://stripe.com/docs/api/idempotent_requests) for an example.
+
+Many operations are naturally idempotent. If you encode a video twice, while it may be a waste of time, you still have the same video. If you delete the same file twice, the second deletion does nothing.
+
+Some operations are not idempotent but duplication may be tolerable. If you are unsure if an email was actually sent, sending a duplicate email might be preferable to risking that no email was sent at all.
