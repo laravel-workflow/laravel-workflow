@@ -22,7 +22,8 @@ final class CreateWorkflowLogsTable extends Migration
             $blueprint->text('class');
             $blueprint->text('result')
                 ->nullable();
-            $blueprint->timestamp('created_at', 6);
+            $blueprint->timestamp('created_at', 6)
+                ->nullable();
             $blueprint->unique(['stored_workflow_id', 'index']);
             $blueprint->foreign('stored_workflow_id')
                 ->references('id')

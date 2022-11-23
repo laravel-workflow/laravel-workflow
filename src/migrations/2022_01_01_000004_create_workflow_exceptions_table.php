@@ -19,7 +19,8 @@ final class CreateWorkflowExceptionsTable extends Migration
                 ->index();
             $blueprint->text('class');
             $blueprint->text('exception');
-            $blueprint->timestamp('created_at', 6);
+            $blueprint->timestamp('created_at', 6)
+                ->nullable();
             $blueprint->foreign('stored_workflow_id')
                 ->references('id')
                 ->on('workflows')
