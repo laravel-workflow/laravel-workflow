@@ -20,7 +20,8 @@ final class CreateWorkflowSignalsTable extends Migration
             $blueprint->text('method');
             $blueprint->text('arguments')
                 ->nullable();
-            $blueprint->timestamp('created_at', 6);
+            $blueprint->timestamp('created_at', 6)
+                ->nullable();
             $blueprint->index(['stored_workflow_id', 'created_at']);
             $blueprint->foreign('stored_workflow_id')
                 ->references('id')
