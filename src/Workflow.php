@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Workflow;
 
+use BadMethodCallException;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
