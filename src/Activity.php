@@ -58,7 +58,7 @@ class Activity implements ShouldBeEncrypted, ShouldQueue, ShouldBeUnique
     public function handle()
     {
         if (! method_exists($this, 'execute')) {
-            throw new BadMethodCallException('Execute method mot implemented.');
+            throw new BadMethodCallException('Execute method not implemented.');
         }
 
         try {
