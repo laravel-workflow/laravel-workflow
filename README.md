@@ -152,13 +152,25 @@ All of these types of operations should be done in activities.
 
 ## Activity Constraints
 
-Activities have none of the above constraints. However, because activities are retryable they should be idempotent. If your activity creates a charge for a customer then retrying it should not create a duplicate charge.
+Activities have none of the above constraints. However, because activities are retryable they should still be idempotent. If your activity creates a charge for a customer then retrying it should not create a duplicate charge.
 
 Many external APIs support passing an `Idempotency-Key`. See [Stripe](https://stripe.com/docs/api/idempotent_requests) for an example.
 
 Many operations are naturally idempotent. If you encode a video twice, while it may be a waste of time, you still have the same video. If you delete the same file twice, the second deletion does nothing.
 
 Some operations are not idempotent but duplication may be tolerable. If you are unsure if an email was actually sent, sending a duplicate email might be preferable to risking that no email was sent at all.
+
+
+## Constraints Summary
+
+| Workflows | Activities |
+| ------------- | ------------- |
+| ❌ IO | ✔️ IO |
+| ❌ mutable global variables | ✔️ mutable global variables |
+| ❌ non-deterministic functions | ✔️ non-deterministic functions |
+| ❌ `Carbon::now()` | ✔️ `Carbon::now()` |
+| ❌ `sleep()` | ✔️ `sleep()` |
+| ❌ non-idempotent | ❌ non-idempotent |
 
 ## Monitoring
 
