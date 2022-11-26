@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Workflow;
 
+use BadMethodCallException;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -52,6 +53,10 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
 
     public function handle(): void
     {
+        if (! method_exists($this, 'execute')) {
+            throw new BadMethodCallException('Execute method not implemented.');
+        }
+
         $this->storedWorkflow->status->transitionTo(WorkflowRunningStatus::class);
 
         $log = $this->storedWorkflow->logs()
