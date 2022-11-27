@@ -185,3 +185,7 @@ Some operations are not idempotent but duplication may be tolerable. If you are 
 ![workflow](https://user-images.githubusercontent.com/1130888/202866616-98a214d3-a916-4ae1-952e-ca8267ddf4a7.png)
 
 Refer to https://github.com/laravel-workflow/waterline for installation and configuration instructions.
+
+## Supporters
+
+[![Stargazers repo roster for @laravel-workflow/laravel-workflow](https://reporoster.com/stars/dark/laravel-workflow/laravel-workflow)](https://github.com/laravel-workflow/laravel-workflow/stargazers)
