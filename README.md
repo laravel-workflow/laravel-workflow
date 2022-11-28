@@ -1,4 +1,4 @@
-# Laravel Workflow [![PHP Composer](https://github.com/laravel-workflow/laravel-workflow/actions/workflows/php.yml/badge.svg)](https://github.com/laravel-workflow/laravel-workflow/actions/workflows/php.yml)
+# Laravel Workflow [![PHP Composer](https://github.com/laravel-workflow/laravel-workflow/actions/workflows/php.yml/badge.svg)](https://github.com/laravel-workflow/laravel-workflow/actions/workflows/php.yml) [![Gitter](https://badges.gitter.im/laravel-workflow/community.svg)](https://gitter.im/laravel-workflow/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 Durable workflow engine that allows users to write long running persistent distributed workflows (orchestrations) in PHP powered by [Laravel Queues](https://laravel.com/docs/9.x/queues).
 
