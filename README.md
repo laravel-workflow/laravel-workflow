@@ -54,7 +54,7 @@ $workflow->output();
 
 Using `WorkflowStub::await()` along with signal methods allows a workflow to wait for an external event.
 
-```
+```php
 class MyWorkflow extends Workflow
 {
     private bool $isReady = false;
@@ -80,7 +80,7 @@ class MyWorkflow extends Workflow
 
 The workflow will reach the call to `WorkflowStub::await()` and then hibernate until some external code signals the workflow like this.
 
-```
+```php
 $workflow->ready();
 ```
 
@@ -88,7 +88,7 @@ $workflow->ready();
 
 Using `WorkflowStub::timer($seconds)` allows a workflow to wait for a fixed amount of time in seconds.
 
-```
+```php
 class MyWorkflow extends Workflow
 {
     public function execute()
@@ -112,7 +112,7 @@ In most cases you don't want to wait forever for a signal.
 
 Instead, you want to wait for some amount of time and then give up. It's possible to combine a signal with a timer yourself to achieve this but a convenience method exists to do this for you, `WorkflowStub::awaitWithTimeout()`.
 
-```
+```php
 $result = yield WorkflowStub::awaitWithTimeout(300, fn () => $this->isReady);
 ```
 
