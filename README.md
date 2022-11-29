@@ -20,6 +20,9 @@ You can use any queue driver that Laravel supports but this is heavily tested ag
 
 **1. Create a workflow.**
 ```php
+use Workflow\ActivityStub;
+use Workflow\Workflow;
+
 class MyWorkflow extends Workflow
 {
     public function execute()
@@ -32,6 +35,8 @@ class MyWorkflow extends Workflow
 
 **2. Create an activity.**
 ```php
+use Workflow\Activity;
+
 class MyActivity extends Activity
 {
     public function execute()
@@ -55,6 +60,12 @@ $workflow->output();
 Using `WorkflowStub::await()` along with signal methods allows a workflow to wait for an external event.
 
 ```php
+use Workflow\ActivityStub;
+use Workflow\SignalMethod;
+use Workflow\Workflow;
+use Workflow\WorkflowStub;
+
+
 class MyWorkflow extends Workflow
 {
     private bool $isReady = false;
@@ -89,6 +100,10 @@ $workflow->ready();
 Using `WorkflowStub::timer($seconds)` allows a workflow to wait for a fixed amount of time in seconds.
 
 ```php
+use Workflow\ActivityStub;
+use Workflow\Workflow;
+use Workflow\WorkflowStub;
+
 class MyWorkflow extends Workflow
 {
     public function execute()
