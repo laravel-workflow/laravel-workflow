@@ -48,6 +48,8 @@ class MyActivity extends Activity
 
 **3. Run the workflow.**
 ```php
+use Workflow\WorkflowStub;
+
 $workflow = WorkflowStub::make(MyWorkflow::class);
 $workflow->start();
 while ($workflow->running());
@@ -128,6 +130,8 @@ In most cases you don't want to wait forever for a signal.
 Instead, you want to wait for some amount of time and then give up. It's possible to combine a signal with a timer yourself to achieve this but a convenience method exists to do this for you, `WorkflowStub::awaitWithTimeout()`.
 
 ```php
+use Workflow\WorkflowStub;
+
 $result = yield WorkflowStub::awaitWithTimeout(300, fn () => $this->isReady);
 ```
 
@@ -138,6 +142,8 @@ This will wait like the previous signal example but it will timeout after 5 minu
 If a workflow fails or crashes at any point then it can be resumed from that point. Any activities that were successfully completed during the previous execution of the workflow will not be run again.
 
 ```php
+use Workflow\WorkflowStub;
+
 $workflow = WorkflowStub::load(1);
 $workflow->resume();
 while ($workflow->running());
