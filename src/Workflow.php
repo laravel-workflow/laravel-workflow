@@ -179,8 +179,8 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
             ++$this->index;
         }
 
-        $this->storedWorkflow->status->transitionTo(WorkflowCompletedStatus::class);
-
         $this->storedWorkflow->output = serialize($this->coroutine->getReturn());
+
+        $this->storedWorkflow->status->transitionTo(WorkflowCompletedStatus::class);
     }
 }
