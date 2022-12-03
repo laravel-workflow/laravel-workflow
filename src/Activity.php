@@ -7,16 +7,16 @@ namespace Workflow;
 use BadMethodCallException;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Throwable;
 use Workflow\Middleware\WorkflowMiddleware;
 use Workflow\Models\StoredWorkflow;
 
-class Activity implements ShouldBeEncrypted, ShouldQueue, ShouldBeUnique
+class Activity implements ShouldBeEncrypted, ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
@@ -76,7 +76,11 @@ class Activity implements ShouldBeEncrypted, ShouldQueue, ShouldBeUnique
 
     public function middleware()
     {
-        return [new WorkflowMiddleware()];
+
+        return [
+            (new WithoutOverlapping("workflow:{$this->storedWorkflow->id}"))->shared(),
+            new WorkflowMiddleware(),
+        ];
     }
 
     public function failed(Throwable $throwable): void

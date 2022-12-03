@@ -10,6 +10,7 @@ use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Carbon;
 use React\Promise\PromiseInterface;
@@ -26,9 +27,9 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
     use Queueable;
     use SerializesModels;
 
-    public int $tries = 1;
+    public int $tries = 0;
 
-    public int $maxExceptions = 1;
+    public int $maxExceptions = 0;
 
     public $arguments;
 
@@ -45,10 +46,20 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
         $this->arguments = $arguments;
     }
 
+    public function middleware()
+    {
+        return [
+            (new WithoutOverlapping("workflow:{$this->storedWorkflow->id}"))->shared(),
+        ];
+    }
+
     public function failed(Throwable $throwable): void
     {
-        $this->storedWorkflow->toWorkflow()
-            ->fail($this->index, $throwable);
+        try {
+            $this->storedWorkflow->toWorkflow()
+                ->fail($this->index, $throwable);
+        } catch (\Throwable) {
+        }
     }
 
     public function handle(): void
@@ -57,7 +68,14 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
             throw new BadMethodCallException('Execute method not implemented.');
         }
 
-        $this->storedWorkflow->status->transitionTo(WorkflowRunningStatus::class);
+        try {
+            $this->storedWorkflow->status->transitionTo(WorkflowRunningStatus::class);
+        } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
+            if ($this->storedWorkflow->toWorkflow()->running()) {
+                $this->release();
+            }
+            return;
+        }
 
         $log = $this->storedWorkflow->logs()
             ->whereIndex($this->index)
@@ -66,7 +84,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
         $this->storedWorkflow
             ->signals()
             ->when($log, static function ($query, $log): void {
-                $query->where('created_at', '<=', $log->created_at);
+                $query->where('created_at', '<=', $log->created_at->format('Y-m-d H:i:s.u'));
             })
             ->each(function ($signal): void {
                 $this->{$signal->method}(...unserialize($signal->arguments));
@@ -90,10 +108,10 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
             $this->storedWorkflow
                 ->signals()
                 ->when($nextLog, static function ($query, $nextLog): void {
-                    $query->where('created_at', '<=', $nextLog->created_at);
+                    $query->where('created_at', '<=', $nextLog->created_at->format('Y-m-d H:i:s.u'));
                 })
                 ->when($log, static function ($query, $log): void {
-                    $query->where('created_at', '>', $log->created_at);
+                    $query->where('created_at', '>', $log->created_at->format('Y-m-d H:i:s.u'));
                 })
                 ->each(function ($signal): void {
                     $this->{$signal->method}(...unserialize($signal->arguments));
@@ -161,8 +179,8 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
             ++$this->index;
         }
 
-        $this->storedWorkflow->output = serialize($this->coroutine->getReturn());
-
         $this->storedWorkflow->status->transitionTo(WorkflowCompletedStatus::class);
+
+        $this->storedWorkflow->output = serialize($this->coroutine->getReturn());
     }
 }
