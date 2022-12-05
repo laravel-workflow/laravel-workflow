@@ -9,9 +9,8 @@ use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
+use Workflow\Middleware\WithoutOverlappingMiddleware;
 use Workflow\Models\StoredWorkflow;
 
 final class Signal implements ShouldBeEncrypted, ShouldQueue
@@ -33,7 +32,7 @@ final class Signal implements ShouldBeEncrypted, ShouldQueue
     public function middleware()
     {
         return [
-            (new WithoutOverlapping("workflow:{$this->storedWorkflow->id}"))->shared(),
+            new WithoutOverlappingMiddleware($this->storedWorkflow->id, WithoutOverlappingMiddleware::WORKFLOW),
         ];
     }
 

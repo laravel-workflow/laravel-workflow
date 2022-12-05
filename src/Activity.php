@@ -10,9 +10,9 @@ use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Throwable;
+use Workflow\Middleware\WithoutOverlappingMiddleware;
 use Workflow\Middleware\WorkflowMiddleware;
 use Workflow\Models\StoredWorkflow;
 
@@ -78,7 +78,7 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
     {
 
         return [
-            (new WithoutOverlapping("workflow:{$this->storedWorkflow->id}"))->shared(),
+            new WithoutOverlappingMiddleware($this->storedWorkflow->id, WithoutOverlappingMiddleware::ACTIVITY),
             new WorkflowMiddleware(),
         ];
     }

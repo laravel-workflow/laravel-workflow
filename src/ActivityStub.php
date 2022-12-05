@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace Workflow;
 
+use React\Promise\Deferred;
+use React\Promise\PromiseInterface;
+use function React\Promise\all;
+use function React\Promise\resolve;
+
 final class ActivityStub
 {
     private $arguments;
@@ -15,9 +20,40 @@ final class ActivityStub
         $this->arguments = $arguments;
     }
 
-    public static function make($activity, ...$arguments): static
+    public static function all(iterable $promises): PromiseInterface
     {
-        return new self($activity, ...$arguments);
+        return all([...$promises]);
+    }
+
+    public static function make($activity, ...$arguments): PromiseInterface
+    {
+        $context = WorkflowStub::getContext();
+
+        $log = $context->storedWorkflow->logs()
+            ->whereIndex($context->index)
+            ->first();
+
+        if ($log) {
+            ++$context->index;
+            WorkflowStub::setContext($context);
+            return resolve(unserialize($log->result));
+        } else {
+            $current = new self($activity, ...$arguments);
+
+            $current->activity()::dispatch(
+                $context->index,
+                $context->now,
+                $context->storedWorkflow,
+                ...$current->arguments()
+            );
+
+            ++$context->index;
+            WorkflowStub::setContext($context);
+
+            $deferred = new Deferred();
+
+            return $deferred->promise();
+        }
     }
 
     public function activity()

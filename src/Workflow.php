@@ -5,16 +5,17 @@ declare(strict_types=1);
 namespace Workflow;
 
 use BadMethodCallException;
+use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Carbon;
 use React\Promise\PromiseInterface;
 use Throwable;
+use Workflow\Middleware\WithoutOverlappingMiddleware;
 use Workflow\Models\StoredWorkflow;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowRunningStatus;
@@ -49,7 +50,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
     public function middleware()
     {
         return [
-            (new WithoutOverlapping("workflow:{$this->storedWorkflow->id}"))->shared(),
+            new WithoutOverlappingMiddleware($this->storedWorkflow->id, WithoutOverlappingMiddleware::WORKFLOW),
         ];
     }
 
@@ -101,6 +102,8 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
         $this->coroutine = $this->{'execute'}(...$this->arguments);
 
         while ($this->coroutine->valid()) {
+            $this->index = WorkflowStub::getContext()->index;
+
             $nextLog = $this->storedWorkflow->logs()
                 ->whereIndex($this->index + 1)
                 ->first();
@@ -132,22 +135,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
 
                 $current->then(function ($value) use (&$resolved): void {
                     $resolved = true;
-
-                    $log = $this->storedWorkflow->logs()
-                        ->whereIndex($this->index)
-                        ->first();
-
-                    if (! $log) {
-                        $log = $this->storedWorkflow->logs()
-                            ->create([
-                                'index' => $this->index,
-                                'now' => $this->now,
-                                'class' => Signal::class,
-                                'result' => serialize($value),
-                            ]);
-                    }
-
-                    $this->coroutine->send(unserialize($log->result));
+                    $this->coroutine->send($value);
                 });
 
                 if (! $resolved) {
@@ -156,27 +144,8 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
                     return;
                 }
             } else {
-                $log = $this->storedWorkflow->logs()
-                    ->whereIndex($this->index)
-                    ->first();
-
-                if ($log) {
-                    $this->coroutine->send(unserialize($log->result));
-                } else {
-                    $this->storedWorkflow->status->transitionTo(WorkflowWaitingStatus::class);
-
-                    $current->activity()::dispatch(
-                        $this->index,
-                        $this->now,
-                        $this->storedWorkflow,
-                        ...$current->arguments()
-                    );
-
-                    return;
-                }
+                throw new Exception('something went wrong');
             }
-
-            ++$this->index;
         }
 
         $this->storedWorkflow->output = serialize($this->coroutine->getReturn());
