@@ -72,11 +72,22 @@ final class WorkflowStub
 
     public static function await($condition): PromiseInterface
     {
+        $context = self::getContext();
         $result = $condition();
 
         if ($result === true) {
+            $context->storedWorkflow->logs()
+                ->create([
+                    'index' => $context->index,
+                    'now' => $context->now,
+                    'class' => Signal::class,
+                    'result' => serialize($result),
+                ]);
+            ++self::$context->index;
             return resolve(true);
         }
+
+        ++self::$context->index;
 
         $deferred = new Deferred();
 
@@ -85,12 +96,23 @@ final class WorkflowStub
 
     public static function awaitWithTimeout($seconds, $condition): PromiseInterface
     {
+        $context = self::getContext();
+
         $result = $condition();
 
         if ($result === true) {
-            return resolve(true);
+            $context->storedWorkflow->logs()
+                ->create([
+                    'index' => $context->index,
+                    'now' => $context->now,
+                    'class' => Signal::class,
+                    'result' => serialize($result),
+                ]);
+            ++self::$context->index;
+            return resolve($result);
         }
 
+        ++self::$context->index;
         return self::timer($seconds)->then(static fn ($completed): bool => ! $completed);
     }
 
@@ -119,11 +141,21 @@ final class WorkflowStub
             $result = $timer->stop_at->lessThanOrEqualTo(now()->addSeconds($seconds));
 
             if ($result === true) {
-                return resolve(true);
+                $context->storedWorkflow->logs()
+                    ->create([
+                        'index' => $context->index,
+                        'now' => $context->now,
+                        'class' => Signal::class,
+                        'result' => serialize($result),
+                    ]);
+                ++self::$context->index;
+                return resolve($result);
             }
         }
 
         Signal::dispatch($context->storedWorkflow)->delay($timer->stop_at);
+
+        ++self::$context->index;
 
         $deferred = new Deferred();
 
