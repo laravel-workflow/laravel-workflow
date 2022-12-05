@@ -181,7 +181,6 @@ Many operations are naturally idempotent. If you encode a video twice, while it 
 
 Some operations are not idempotent but duplication may be tolerable. If you are unsure if an email was actually sent, sending a duplicate email might be preferable to risking that no email was sent at all.
 
-
 ## Constraints Summary
 
 | Workflows | Activities |
@@ -192,6 +191,28 @@ Some operations are not idempotent but duplication may be tolerable. If you are 
 | ❌ `Carbon::now()` | ✔️ `Carbon::now()` |
 | ❌ `sleep()` | ✔️ `sleep()` |
 | ❌ non-idempotent | ❌ non-idempotent |
+
+## Concurrent Activities
+
+Rather than running each activity in order, it is possible to use `ActivityStub::all()` to wait for the completion of a group of activities and collect their results before continuing (fan-out/fan-in).
+
+```php
+use Workflow\ActivityStub;
+use Workflow\Workflow;
+
+class MyWorkflow extends Workflow
+{
+    public function execute()
+    {
+        $activity1 = ActivityStub::make(MyActivity::class);
+        $activity2 = ActivityStub::make(MyActivity::class);
+        $result = yield ActivityStub::all([$activity1, $activity2]);
+        return $result;
+    }
+}
+```
+
+The difference is, instead of calling `yield` on each activity, we collect them into an array via `ActivityStub::all()` and `yield` that.
 
 ## Monitoring
 
