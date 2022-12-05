@@ -36,7 +36,7 @@ final class ActivityStub
         if ($log) {
             ++$context->index;
             WorkflowStub::setContext($context);
-            return resolve($log->result);
+            return resolve(unserialize($log->result));
         } else {
             $current = new self($activity, ...$arguments);
 
