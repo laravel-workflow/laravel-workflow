@@ -102,6 +102,8 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
         $this->coroutine = $this->{'execute'}(...$this->arguments);
 
         while ($this->coroutine->valid()) {
+            $this->index = WorkflowStub::getContext()->index;
+
             $nextLog = $this->storedWorkflow->logs()
                 ->whereIndex($this->index + 1)
                 ->first();
@@ -144,8 +146,6 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
             } else {
                 throw new Exception('something went wrong');
             }
-
-            $this->index = WorkflowStub::getContext()->index;
         }
 
         $this->storedWorkflow->output = serialize($this->coroutine->getReturn());
