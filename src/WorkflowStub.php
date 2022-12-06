@@ -37,7 +37,20 @@ final class WorkflowStub
                     'arguments' => serialize($arguments),
                 ]);
 
-            Signal::dispatch($this->storedWorkflow);
+            return Signal::dispatch($this->storedWorkflow);
+        }
+
+        if (collect((new ReflectionClass($this->storedWorkflow->class))->getMethods())
+            ->filter(static fn ($method): bool => collect($method->getAttributes())
+                ->contains(static fn ($attribute): bool => $attribute->getName() === QueryMethod::class))
+            ->map(static fn ($method) => $method->getName())
+            ->contains($method)
+        ) {
+            return (new $this->storedWorkflow->class(
+                $this->storedWorkflow,
+                ...unserialize($this->storedWorkflow->arguments,
+            )))
+            ->query($method);
         }
     }
 
@@ -76,13 +89,15 @@ final class WorkflowStub
         $result = $condition();
 
         if ($result === true) {
-            $context->storedWorkflow->logs()
-                ->create([
-                    'index' => $context->index,
-                    'now' => $context->now,
-                    'class' => Signal::class,
-                    'result' => serialize($result),
-                ]);
+            if (! $context->replaying) {
+                $context->storedWorkflow->logs()
+                    ->create([
+                        'index' => $context->index,
+                        'now' => $context->now,
+                        'class' => Signal::class,
+                        'result' => serialize($result),
+                    ]);
+            }
             ++self::$context->index;
             return resolve(true);
         }
@@ -101,13 +116,15 @@ final class WorkflowStub
         $result = $condition();
 
         if ($result === true) {
-            $context->storedWorkflow->logs()
-                ->create([
-                    'index' => $context->index,
-                    'now' => $context->now,
-                    'class' => Signal::class,
-                    'result' => serialize($result),
-                ]);
+            if (! $context->replaying) {
+                $context->storedWorkflow->logs()
+                    ->create([
+                        'index' => $context->index,
+                        'now' => $context->now,
+                        'class' => Signal::class,
+                        'result' => serialize($result),
+                    ]);
+            }
             ++self::$context->index;
             return resolve($result);
         }
@@ -132,28 +149,34 @@ final class WorkflowStub
             $when = now()
                 ->addSeconds($seconds);
 
-            $timer = $context->storedWorkflow->timers()
-                ->create([
-                    'index' => $context->index,
-                    'stop_at' => $when,
-                ]);
+            if (! $context->replaying) {
+                $timer = $context->storedWorkflow->timers()
+                    ->create([
+                        'index' => $context->index,
+                        'stop_at' => $when,
+                    ]);
+            }
         } else {
             $result = $timer->stop_at->lessThanOrEqualTo(now()->addSeconds($seconds));
 
             if ($result === true) {
-                $context->storedWorkflow->logs()
-                    ->create([
-                        'index' => $context->index,
-                        'now' => $context->now,
-                        'class' => Signal::class,
-                        'result' => serialize($result),
-                    ]);
+                if (! $context->replaying) {
+                    $context->storedWorkflow->logs()
+                        ->create([
+                            'index' => $context->index,
+                            'now' => $context->now,
+                            'class' => Signal::class,
+                            'result' => serialize($result),
+                        ]);
+                }
                 ++self::$context->index;
                 return resolve($result);
             }
         }
 
-        Signal::dispatch($context->storedWorkflow)->delay($timer->stop_at);
+        if (! $context->replaying) {
+            Signal::dispatch($context->storedWorkflow)->delay($timer->stop_at);
+        }
 
         ++self::$context->index;
 

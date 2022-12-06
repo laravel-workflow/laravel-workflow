@@ -22,6 +22,8 @@ final class WorkflowTest extends TestCase
 
         $workflow->cancel();
 
+        while (! $workflow->isCanceled());
+
         while ($workflow->running());
 
         $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());

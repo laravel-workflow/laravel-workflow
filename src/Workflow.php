@@ -40,11 +40,20 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
 
     public $now;
 
+    public bool $replaying = false;
+
     public function __construct(
         public StoredWorkflow $storedWorkflow,
         ...$arguments
     ) {
         $this->arguments = $arguments;
+    }
+
+    public function query($method)
+    {
+        $this->replaying = true;
+        $this->handle();
+        return $this->$method();
     }
 
     public function middleware()
@@ -70,7 +79,9 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
         }
 
         try {
-            $this->storedWorkflow->status->transitionTo(WorkflowRunningStatus::class);
+            if (! $this->replaying) {
+                $this->storedWorkflow->status->transitionTo(WorkflowRunningStatus::class);
+            }
         } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
             if ($this->storedWorkflow->toWorkflow()->running()) {
                 $this->release();
@@ -97,6 +108,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
             'storedWorkflow' => $this->storedWorkflow,
             'index' => $this->index,
             'now' => $this->now,
+            'replaying' => $this->replaying,
         ]);
 
         $this->coroutine = $this->{'execute'}(...$this->arguments);
@@ -126,6 +138,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
                 'storedWorkflow' => $this->storedWorkflow,
                 'index' => $this->index,
                 'now' => $this->now,
+                'replaying' => $this->replaying,
             ]);
 
             $current = $this->coroutine->current();
@@ -139,7 +152,9 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
                 });
 
                 if (! $resolved) {
-                    $this->storedWorkflow->status->transitionTo(WorkflowWaitingStatus::class);
+                    if (! $this->replaying) {
+                        $this->storedWorkflow->status->transitionTo(WorkflowWaitingStatus::class);
+                    }
 
                     return;
                 }
@@ -148,8 +163,10 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
             }
         }
 
-        $this->storedWorkflow->output = serialize($this->coroutine->getReturn());
+        if (! $this->replaying) {
+            $this->storedWorkflow->output = serialize($this->coroutine->getReturn());
 
-        $this->storedWorkflow->status->transitionTo(WorkflowCompletedStatus::class);
+            $this->storedWorkflow->status->transitionTo(WorkflowCompletedStatus::class);
+        }
     }
 }
