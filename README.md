@@ -70,19 +70,19 @@ use Workflow\WorkflowStub;
 
 class MyWorkflow extends Workflow
 {
-    private bool $isReady = false;
+    private bool $ready = false;
 
     #[SignalMethod]
-    public function ready()
+    public function setReady()
     {
-        $this->isReady = true;
+        $this->ready = true;
     }
 
     public function execute()
     {
         $result = yield ActivityStub::make(MyActivity::class);
 
-        yield WorkflowStub::await(fn () => $this->isReady);
+        yield WorkflowStub::await(fn () => $this->ready);
 
         $otherResult = yield ActivityStub::make(MyOtherActivity::class);
 
@@ -94,7 +94,53 @@ class MyWorkflow extends Workflow
 The workflow will reach the call to `WorkflowStub::await()` and then hibernate until some external code signals the workflow like this.
 
 ```php
-$workflow->ready();
+$workflow->setReady();
+```
+
+## Queries
+
+Information about the current state of a workflow can be retrieved using a query. Unlike a signal, it cannot advance the workflow or make any changes.
+
+```php
+use Workflow\ActivityStub;
+use Workflow\SignalMethod;
+use Workflow\QueryMethod;
+use Workflow\Workflow;
+use Workflow\WorkflowStub;
+
+class MyWorkflow extends Workflow
+{
+    private bool $ready = false;
+
+    #[SignalMethod]
+    public function setReady()
+    {
+        $this->ready = true;
+    }
+
+    #[QueryMethod]
+    public function getReady(): bool
+    {
+        return $this->ready;
+    }
+
+    public function execute()
+    {
+        $result = yield ActivityStub::make(MyActivity::class);
+
+        yield WorkflowStub::await(fn () => $this->ready);
+
+        $otherResult = yield ActivityStub::make(MyOtherActivity::class);
+
+        return $result . $otherResult;
+    }
+}
+```
+
+The workflow can then be queried like this.
+
+```php
+$workflow->setReady();
 ```
 
 ## Timers
@@ -132,7 +178,7 @@ Instead, you want to wait for some amount of time and then give up. It's possibl
 ```php
 use Workflow\WorkflowStub;
 
-$result = yield WorkflowStub::awaitWithTimeout(300, fn () => $this->isReady);
+$result = yield WorkflowStub::awaitWithTimeout(300, fn () => $this->ready);
 ```
 
 This will wait like the previous signal example but it will timeout after 5 minutes. If a timeout occurs, the result will be `false`.
