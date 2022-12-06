@@ -137,6 +137,28 @@ $result = yield WorkflowStub::awaitWithTimeout(300, fn () => $this->isReady);
 
 This will wait like the previous signal example but it will timeout after 5 minutes. If a timeout occurs, the result will be `false`.
 
+## Concurrent Activities
+
+Rather than running each activity in order, it is possible to use `ActivityStub::all()` to wait for the completion of a group of activities and collect their results before continuing (fan-out/fan-in).
+
+```php
+use Workflow\ActivityStub;
+use Workflow\Workflow;
+
+class MyWorkflow extends Workflow
+{
+    public function execute()
+    {
+        $activity1 = ActivityStub::make(MyActivity::class);
+        $activity2 = ActivityStub::make(MyActivity::class);
+        $result = yield ActivityStub::all([$activity1, $activity2]);
+        return $result;
+    }
+}
+```
+
+The difference is, instead of calling `yield` on each activity, we collect them into an array via `ActivityStub::all()` and `yield` that.
+
 ## Failed Workflows
 
 If a workflow fails or crashes at any point then it can be resumed from that point. Any activities that were successfully completed during the previous execution of the workflow will not be run again.
@@ -191,28 +213,6 @@ Some operations are not idempotent but duplication may be tolerable. If you are 
 | ❌ `Carbon::now()` | ✔️ `Carbon::now()` |
 | ❌ `sleep()` | ✔️ `sleep()` |
 | ❌ non-idempotent | ❌ non-idempotent |
-
-## Concurrent Activities
-
-Rather than running each activity in order, it is possible to use `ActivityStub::all()` to wait for the completion of a group of activities and collect their results before continuing (fan-out/fan-in).
-
-```php
-use Workflow\ActivityStub;
-use Workflow\Workflow;
-
-class MyWorkflow extends Workflow
-{
-    public function execute()
-    {
-        $activity1 = ActivityStub::make(MyActivity::class);
-        $activity2 = ActivityStub::make(MyActivity::class);
-        $result = yield ActivityStub::all([$activity1, $activity2]);
-        return $result;
-    }
-}
-```
-
-The difference is, instead of calling `yield` on each activity, we collect them into an array via `ActivityStub::all()` and `yield` that.
 
 ## Monitoring
 
