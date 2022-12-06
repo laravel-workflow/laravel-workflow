@@ -6,6 +6,7 @@ namespace Tests\Fixtures;
 
 use Workflow\ActivityStub;
 use Workflow\SignalMethod;
+use Workflow\QueryMethod;
 use Workflow\Workflow;
 use Workflow\WorkflowStub;
 
@@ -17,6 +18,12 @@ final class TestWorkflow extends Workflow
     public function cancel(): void
     {
         $this->canceled = true;
+    }
+
+    #[QueryMethod]
+    public function isCanceled(): bool
+    {
+        return $this->canceled;
     }
 
     public function execute($shouldAssert = false)
