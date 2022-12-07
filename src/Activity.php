@@ -38,6 +38,14 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
         ...$arguments
     ) {
         $this->arguments = $arguments;
+
+        if (property_exists($this, 'connection')) {
+            $this->onConnection($this->connection);
+        }
+
+        if (property_exists($this, 'queue')) {
+            $this->onQueue($this->queue);
+        }
     }
 
     public function backoff()
