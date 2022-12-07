@@ -12,6 +12,10 @@ use Workflow\WorkflowStub;
 
 final class TestWorkflow extends Workflow
 {
+    public $connection = 'redis';
+
+    public $queue = 'default';
+
     private bool $canceled = false;
 
     #[SignalMethod]
