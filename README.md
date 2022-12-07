@@ -140,7 +140,7 @@ class MyWorkflow extends Workflow
 The workflow can then be queried like this.
 
 ```php
-$workflow->setReady();
+$workflow->getReady();
 ```
 
 ## Timers
