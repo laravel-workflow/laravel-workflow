@@ -227,6 +227,26 @@ The default activity retry policy is to retry activities forever with an exponen
 
 Workflows and activities are based on [Laravel Queues](https://laravel.com/docs/9.x/queues) so you can use any options you normally would.
 
+## Connection/Queue
+
+You may optionally specify which connection/queue a workflow or activity will run on.
+
+```php
+use Workflow\Workflow;
+
+class MyWorkflow extends Workflow
+{
+    $connection = 'redis';
+
+    $queue = 'default';
+
+    public function execute()
+    {
+        // ...
+    }
+}
+```
+
 ## Workflow Constraints
 
 Workflows and activities have a key difference. Workflows cannot have any side effects other than running activities and they must be deterministic. The following list only applies to workflows, not activities.
