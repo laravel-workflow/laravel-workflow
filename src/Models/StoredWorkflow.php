@@ -9,7 +9,7 @@ use Spatie\ModelStates\HasStates;
 use Workflow\States\WorkflowStatus;
 use Workflow\WorkflowStub;
 
-final class StoredWorkflow extends Model
+class StoredWorkflow extends Model
 {
     use HasStates;
 

@@ -6,7 +6,7 @@ namespace Workflow\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-final class StoredWorkflowSignal extends Model
+class StoredWorkflowSignal extends Model
 {
     public const UPDATED_AT = null;
 

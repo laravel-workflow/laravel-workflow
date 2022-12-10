@@ -6,7 +6,7 @@ namespace Workflow\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-final class StoredWorkflowException extends Model
+class StoredWorkflowException extends Model
 {
     public const UPDATED_AT = null;
 

@@ -6,7 +6,7 @@ namespace Workflow\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-final class StoredWorkflowTimer extends Model
+class StoredWorkflowTimer extends Model
 {
     public const UPDATED_AT = null;
 
