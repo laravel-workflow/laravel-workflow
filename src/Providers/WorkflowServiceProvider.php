@@ -11,6 +11,10 @@ final class WorkflowServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->publishes([
+            __DIR__ . '/../config/' => config_path('/config'),
+        ], 'config');
+
+        $this->publishes([
             __DIR__ . '/../migrations/' => database_path('/migrations'),
         ], 'migrations');
     }
