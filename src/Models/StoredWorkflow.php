@@ -9,7 +9,7 @@ use Spatie\ModelStates\HasStates;
 use Workflow\States\WorkflowStatus;
 use Workflow\WorkflowStub;
 
-final class StoredWorkflow extends Model
+class StoredWorkflow extends Model
 {
     use HasStates;
 
@@ -39,21 +39,21 @@ final class StoredWorkflow extends Model
 
     public function logs(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(StoredWorkflowLog::class);
+        return $this->hasMany(config('workflows.stored_workflow_log_model', StoredWorkflowLog::class));
     }
 
     public function signals(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(StoredWorkflowSignal::class);
+        return $this->hasMany(config('workflows.stored_workflow_signal_model', StoredWorkflowSignal::class));
     }
 
     public function timers(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(StoredWorkflowTimer::class);
+        return $this->hasMany(config('workflows.stored_workflow_timer_model', StoredWorkflowTimer::class));
     }
 
     public function exceptions(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(StoredWorkflowException::class);
+        return $this->hasMany(config('workflows.stored_workflow_exception_model', StoredWorkflowException::class));
     }
 }

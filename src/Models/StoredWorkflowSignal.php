@@ -6,7 +6,7 @@ namespace Workflow\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-final class StoredWorkflowSignal extends Model
+class StoredWorkflowSignal extends Model
 {
     public const UPDATED_AT = null;
 
@@ -24,6 +24,6 @@ final class StoredWorkflowSignal extends Model
 
     public function workflow(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->belongsTo(StoredWorkflow::class);
+        return $this->belongsTo(config('workflows.stored_workflow_model', StoredWorkflow::class));
     }
 }

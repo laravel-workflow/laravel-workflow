@@ -56,7 +56,7 @@ final class WorkflowStub
 
     public static function make($class): static
     {
-        $storedWorkflow = StoredWorkflow::create([
+        $storedWorkflow = config('workflows.stored_workflow_model', StoredWorkflow::class)::create([
             'class' => $class,
         ]);
 
@@ -65,7 +65,7 @@ final class WorkflowStub
 
     public static function load($id)
     {
-        return static::fromStoredWorkflow(StoredWorkflow::findOrFail($id));
+        return static::fromStoredWorkflow(config('workflows.stored_workflow_model', StoredWorkflow::class)::findOrFail($id));
     }
 
     public static function fromStoredWorkflow(StoredWorkflow $storedWorkflow): static
