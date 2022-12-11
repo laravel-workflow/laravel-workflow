@@ -155,7 +155,7 @@ $workflow->getReady();
 
 ## Timers
 
-Using `WorkflowStub::timer($seconds)` allows a workflow to wait for a fixed amount of time in seconds.
+Using `WorkflowStub::timer()` allows a workflow to wait for a fixed amount of time.
 
 ```php
 use Workflow\ActivityStub;
@@ -168,7 +168,7 @@ class MyWorkflow extends Workflow
     {
         $result = yield ActivityStub::make(MyActivity::class);
 
-        yield WorkflowStub::timer(300);
+        yield WorkflowStub::timer('5 minutes');
 
         $otherResult = yield ActivityStub::make(MyOtherActivity::class);
 
@@ -177,7 +177,7 @@ class MyWorkflow extends Workflow
 }
 ```
 
-The workflow will reach the call to `WorkflowStub::timer()` and then hibernate for 5 minutes. After that time has passed, it will continue execution.
+The workflow will reach the call to `WorkflowStub::timer()` and then hibernate for 5 minutes. After that time has passed, it will continue execution. Instead of a string interval, you can also pass in the number of seconds as an integer.
 
 ## Signal + Timer
 
@@ -188,7 +188,7 @@ Instead, you want to wait for some amount of time and then give up. It's possibl
 ```php
 use Workflow\WorkflowStub;
 
-$result = yield WorkflowStub::awaitWithTimeout(300, fn () => $this->ready);
+$result = yield WorkflowStub::awaitWithTimeout('5 minutes', fn () => $this->ready);
 ```
 
 This will wait like the previous signal example but it will timeout after 5 minutes. If a timeout occurs, the result will be `false`.
