@@ -15,9 +15,6 @@ final class ConcurrentWorkflowTest extends TestCase
 {
     public function testCompleted(): void
     {
-        $this->markTestSkipped('Skip concurrent workflow test.');
-        return;
-
         $workflow = WorkflowStub::make(TestConcurrentWorkflow::class);
 
         $workflow->start();
