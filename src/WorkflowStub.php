@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Workflow;
 
+use Carbon\CarbonInterval;
 use Illuminate\Database\QueryException;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
@@ -85,18 +86,23 @@ final class WorkflowStub
 
     public static function await($condition): PromiseInterface
     {
-        $context = self::getContext();
         $result = $condition();
 
         if ($result === true) {
-            if (! $context->replaying) {
-                $context->storedWorkflow->logs()
-                    ->create([
-                        'index' => $context->index,
-                        'now' => $context->now,
-                        'class' => Signal::class,
-                        'result' => serialize($result),
-                    ]);
+            if (! self::$context->replaying) {
+                try {
+                    self::$context->storedWorkflow->logs()
+                        ->create([
+                            'index' => self::$context->index,
+                            'now' => self::$context->now,
+                            'class' => Signal::class,
+                            'result' => serialize($result),
+                        ]);
+                } catch (QueryException $exception) {
+                    if (! str_contains($exception->getMessage(), 'Duplicate')) {
+                        throw $exception;
+                    }
+                }
             }
             ++self::$context->index;
             return resolve(true);
@@ -111,19 +117,27 @@ final class WorkflowStub
 
     public static function awaitWithTimeout($seconds, $condition): PromiseInterface
     {
-        $context = self::getContext();
+        if (is_string($seconds)) {
+            $seconds = CarbonInterval::fromString($seconds)->totalSeconds;
+        }
 
         $result = $condition();
 
         if ($result === true) {
-            if (! $context->replaying) {
-                $context->storedWorkflow->logs()
-                    ->create([
-                        'index' => $context->index,
-                        'now' => $context->now,
-                        'class' => Signal::class,
-                        'result' => serialize($result),
-                    ]);
+            if (! self::$context->replaying) {
+                try {
+                    self::$context->storedWorkflow->logs()
+                        ->create([
+                            'index' => self::$context->index,
+                            'now' => self::$context->now,
+                            'class' => Signal::class,
+                            'result' => serialize($result),
+                        ]);
+                } catch (QueryException $exception) {
+                    if (! str_contains($exception->getMessage(), 'Duplicate')) {
+                        throw $exception;
+                    }
+                }
             }
             ++self::$context->index;
             return resolve($result);
@@ -135,47 +149,57 @@ final class WorkflowStub
 
     public static function timer($seconds): PromiseInterface
     {
+        if (is_string($seconds)) {
+            $seconds = CarbonInterval::fromString($seconds)->totalSeconds;
+        }
+
         if ($seconds <= 0) {
+            ++self::$context->index;
             return resolve(true);
         }
 
-        $context = self::getContext();
-
-        $timer = $context->storedWorkflow->timers()
-            ->whereIndex($context->index)
+        $timer = self::$context->storedWorkflow->timers()
+            ->whereIndex(self::$context->index)
             ->first();
 
         if ($timer === null) {
-            $when = now()
+            $when = self::$context->now->copy()
                 ->addSeconds($seconds);
 
-            if (! $context->replaying) {
-                $timer = $context->storedWorkflow->timers()
+            if (! self::$context->replaying) {
+                $timer = self::$context->storedWorkflow->timers()
                     ->create([
-                        'index' => $context->index,
+                        'index' => self::$context->index,
                         'stop_at' => $when,
                     ]);
             }
         } else {
-            $result = $timer->stop_at->lessThanOrEqualTo(now()->addSeconds($seconds));
+            $result = $timer->stop_at
+                ->lessThanOrEqualTo(self::$context->now->copy()->addSeconds($seconds));
 
             if ($result === true) {
-                if (! $context->replaying) {
-                    $context->storedWorkflow->logs()
-                        ->create([
-                            'index' => $context->index,
-                            'now' => $context->now,
-                            'class' => Signal::class,
-                            'result' => serialize($result),
-                        ]);
+                if (! self::$context->replaying) {
+                    try {
+                        self::$context->storedWorkflow->logs()
+                            ->create([
+                                'index' => self::$context->index,
+                                'now' => self::$context->now,
+                                'class' => Signal::class,
+                                'result' => serialize($result),
+                            ]);
+                    } catch (QueryException $exception) {
+                        if (! str_contains($exception->getMessage(), 'Duplicate')) {
+                            throw $exception;
+                        }
+                    }
                 }
                 ++self::$context->index;
                 return resolve($result);
             }
         }
 
-        if (! $context->replaying) {
-            Signal::dispatch($context->storedWorkflow)->delay($timer->stop_at);
+        if (! self::$context->replaying) {
+            Signal::dispatch(self::$context->storedWorkflow)->delay($timer->stop_at);
         }
 
         ++self::$context->index;
@@ -252,11 +276,14 @@ final class WorkflowStub
 
     public function fail($throwable): void
     {
-        $this->storedWorkflow->exceptions()
-            ->create([
-                'class' => $this->storedWorkflow->class,
-                'exception' => serialize($throwable),
-            ]);
+        try {
+            $this->storedWorkflow->exceptions()
+                ->create([
+                    'class' => $this->storedWorkflow->class,
+                    'exception' => serialize($throwable),
+                ]);
+        } catch (\Throwable) {
+        }
 
         $this->storedWorkflow->status->transitionTo(WorkflowFailedStatus::class);
     }
