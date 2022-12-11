@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Workflow;
 
+use Carbon\CarbonInterval;
 use Illuminate\Database\QueryException;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
@@ -90,13 +91,19 @@ final class WorkflowStub
 
         if ($result === true) {
             if (! $context->replaying) {
-                $context->storedWorkflow->logs()
-                    ->create([
-                        'index' => $context->index,
-                        'now' => $context->now,
-                        'class' => Signal::class,
-                        'result' => serialize($result),
-                    ]);
+                try {
+                    $context->storedWorkflow->logs()
+                        ->create([
+                            'index' => $context->index,
+                            'now' => $context->now,
+                            'class' => Signal::class,
+                            'result' => serialize($result),
+                        ]);
+                } catch (QueryException $exception) {
+                    if (! str_contains($exception->getMessage(), 'Duplicate')) {
+                        throw $exception;
+                    }
+                }
             }
             ++self::$context->index;
             return resolve(true);
@@ -111,19 +118,29 @@ final class WorkflowStub
 
     public static function awaitWithTimeout($seconds, $condition): PromiseInterface
     {
+        if (is_string($seconds)) {
+            $seconds = CarbonInterval::fromString($seconds)->totalSeconds;
+        }
+
         $context = self::getContext();
 
         $result = $condition();
 
         if ($result === true) {
             if (! $context->replaying) {
-                $context->storedWorkflow->logs()
-                    ->create([
-                        'index' => $context->index,
-                        'now' => $context->now,
-                        'class' => Signal::class,
-                        'result' => serialize($result),
-                    ]);
+                try {
+                    $context->storedWorkflow->logs()
+                        ->create([
+                            'index' => $context->index,
+                            'now' => $context->now,
+                            'class' => Signal::class,
+                            'result' => serialize($result),
+                        ]);
+                } catch (QueryException $exception) {
+                    if (! str_contains($exception->getMessage(), 'Duplicate')) {
+                        throw $exception;
+                    }
+                }
             }
             ++self::$context->index;
             return resolve($result);
@@ -135,7 +152,12 @@ final class WorkflowStub
 
     public static function timer($seconds): PromiseInterface
     {
+        if (is_string($seconds)) {
+            $seconds = CarbonInterval::fromString($seconds)->totalSeconds;
+        }
+
         if ($seconds <= 0) {
+            ++self::$context->index;
             return resolve(true);
         }
 
@@ -146,7 +168,7 @@ final class WorkflowStub
             ->first();
 
         if ($timer === null) {
-            $when = now()
+            $when = $context->now->copy()
                 ->addSeconds($seconds);
 
             if (! $context->replaying) {
@@ -161,13 +183,19 @@ final class WorkflowStub
 
             if ($result === true) {
                 if (! $context->replaying) {
-                    $context->storedWorkflow->logs()
-                        ->create([
-                            'index' => $context->index,
-                            'now' => $context->now,
-                            'class' => Signal::class,
-                            'result' => serialize($result),
-                        ]);
+                    try {
+                        $context->storedWorkflow->logs()
+                            ->create([
+                                'index' => $context->index,
+                                'now' => $context->now,
+                                'class' => Signal::class,
+                                'result' => serialize($result),
+                            ]);
+                    } catch (QueryException $exception) {
+                        if (! str_contains($exception->getMessage(), 'Duplicate')) {
+                            throw $exception;
+                        }
+                    }
                 }
                 ++self::$context->index;
                 return resolve($result);

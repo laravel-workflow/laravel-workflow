@@ -75,7 +75,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
     {
         try {
             $this->storedWorkflow->toWorkflow()
-                ->fail($this->index, $throwable);
+                ->fail($throwable);
         } catch (\Throwable) {
         }
     }
