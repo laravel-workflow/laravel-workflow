@@ -86,16 +86,15 @@ final class WorkflowStub
 
     public static function await($condition): PromiseInterface
     {
-        $context = self::getContext();
         $result = $condition();
 
         if ($result === true) {
-            if (! $context->replaying) {
+            if (! self::$context->replaying) {
                 try {
-                    $context->storedWorkflow->logs()
+                    self::$context->storedWorkflow->logs()
                         ->create([
-                            'index' => $context->index,
-                            'now' => $context->now,
+                            'index' => self::$context->index,
+                            'now' => self::$context->now,
                             'class' => Signal::class,
                             'result' => serialize($result),
                         ]);
@@ -122,17 +121,15 @@ final class WorkflowStub
             $seconds = CarbonInterval::fromString($seconds)->totalSeconds;
         }
 
-        $context = self::getContext();
-
         $result = $condition();
 
         if ($result === true) {
-            if (! $context->replaying) {
+            if (! self::$context->replaying) {
                 try {
-                    $context->storedWorkflow->logs()
+                    self::$context->storedWorkflow->logs()
                         ->create([
-                            'index' => $context->index,
-                            'now' => $context->now,
+                            'index' => self::$context->index,
+                            'now' => self::$context->now,
                             'class' => Signal::class,
                             'result' => serialize($result),
                         ]);
@@ -161,33 +158,32 @@ final class WorkflowStub
             return resolve(true);
         }
 
-        $context = self::getContext();
-
-        $timer = $context->storedWorkflow->timers()
-            ->whereIndex($context->index)
+        $timer = self::$context->storedWorkflow->timers()
+            ->whereIndex(self::$context->index)
             ->first();
 
         if ($timer === null) {
-            $when = $context->now->copy()
+            $when = self::$context->now->copy()
                 ->addSeconds($seconds);
 
-            if (! $context->replaying) {
-                $timer = $context->storedWorkflow->timers()
+            if (! self::$context->replaying) {
+                $timer = self::$context->storedWorkflow->timers()
                     ->create([
-                        'index' => $context->index,
+                        'index' => self::$context->index,
                         'stop_at' => $when,
                     ]);
             }
         } else {
-            $result = $timer->stop_at->lessThanOrEqualTo(now()->addSeconds($seconds));
+            $result = $timer->stop_at
+                ->lessThanOrEqualTo(self::$context->now->copy()->addSeconds($seconds));
 
             if ($result === true) {
-                if (! $context->replaying) {
+                if (! self::$context->replaying) {
                     try {
-                        $context->storedWorkflow->logs()
+                        self::$context->storedWorkflow->logs()
                             ->create([
-                                'index' => $context->index,
-                                'now' => $context->now,
+                                'index' => self::$context->index,
+                                'now' => self::$context->now,
                                 'class' => Signal::class,
                                 'result' => serialize($result),
                             ]);
@@ -202,8 +198,8 @@ final class WorkflowStub
             }
         }
 
-        if (! $context->replaying) {
-            Signal::dispatch($context->storedWorkflow)->delay($timer->stop_at);
+        if (! self::$context->replaying) {
+            Signal::dispatch(self::$context->storedWorkflow)->delay($timer->stop_at);
         }
 
         ++self::$context->index;
