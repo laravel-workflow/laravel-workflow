@@ -75,7 +75,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
     {
         try {
             $this->storedWorkflow->toWorkflow()
-                ->fail(0);
+                ->fail($throwable);
         } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
             return;
         }

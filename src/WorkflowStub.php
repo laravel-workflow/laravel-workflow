@@ -276,11 +276,14 @@ final class WorkflowStub
 
     public function fail($throwable): void
     {
-        $this->storedWorkflow->exceptions()
-            ->create([
-                'class' => $this->storedWorkflow->class,
-                'exception' => serialize($throwable),
-            ]);
+        try {
+            $this->storedWorkflow->exceptions()
+                ->create([
+                    'class' => $this->storedWorkflow->class,
+                    'exception' => serialize($throwable),
+                ]);
+        } catch (\Throwable) {
+        }
 
         $this->storedWorkflow->status->transitionTo(WorkflowFailedStatus::class);
     }
