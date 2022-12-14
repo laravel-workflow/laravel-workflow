@@ -313,6 +313,6 @@ final class WorkflowStub
     {
         $this->storedWorkflow->status->transitionTo(WorkflowPendingStatus::class);
 
-        $this->storedWorkflow->class::dispatch($this->storedWorkflow, ...unserialize(is_resource($this->storedWorkflow->arguments) ? get_stream_contents($this->storedWorkflow->arguments) : $this->storedWorkflow->arguments);
+        $this->storedWorkflow->class::dispatch($this->storedWorkflow, ...unserialize(is_resource($this->storedWorkflow->arguments) ? get_stream_contents($this->storedWorkflow->arguments) : $this->storedWorkflow->arguments));
     }
 }
