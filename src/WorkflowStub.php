@@ -49,8 +49,8 @@ final class WorkflowStub
         ) {
             return (new $this->storedWorkflow->class(
                 $this->storedWorkflow,
-                ...unserialize($this->storedWorkflow->arguments,
-            )))
+                ...stream_get_contents(unserialize($this->storedWorkflow->arguments)),
+            ))
             ->query($method);
         }
     }
@@ -231,7 +231,9 @@ final class WorkflowStub
 
     public function output()
     {
-        return unserialize($this->storedWorkflow->fresh()->output ?? serialize(null));
+        if (is_null($this->storedWorkflow->fresh()->output)) return null;
+
+        return stream_get_contents(unserialize($this->storedWorkflow->fresh()->output));
     }
 
     public function running(): bool
