@@ -16,7 +16,7 @@ final class CreateWorkflowsTable extends Migration
         Schema::create('workflows', static function (Blueprint $blueprint): void {
             $blueprint->id('id');
             $blueprint->text('class');
-            $blueprint->text('arguments')
+            $blueprint->binary('arguments')
                 ->nullable();
             $blueprint->binary('output')
                 ->nullable();
