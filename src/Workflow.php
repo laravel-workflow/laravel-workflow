@@ -108,7 +108,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
                 $query->where('created_at', '<=', $log->created_at->format('Y-m-d H:i:s.u'));
             })
             ->each(function ($signal): void {
-                $this->{$signal->method}(...unserialize($signal->arguments));
+                $this->{$signal->method}(...stream_get_contents(unserialize($signal->arguments)));
             });
 
         $this->now = $log ? $log->now : Carbon::now();
@@ -138,7 +138,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
                     $query->where('created_at', '>', $log->created_at->format('Y-m-d H:i:s.u'));
                 })
                 ->each(function ($signal): void {
-                    $this->{$signal->method}(...unserialize($signal->arguments));
+                    $this->{$signal->method}(...stream_get_contents(unserialize($signal->arguments)));
                 });
 
             $this->now = $nextLog ? $nextLog->now : Carbon::now();
