@@ -49,7 +49,7 @@ final class WorkflowStub
         ) {
             return (new $this->storedWorkflow->class(
                 $this->storedWorkflow,
-                ...unserialize(stream_get_contents($this->storedWorkflow->arguments)),
+                ...unserialize(is_resource($this->storedWorkflow->arguments) ? stream_get_contents($this->storedWorkflow->arguments) : $this->storedWorkflow->arguments),
             ))
             ->query($method);
         }
@@ -233,7 +233,7 @@ final class WorkflowStub
     {
         if (is_null($this->storedWorkflow->fresh()->output)) return null;
 
-        return unserialize(stream_get_contents($this->storedWorkflow->fresh()->output));
+        return unserialize(is_resource($this->storedWorkflow->fresh()->output) ? stream_get_contents($this->storedWorkflow->fresh()->output) : $this->storedWorkflow->fresh()->output);
     }
 
     public function running(): bool
@@ -313,6 +313,6 @@ final class WorkflowStub
     {
         $this->storedWorkflow->status->transitionTo(WorkflowPendingStatus::class);
 
-        $this->storedWorkflow->class::dispatch($this->storedWorkflow, ...unserialize($this->storedWorkflow->arguments));
+        $this->storedWorkflow->class::dispatch($this->storedWorkflow, ...unserialize(is_resource($this->storedWorkflow->arguments) ? get_stream_contents($this->storedWorkflow->arguments) : $this->storedWorkflow->arguments);
     }
 }
