@@ -52,7 +52,7 @@ final class WorkflowStub
                 $this->storedWorkflow,
                 ...Y::unserialize($this->storedWorkflow->arguments),
             ))
-            ->query($method);
+                ->query($method);
         }
     }
 
@@ -67,7 +67,9 @@ final class WorkflowStub
 
     public static function load($id)
     {
-        return static::fromStoredWorkflow(config('workflows.stored_workflow_model', StoredWorkflow::class)::findOrFail($id));
+        return static::fromStoredWorkflow(
+            config('workflows.stored_workflow_model', StoredWorkflow::class)::findOrFail($id)
+        );
     }
 
     public static function fromStoredWorkflow(StoredWorkflow $storedWorkflow): static
@@ -232,7 +234,9 @@ final class WorkflowStub
 
     public function output()
     {
-        if (is_null($this->storedWorkflow->fresh()->output)) return null;
+        if ($this->storedWorkflow->fresh()->output === null) {
+            return null;
+        }
 
         return Y::unserialize($this->storedWorkflow->fresh()->output);
     }
@@ -314,6 +318,9 @@ final class WorkflowStub
     {
         $this->storedWorkflow->status->transitionTo(WorkflowPendingStatus::class);
 
-        $this->storedWorkflow->class::dispatch($this->storedWorkflow, ...Y::unserialize($this->storedWorkflow->arguments));
+        $this->storedWorkflow->class::dispatch(
+            $this->storedWorkflow,
+            ...Y::unserialize($this->storedWorkflow->arguments)
+        );
     }
 }

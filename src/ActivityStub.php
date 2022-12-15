@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Workflow;
 
+use function React\Promise\all;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
-use function React\Promise\all;
 use function React\Promise\resolve;
 use Workflow\Serializers\Y;
 
@@ -38,23 +38,22 @@ final class ActivityStub
             ++$context->index;
             WorkflowStub::setContext($context);
             return resolve(Y::unserialize($log->result));
-        } else {
-            $current = new self($activity, ...$arguments);
-
-            $current->activity()::dispatch(
-                $context->index,
-                $context->now,
-                $context->storedWorkflow,
-                ...$current->arguments()
-            );
-
-            ++$context->index;
-            WorkflowStub::setContext($context);
-
-            $deferred = new Deferred();
-
-            return $deferred->promise();
         }
+        $current = new self($activity, ...$arguments);
+
+        $current->activity()::dispatch(
+            $context->index,
+            $context->now,
+            $context->storedWorkflow,
+            ...$current->arguments()
+        );
+
+        ++$context->index;
+        WorkflowStub::setContext($context);
+
+        $deferred = new Deferred();
+
+        return $deferred->promise();
     }
 
     public function activity()

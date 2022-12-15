@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Tests\Fixtures;
 
 use Workflow\ActivityStub;
-use Workflow\SignalMethod;
 use Workflow\QueryMethod;
+use Workflow\SignalMethod;
 use Workflow\Workflow;
 use Workflow\WorkflowStub;
 

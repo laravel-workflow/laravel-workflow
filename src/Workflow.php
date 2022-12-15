@@ -62,7 +62,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
     {
         $this->replaying = true;
         $this->handle();
-        return $this->$method();
+        return $this->{$method}();
     }
 
     public function middleware()
