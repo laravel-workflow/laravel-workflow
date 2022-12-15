@@ -11,6 +11,7 @@ use React\Promise\PromiseInterface;
 use function React\Promise\resolve;
 use ReflectionClass;
 use Workflow\Models\StoredWorkflow;
+use Workflow\Serializers\Y;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowFailedStatus;
 use Workflow\States\WorkflowPendingStatus;
@@ -35,7 +36,7 @@ final class WorkflowStub
             $this->storedWorkflow->signals()
                 ->create([
                     'method' => $method,
-                    'arguments' => serialize($arguments),
+                    'arguments' => Y::serialize($arguments),
                 ]);
 
             return Signal::dispatch($this->storedWorkflow);
@@ -49,7 +50,7 @@ final class WorkflowStub
         ) {
             return (new $this->storedWorkflow->class(
                 $this->storedWorkflow,
-                ...unserialize(is_resource($this->storedWorkflow->arguments) ? stream_get_contents($this->storedWorkflow->arguments) : $this->storedWorkflow->arguments),
+                ...Y::unserialize($this->storedWorkflow->arguments),
             ))
             ->query($method);
         }
@@ -96,7 +97,7 @@ final class WorkflowStub
                             'index' => self::$context->index,
                             'now' => self::$context->now,
                             'class' => Signal::class,
-                            'result' => serialize($result),
+                            'result' => Y::serialize($result),
                         ]);
                 } catch (QueryException $exception) {
                     if (! str_contains($exception->getMessage(), 'Duplicate')) {
@@ -131,7 +132,7 @@ final class WorkflowStub
                             'index' => self::$context->index,
                             'now' => self::$context->now,
                             'class' => Signal::class,
-                            'result' => serialize($result),
+                            'result' => Y::serialize($result),
                         ]);
                 } catch (QueryException $exception) {
                     if (! str_contains($exception->getMessage(), 'Duplicate')) {
@@ -185,7 +186,7 @@ final class WorkflowStub
                                 'index' => self::$context->index,
                                 'now' => self::$context->now,
                                 'class' => Signal::class,
-                                'result' => serialize($result),
+                                'result' => Y::serialize($result),
                             ]);
                     } catch (QueryException $exception) {
                         if (! str_contains($exception->getMessage(), 'Duplicate')) {
@@ -233,7 +234,7 @@ final class WorkflowStub
     {
         if (is_null($this->storedWorkflow->fresh()->output)) return null;
 
-        return unserialize(is_resource($this->storedWorkflow->fresh()->output) ? stream_get_contents($this->storedWorkflow->fresh()->output) : $this->storedWorkflow->fresh()->output);
+        return Y::unserialize($this->storedWorkflow->fresh()->output);
     }
 
     public function running(): bool
@@ -256,7 +257,7 @@ final class WorkflowStub
 
     public function restart(...$arguments): void
     {
-        $this->storedWorkflow->arguments = serialize($arguments);
+        $this->storedWorkflow->arguments = Y::serialize($arguments);
         $this->storedWorkflow->output = null;
         $this->storedWorkflow->logs()
             ->delete();
@@ -271,7 +272,7 @@ final class WorkflowStub
 
     public function start(...$arguments): void
     {
-        $this->storedWorkflow->arguments = serialize($arguments);
+        $this->storedWorkflow->arguments = Y::serialize($arguments);
 
         $this->dispatch();
     }
@@ -282,7 +283,7 @@ final class WorkflowStub
             $this->storedWorkflow->exceptions()
                 ->create([
                     'class' => $this->storedWorkflow->class,
-                    'exception' => serialize($throwable),
+                    'exception' => Y::serialize($throwable),
                 ]);
         } catch (\Throwable) {
         }
@@ -298,7 +299,7 @@ final class WorkflowStub
                     'index' => $index,
                     'now' => $now,
                     'class' => $class,
-                    'result' => serialize($result),
+                    'result' => Y::serialize($result),
                 ]);
         } catch (QueryException $exception) {
             if (! str_contains($exception->getMessage(), 'Duplicate')) {
@@ -313,6 +314,6 @@ final class WorkflowStub
     {
         $this->storedWorkflow->status->transitionTo(WorkflowPendingStatus::class);
 
-        $this->storedWorkflow->class::dispatch($this->storedWorkflow, ...unserialize(is_resource($this->storedWorkflow->arguments) ? get_stream_contents($this->storedWorkflow->arguments) : $this->storedWorkflow->arguments));
+        $this->storedWorkflow->class::dispatch($this->storedWorkflow, ...Y::unserialize($this->storedWorkflow->arguments));
     }
 }

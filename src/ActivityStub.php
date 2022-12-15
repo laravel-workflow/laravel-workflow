@@ -8,6 +8,7 @@ use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use function React\Promise\all;
 use function React\Promise\resolve;
+use Workflow\Serializers\Y;
 
 final class ActivityStub
 {
@@ -36,7 +37,7 @@ final class ActivityStub
         if ($log) {
             ++$context->index;
             WorkflowStub::setContext($context);
-            return resolve(unserialize(is_resource($log->result) ? stream_get_contents($log->result) : $log->result));
+            return resolve(Y::unserialize($log->result));
         } else {
             $current = new self($activity, ...$arguments);
 
