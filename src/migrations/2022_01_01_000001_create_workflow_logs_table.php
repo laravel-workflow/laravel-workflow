@@ -20,7 +20,7 @@ final class CreateWorkflowLogsTable extends Migration
             $blueprint->unsignedBigInteger('index');
             $blueprint->timestamp('now');
             $blueprint->text('class');
-            $blueprint->binary('result')
+            $blueprint->text('result')
                 ->nullable();
             $blueprint->timestamp('created_at', 6)
                 ->nullable();
