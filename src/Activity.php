@@ -15,6 +15,7 @@ use Throwable;
 use Workflow\Middleware\WithoutOverlappingMiddleware;
 use Workflow\Middleware\WorkflowMiddleware;
 use Workflow\Models\StoredWorkflow;
+use Workflow\Serializers\Y;
 
 class Activity implements ShouldBeEncrypted, ShouldQueue
 {
@@ -75,7 +76,7 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
             $this->storedWorkflow->exceptions()
                 ->create([
                     'class' => $this::class,
-                    'exception' => serialize($throwable),
+                    'exception' => Y::serialize($throwable),
                 ]);
 
             throw $throwable;
@@ -84,7 +85,6 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
 
     public function middleware()
     {
-
         return [
             new WithoutOverlappingMiddleware($this->storedWorkflow->id, WithoutOverlappingMiddleware::ACTIVITY),
             new WorkflowMiddleware(),

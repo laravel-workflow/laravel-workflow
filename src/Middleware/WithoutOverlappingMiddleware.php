@@ -13,6 +13,7 @@ class WithoutOverlappingMiddleware
     use InteractsWithTime;
 
     public const WORKFLOW = 1;
+
     public const ACTIVITY = 2;
 
     public string $key;
@@ -43,14 +44,24 @@ class WithoutOverlappingMiddleware
             case self::WORKFLOW:
                 $locked = false;
                 if ($workflowSemaphore === 0 && $activitySemaphore === 0) {
-                    $locked = $this->compareAndSet($cache, $this->getWorkflowSemaphoreKey(), $workflowSemaphore, $workflowSemaphore + 1);
+                    $locked = $this->compareAndSet(
+                        $cache,
+                        $this->getWorkflowSemaphoreKey(),
+                        $workflowSemaphore,
+                        $workflowSemaphore + 1
+                    );
                 }
                 break;
 
             case self::ACTIVITY:
                 $locked = false;
                 if ($workflowSemaphore === 0) {
-                    $locked = $this->compareAndSet($cache, $this->getActivitySemaphoreKey(), $activitySemaphore, $activitySemaphore + 1);
+                    $locked = $this->compareAndSet(
+                        $cache,
+                        $this->getActivitySemaphoreKey(),
+                        $activitySemaphore,
+                        $activitySemaphore + 1
+                    );
                 }
                 break;
 
@@ -68,48 +79,58 @@ class WithoutOverlappingMiddleware
                         $unlocked = false;
                         while (! $unlocked) {
                             $workflowSemaphore = (int) $cache->get($this->getWorkflowSemaphoreKey());
-                            $unlocked = $this->compareAndSet($cache, $this->getWorkflowSemaphoreKey(), $workflowSemaphore, max($workflowSemaphore - 1, 0));
+                            $unlocked = $this->compareAndSet(
+                                $cache,
+                                $this->getWorkflowSemaphoreKey(),
+                                $workflowSemaphore,
+                                max($workflowSemaphore - 1, 0)
+                            );
                         }
                         break;
-        
+
                     case self::ACTIVITY:
                         $unlocked = false;
                         while (! $unlocked) {
                             $activitySemaphore = (int) $cache->get($this->getActivitySemaphoreKey());
-                            $unlocked = $this->compareAndSet($cache, $this->getActivitySemaphoreKey(), $activitySemaphore, max($activitySemaphore - 1, 0));
+                            $unlocked = $this->compareAndSet(
+                                $cache,
+                                $this->getActivitySemaphoreKey(),
+                                $activitySemaphore,
+                                max($activitySemaphore - 1, 0)
+                            );
                         }
                         break;
-                }        
+                }
             }
-        } elseif (! is_null($this->releaseAfter)) {
+        } elseif ($this->releaseAfter !== null) {
             $job->release($this->releaseAfter);
         }
     }
 
     public function getLockKey()
     {
-        return $this->prefix.$this->key;
+        return $this->prefix . $this->key;
     }
 
     public function getWorkflowSemaphoreKey()
     {
-        return $this->getLockKey().':workflow';
+        return $this->getLockKey() . ':workflow';
     }
 
     public function getActivitySemaphoreKey()
     {
-        return $this->getLockKey().':activity';
+        return $this->getLockKey() . ':activity';
     }
 
     private function compareAndSet($cache, $key, $expectedValue, $newValue)
     {
         $lock = $cache->lock($this->getLockKey(), $this->expiresAfter);
-    
+
         if ($lock->get()) {
             try {
                 $currentValue = (int) $cache->get($key, null);
-    
-                if ($currentValue == $expectedValue) {
+
+                if ($currentValue === $expectedValue) {
                     $cache->put($key, (int) $newValue);
                     return true;
                 }

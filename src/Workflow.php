@@ -17,6 +17,7 @@ use React\Promise\PromiseInterface;
 use Throwable;
 use Workflow\Middleware\WithoutOverlappingMiddleware;
 use Workflow\Models\StoredWorkflow;
+use Workflow\Serializers\Y;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowRunningStatus;
 use Workflow\States\WorkflowWaitingStatus;
@@ -61,7 +62,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
     {
         $this->replaying = true;
         $this->handle();
-        return $this->$method();
+        return $this->{$method}();
     }
 
     public function middleware()
@@ -108,7 +109,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
                 $query->where('created_at', '<=', $log->created_at->format('Y-m-d H:i:s.u'));
             })
             ->each(function ($signal): void {
-                $this->{$signal->method}(...unserialize($signal->arguments));
+                $this->{$signal->method}(...Y::unserialize($signal->arguments));
             });
 
         $this->now = $log ? $log->now : Carbon::now();
@@ -138,7 +139,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
                     $query->where('created_at', '>', $log->created_at->format('Y-m-d H:i:s.u'));
                 })
                 ->each(function ($signal): void {
-                    $this->{$signal->method}(...unserialize($signal->arguments));
+                    $this->{$signal->method}(...Y::unserialize($signal->arguments));
                 });
 
             $this->now = $nextLog ? $nextLog->now : Carbon::now();
@@ -173,7 +174,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
         }
 
         if (! $this->replaying) {
-            $this->storedWorkflow->output = serialize($this->coroutine->getReturn());
+            $this->storedWorkflow->output = Y::serialize($this->coroutine->getReturn());
 
             $this->storedWorkflow->status->transitionTo(WorkflowCompletedStatus::class);
         }

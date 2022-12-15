@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use Tests\Fixtures\TestExceptionWorkflow;
 use Tests\TestCase;
+use Workflow\Serializers\Y;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\WorkflowStub;
 
@@ -22,7 +23,7 @@ final class ExceptionWorkflowTest extends TestCase
         $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
         $this->assertSame('workflow_activity_other', $workflow->output());
         if ($workflow->exceptions()->first()) {
-            $this->assertSame('failed', unserialize($workflow->exceptions()->first()->exception)->getMessage());
+            $this->assertSame('failed', Y::unserialize($workflow->exceptions()->first()->exception)->getMessage());
         }
     }
 }
