@@ -35,6 +35,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    with:
+        fetch-depth: 10
 
     - name: Validate composer.json and composer.lock
       run: composer validate --strict
