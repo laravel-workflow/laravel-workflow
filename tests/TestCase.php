@@ -22,7 +22,7 @@ abstract class TestCase extends BaseTestCase
             '-dxdebug.client_port=9003',
             '-dxdebug.start_with_request=trigger',
             'artisan',
-            'queue:work'
+            'queue:work',
         ]);
         self::$process->start();
     }
