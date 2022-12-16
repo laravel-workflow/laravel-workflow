@@ -61,7 +61,7 @@ jobs:
       run: mysql -e 'CREATE DATABASE testbench' -h127.0.0.1 -uroot -ppassword -P ${{ job.services.mysql.ports[3306] }}
 
     - name: Run test suite (MySQL)
-      run: composer run-script test
+      run: vendor/bin/phpunit --testdox
       env:
         APP_KEY: base64:i3g6f+dV8FfsIkcxqd7gbiPn2oXk5r00sTmdD6V5utI=
         DB_CONNECTION: mysql
@@ -76,7 +76,7 @@ jobs:
         REDIS_PORT: 6379
 
     - name: Run test suite (PostgreSQL)
-      run: composer run-script test
+      run: vendor/bin/phpunit --testdox --coverage-clover=coverage.clover
       env:
         APP_KEY: base64:i3g6f+dV8FfsIkcxqd7gbiPn2oXk5r00sTmdD6V5utI=
         DB_CONNECTION: pgsql
@@ -89,3 +89,9 @@ jobs:
         REDIS_HOST: 127.0.0.1
         REDIS_PASSWORD:
         REDIS_PORT: 6379
+
+    - name: Install Ocular
+      run: wget https://scrutinizer-ci.com/ocular.phar
+
+    - name: Upload coverage
+      run: php ocular.phar code-coverage:upload --repository=laravel-workflow/laravel-workflow --format=php-clover coverage.clover
