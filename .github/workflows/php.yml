@@ -57,7 +57,7 @@ jobs:
       run: vendor/bin/ecs check
 
     - name: Run static analysis via PHPStan
-      run: vendor/bin/phpstan --xdebug analyse src
+      run: vendor/bin/phpstan --xdebug analyse src tests
 
     - name: Create database
       run: mysql -e 'CREATE DATABASE testbench' -h127.0.0.1 -uroot -ppassword -P ${{ job.services.mysql.ports[3306] }}
@@ -78,13 +78,31 @@ jobs:
         REDIS_PORT: 6379
 
     - name: Run test suite (PostgreSQL)
-      run: |
-        vendor/bin/phpunit --testdox --coverage-clover=coverage.clover
-        vendor/bin/ocular code-coverage:upload --format=php-clover coverage.clover
+      run: vendor/bin/phpunit --testdox
       env:
         APP_KEY: base64:i3g6f+dV8FfsIkcxqd7gbiPn2oXk5r00sTmdD6V5utI=
         DB_CONNECTION: pgsql
         DB_DATABASE: testbench
+        DB_HOST: 127.0.0.1
+        DB_PORT: 5432
+        DB_USERNAME: root
+        DB_PASSWORD: password
+        QUEUE_CONNECTION: redis
+        REDIS_HOST: 127.0.0.1
+        REDIS_PASSWORD:
+        REDIS_PORT: 6379
+
+    - name: Create database
+      run: touch testbench.sqlite
+
+    - name: Code Coverage
+      run: |
+        vendor/bin/phpunit --testdox --coverage-clover=coverage.clover --testsuite unit
+        vendor/bin/ocular code-coverage:upload --format=php-clover coverage.clover
+      env:
+        APP_KEY: base64:i3g6f+dV8FfsIkcxqd7gbiPn2oXk5r00sTmdD6V5utI=
+        DB_CONNECTION: sqlite
+        DB_DATABASE: testbench.sqlite
         DB_HOST: 127.0.0.1
         DB_PORT: 5432
         DB_USERNAME: root
