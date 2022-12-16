@@ -57,7 +57,7 @@ jobs:
       run: vendor/bin/ecs check
 
     - name: Run static analysis via PHPStan
-      run: vendor/bin/phpstan --xdebug analyse src
+      run: vendor/bin/phpstan --xdebug analyse src tests
 
     - name: Create database
       run: mysql -e 'CREATE DATABASE testbench' -h127.0.0.1 -uroot -ppassword -P ${{ job.services.mysql.ports[3306] }}
