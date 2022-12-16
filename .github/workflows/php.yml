@@ -78,8 +78,7 @@ jobs:
     - name: Run test suite (PostgreSQL)
       run: |
         vendor/bin/phpunit --testdox --coverage-clover=coverage.clover
-        wget https://scrutinizer-ci.com/ocular.phar
-        php ocular.phar code-coverage:upload --format=php-clover coverage.clover
+        vendor/bin/ocular code-coverage:upload --format=php-clover coverage.clover
       env:
         APP_KEY: base64:i3g6f+dV8FfsIkcxqd7gbiPn2oXk5r00sTmdD6V5utI=
         DB_CONNECTION: pgsql
