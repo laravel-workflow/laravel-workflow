@@ -15,6 +15,7 @@ abstract class TestCase extends BaseTestCase
     public static function setUpBeforeClass(): void
     {
         Dotenv::createImmutable(__DIR__ . '/..')->safeLoad();
+
         self::$process = new Process(['php', 'artisan', 'queue:work']);
         self::$process->start();
     }
