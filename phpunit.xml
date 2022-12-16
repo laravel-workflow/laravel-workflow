@@ -6,8 +6,10 @@
     </include>
   </coverage>
   <testsuites>
-    <testsuite name="Workflow Test Suite">
+    <testsuite name="feature">
       <directory>./tests/Feature</directory>
+    </testsuite>
+    <testsuite name="unit">
       <directory>./tests/Unit</directory>
     </testsuite>
   </testsuites>
