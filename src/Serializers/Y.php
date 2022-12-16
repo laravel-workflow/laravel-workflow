@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Workflow\Serializers;
 
-final class Y
+use function Opis\Closure\{serialize as s, unserialize as u};
+use Opis\Closure\SerializableClosure;
+
+final class Y implements SerializerInterface
 {
     public static function encode(string $data): string
     {
@@ -37,11 +40,13 @@ final class Y
 
     public static function serialize($data): string
     {
-        return self::encode(serialize($data));
+        SerializableClosure::setSecretKey(config('app.key'));
+        return self::encode(s($data));
     }
 
     public static function unserialize(string $data)
     {
-        return unserialize(self::decode($data));
+        SerializableClosure::setSecretKey(config('app.key'));
+        return u(self::decode($data));
     }
 }
