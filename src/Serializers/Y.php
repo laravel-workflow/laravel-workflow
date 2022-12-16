@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Workflow\Serializers;
 
-use function Opis\Closure\{serialize as s, unserialize as u};
 use Opis\Closure\SerializableClosure;
+use function Opis\Closure\serialize as s;
+use function Opis\Closure\unserialize as u;
 
 final class Y implements SerializerInterface
 {
