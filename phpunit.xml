@@ -8,6 +8,7 @@
   <testsuites>
     <testsuite name="Workflow Test Suite">
       <directory>./tests/Feature</directory>
+      <directory>./tests/Unit</directory>
     </testsuite>
   </testsuites>
   <php>
