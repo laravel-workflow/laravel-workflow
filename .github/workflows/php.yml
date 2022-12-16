@@ -78,9 +78,7 @@ jobs:
         REDIS_PORT: 6379
 
     - name: Run test suite (PostgreSQL)
-      run: |
-        vendor/bin/phpunit --testdox --coverage-clover=coverage.clover
-        vendor/bin/ocular code-coverage:upload --format=php-clover coverage.clover
+      run: vendor/bin/phpunit --testdox
       env:
         APP_KEY: base64:i3g6f+dV8FfsIkcxqd7gbiPn2oXk5r00sTmdD6V5utI=
         DB_CONNECTION: pgsql
@@ -93,4 +91,3 @@ jobs:
         REDIS_HOST: 127.0.0.1
         REDIS_PASSWORD:
         REDIS_PORT: 6379
-        XDEBUG_MODE: coverage
