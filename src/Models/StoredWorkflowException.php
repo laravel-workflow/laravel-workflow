@@ -21,9 +21,4 @@ class StoredWorkflowException extends Model
     protected $guarded = [];
 
     protected $dateFormat = 'Y-m-d H:i:s.u';
-
-    public function workflow(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(config('workflows.stored_workflow_model', StoredWorkflow::class));
-    }
 }

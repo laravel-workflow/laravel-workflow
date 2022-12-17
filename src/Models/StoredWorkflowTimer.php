@@ -28,9 +28,4 @@ class StoredWorkflowTimer extends Model
     protected $casts = [
         'stop_at' => 'datetime:Y-m-d H:i:s.u',
     ];
-
-    public function workflow(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(config('workflows.stored_workflow_model', StoredWorkflow::class));
-    }
 }
