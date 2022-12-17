@@ -4,11 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
-use Tests\Fixtures\TestActivity;
-use Tests\Fixtures\TestOtherActivity;
 use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
-use Workflow\Signal;
 use Workflow\States\WorkflowPendingStatus;
 use Workflow\WorkflowStub;
 
