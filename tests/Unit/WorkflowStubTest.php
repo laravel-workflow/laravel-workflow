@@ -9,29 +9,21 @@ use Tests\Fixtures\TestOtherActivity;
 use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
 use Workflow\Signal;
-use Workflow\States\WorkflowCompletedStatus;
+use Workflow\States\WorkflowPendingStatus;
 use Workflow\WorkflowStub;
 
 final class WorkflowStubTest extends TestCase
 {
-    public function testCompleted(): void
+    public function testMake(): void
     {
         $workflow = WorkflowStub::make(TestWorkflow::class);
 
-        $workflow->start(shouldAssert: false);
+        $workflow->start();
 
         $workflow->cancel();
 
         while (! $workflow->isCanceled());
 
-        while ($workflow->running());
-
-        $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
-        $this->assertSame('workflow_activity_other', $workflow->output());
-        $this->assertSame([TestActivity::class, TestOtherActivity::class, Signal::class], $workflow->logs()
-            ->pluck('class')
-            ->sort()
-            ->values()
-            ->toArray());
+        $this->assertSame(WorkflowPendingStatus::class, $workflow->status());
     }
 }
