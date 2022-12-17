@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Middleware;
 
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Queue;
 use Mockery\MockInterface;
 use Tests\Fixtures\TestActivity;
@@ -27,16 +26,19 @@ final class WorkflowMiddlewareTest extends TestCase
         $workflow->start();
 
         $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
-        $storedWorkflow->update(['status' => WorkflowWaitingStatus::class]);
+        $storedWorkflow->update([
+            'status' => WorkflowWaitingStatus::class,
+        ]);
 
         $activity = $this->mock(TestActivity::class);
         $activity->index = 0;
-        $activity->now = now()->toDateTimeString();
+        $activity->now = now()
+            ->toDateTimeString();
         $activity->storedWorkflow = $storedWorkflow;
 
         $middleware = new WorkflowMiddleware();
 
-        $middleware->handle($activity, function ($job) {
+        $middleware->handle($activity, static function ($job) {
             return true;
         });
 
@@ -51,16 +53,19 @@ final class WorkflowMiddlewareTest extends TestCase
         $workflow->start();
 
         $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
-        $storedWorkflow->update(['status' => WorkflowCompletedStatus::class]);
+        $storedWorkflow->update([
+            'status' => WorkflowCompletedStatus::class,
+        ]);
 
         $activity = $this->mock(TestActivity::class);
         $activity->index = 0;
-        $activity->now = now()->toDateTimeString();
+        $activity->now = now()
+            ->toDateTimeString();
         $activity->storedWorkflow = $storedWorkflow;
 
         $middleware = new WorkflowMiddleware();
 
-        $middleware->handle($activity, function ($job) {
+        $middleware->handle($activity, static function ($job) {
             return true;
         });
 
@@ -75,19 +80,22 @@ final class WorkflowMiddlewareTest extends TestCase
         $workflow->start();
 
         $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
-        $storedWorkflow->update(['status' => WorkflowRunningStatus::class]);
+        $storedWorkflow->update([
+            'status' => WorkflowRunningStatus::class,
+        ]);
 
         $activity = $this->mock(TestActivity::class, static function (MockInterface $mock) {
             $mock->shouldReceive('release')
                 ->once();
         });
         $activity->index = 0;
-        $activity->now = now()->toDateTimeString();
+        $activity->now = now()
+            ->toDateTimeString();
         $activity->storedWorkflow = $storedWorkflow;
 
         $middleware = new WorkflowMiddleware();
 
-        $middleware->handle($activity, function ($job) {
+        $middleware->handle($activity, static function ($job) {
             return true;
         });
 
