@@ -119,4 +119,37 @@ final class WorkflowStubTest extends TestCase
         $this->assertSame(2, $workflow->logs()->count());
         $this->assertSame(2, WorkflowStub::getContext()->index);
     }
+
+    public function testAwaitWithTimeoutTimedout(): void
+    {
+        $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
+        $workflow->start();
+        $workflow->cancel();
+        while (! $workflow->isCanceled());
+
+        $workflow = WorkflowStub::load($workflow->id());
+
+        $this->assertSame(0, WorkflowStub::getContext()->index);
+
+        $promise = WorkflowStub::awaitWithTimeout('1 minute', static fn () => false);
+
+        $this->assertSame(1, $workflow->logs()->count());
+        $this->assertSame(1, WorkflowStub::getContext()->index);
+
+        $workflow = WorkflowStub::load($workflow->id());
+        $context = WorkflowStub::getContext();
+        $context->now = $context->now->addMinute();
+        WorkflowStub::setContext($context);
+
+        $promise = WorkflowStub::awaitWithTimeout('1 minute', static fn () => false);
+
+        $this->assertSame(2, $workflow->logs()->count());
+        $this->assertSame(2, WorkflowStub::getContext()->index);
+        $this->assertDatabaseHas('workflow_logs', [
+            'stored_workflow_id' => $workflow->id(),
+            'index' => 1,
+            'class' => Signal::class,
+            'result' => Y::serialize(true),
+        ]);
+    }
 }
