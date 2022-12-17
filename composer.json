@@ -17,6 +17,8 @@
         "rector": "vendor/bin/rector",
         "ecs": "vendor/bin/ecs check --fix",
         "stan": "vendor/bin/phpstan analyse src tests",
+        "feature": "phpunit --testdox --testsuite feature",
+        "unit": "phpunit --testdox --testsuite unit",
         "test": "phpunit --testdox"
     },
     "authors": [

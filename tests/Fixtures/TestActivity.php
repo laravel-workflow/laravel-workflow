@@ -6,7 +6,7 @@ namespace Tests\Fixtures;
 
 use Workflow\Activity;
 
-final class TestActivity extends Activity
+class TestActivity extends Activity
 {
     public function execute()
     {

@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit;
+namespace Tests\Unit\Serializers;
 
 use Tests\TestCase;
 use Workflow\Serializers\Y;
 
-final class TestSerialize extends TestCase
+final class SerializeTest extends TestCase
 {
     /**
      * @dataProvider dataProvider

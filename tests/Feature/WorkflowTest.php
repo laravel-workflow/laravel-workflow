@@ -28,8 +28,10 @@ final class WorkflowTest extends TestCase
 
         $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
         $this->assertSame('workflow_activity_other', $workflow->output());
-        $this->assertSame([TestOtherActivity::class, TestActivity::class, Signal::class], $workflow->logs()
+        $this->assertSame([TestActivity::class, TestOtherActivity::class, Signal::class], $workflow->logs()
             ->pluck('class')
+            ->sort()
+            ->values()
             ->toArray());
     }
 
@@ -47,8 +49,10 @@ final class WorkflowTest extends TestCase
 
         $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
         $this->assertSame('workflow_activity_other', $workflow->output());
-        $this->assertSame([TestOtherActivity::class, TestActivity::class, Signal::class], $workflow->logs()
+        $this->assertSame([TestActivity::class, TestOtherActivity::class, Signal::class], $workflow->logs()
             ->pluck('class')
+            ->sort()
+            ->values()
             ->toArray());
     }
 }

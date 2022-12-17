@@ -10,7 +10,7 @@ use Workflow\SignalMethod;
 use Workflow\Workflow;
 use Workflow\WorkflowStub;
 
-final class TestWorkflow extends Workflow
+class TestWorkflow extends Workflow
 {
     public $connection = 'redis';
 
