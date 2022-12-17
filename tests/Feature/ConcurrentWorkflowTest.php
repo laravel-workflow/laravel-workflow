@@ -23,8 +23,10 @@ final class ConcurrentWorkflowTest extends TestCase
 
         $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
         $this->assertSame('workflow_activity_other', $workflow->output());
-        $this->assertSame([TestOtherActivity::class, TestActivity::class], $workflow->logs()
+        $this->assertSame([TestActivity::class, TestOtherActivity::class], $workflow->logs()
             ->pluck('class')
+            ->sort()
+            ->values()
             ->toArray());
     }
 }
