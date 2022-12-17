@@ -6,6 +6,7 @@ namespace Workflow;
 
 use Carbon\CarbonInterval;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Carbon;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use function React\Promise\resolve;
@@ -23,6 +24,12 @@ final class WorkflowStub
     private function __construct(
         protected $storedWorkflow
     ) {
+        self::setContext([
+            'storedWorkflow' => $storedWorkflow,
+            'index' => 0,
+            'now' => Carbon::now(),
+            'replaying' => false,
+        ]);
     }
 
     public function __call($method, $arguments)
@@ -102,9 +109,9 @@ final class WorkflowStub
                             'result' => Y::serialize($result),
                         ]);
                 } catch (QueryException $exception) {
-                    if (! str_contains($exception->getMessage(), 'Duplicate')) {
-                        throw $exception;
-                    }
+                    ++self::$context->index;
+                    $deferred = new Deferred();
+                    return $deferred->promise();
                 }
             }
             ++self::$context->index;
@@ -112,9 +119,7 @@ final class WorkflowStub
         }
 
         ++self::$context->index;
-
         $deferred = new Deferred();
-
         return $deferred->promise();
     }
 
@@ -137,9 +142,9 @@ final class WorkflowStub
                             'result' => Y::serialize($result),
                         ]);
                 } catch (QueryException $exception) {
-                    if (! str_contains($exception->getMessage(), 'Duplicate')) {
-                        throw $exception;
-                    }
+                    ++self::$context->index;
+                    $deferred = new Deferred();
+                    return $deferred->promise();
                 }
             }
             ++self::$context->index;
@@ -176,29 +181,29 @@ final class WorkflowStub
                         'stop_at' => $when,
                     ]);
             }
-        } else {
-            $result = $timer->stop_at
-                ->lessThanOrEqualTo(self::$context->now->copy()->addSeconds($seconds));
+        }
 
-            if ($result === true) {
-                if (! self::$context->replaying) {
-                    try {
-                        self::$context->storedWorkflow->logs()
-                            ->create([
-                                'index' => self::$context->index,
-                                'now' => self::$context->now,
-                                'class' => Signal::class,
-                                'result' => Y::serialize($result),
-                            ]);
-                    } catch (QueryException $exception) {
-                        if (! str_contains($exception->getMessage(), 'Duplicate')) {
-                            throw $exception;
-                        }
-                    }
+        $result = $timer->stop_at
+            ->lessThanOrEqualTo(self::$context->now);
+
+        if ($result === true) {
+            if (! self::$context->replaying) {
+                try {
+                    self::$context->storedWorkflow->logs()
+                        ->create([
+                            'index' => self::$context->index,
+                            'now' => self::$context->now,
+                            'class' => Signal::class,
+                            'result' => Y::serialize($result),
+                        ]);
+                } catch (QueryException $exception) {
+                    ++self::$context->index;
+                    $deferred = new Deferred();
+                    return $deferred->promise();
                 }
-                ++self::$context->index;
-                return resolve($result);
             }
+            ++self::$context->index;
+            return resolve($result);
         }
 
         if (! self::$context->replaying) {
@@ -206,9 +211,7 @@ final class WorkflowStub
         }
 
         ++self::$context->index;
-
         $deferred = new Deferred();
-
         return $deferred->promise();
     }
 
