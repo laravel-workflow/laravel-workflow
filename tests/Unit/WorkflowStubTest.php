@@ -6,10 +6,12 @@ namespace Tests\Unit;
 
 use Exception;
 use Illuminate\Support\Carbon;
+use Tests\Fixtures\TestAwaitWorkflow;
 use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
 use Workflow\Serializers\Y;
 use Workflow\Signal;
+use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowFailedStatus;
 use Workflow\States\WorkflowPendingStatus;
 use Workflow\WorkflowStub;
@@ -45,6 +47,21 @@ final class WorkflowStubTest extends TestCase
         $workflow->fresh();
         $this->assertSame(WorkflowPendingStatus::class, $workflow->status());
         $this->assertNull($workflow->output());
+        $this->assertSame(1, $workflow->logs()->count());
+    }
+
+    public function testComplete(): void
+    {
+        Carbon::setTestNow('2022-01-01');
+
+        $workflow = WorkflowStub::make(TestAwaitWorkflow::class);
+        $workflow->start();
+        $workflow->cancel();
+        $workflow->fail(new Exception('resume'));
+        $workflow->resume();
+        $this->assertSame('2022-01-01 00:00:00', WorkflowStub::now()->toDateTimeString());
+        $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
+        $this->assertSame('workflow', $workflow->output());
         $this->assertSame(1, $workflow->logs()->count());
     }
 
