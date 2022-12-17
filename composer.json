@@ -18,7 +18,7 @@
         "ecs": "vendor/bin/ecs check --fix",
         "stan": "vendor/bin/phpstan analyse src tests",
         "feature": "phpunit --testdox --testsuite feature",
-        "unit": "phpunit --testdox --testsuite unit",
+        "unit": "phpunit --testdox --testsuite unit --filter WorkflowStubTest",
         "test": "phpunit --testdox"
     },
     "authors": [
