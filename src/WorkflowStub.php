@@ -142,9 +142,9 @@ final class WorkflowStub
                             'result' => Y::serialize($result),
                         ]);
                 } catch (QueryException $exception) {
-                    if (! str_contains($exception->getMessage(), 'Duplicate')) {
-                        throw $exception;
-                    }
+                    ++self::$context->index;
+                    $deferred = new Deferred();
+                    return $deferred->promise();
                 }
             }
             ++self::$context->index;
@@ -196,9 +196,9 @@ final class WorkflowStub
                                 'result' => Y::serialize($result),
                             ]);
                     } catch (QueryException $exception) {
-                        if (! str_contains($exception->getMessage(), 'Duplicate')) {
-                            throw $exception;
-                        }
+                        ++self::$context->index;
+                        $deferred = new Deferred();
+                        return $deferred->promise();
                     }
                 }
                 ++self::$context->index;
@@ -211,9 +211,7 @@ final class WorkflowStub
         }
 
         ++self::$context->index;
-
         $deferred = new Deferred();
-
         return $deferred->promise();
     }
 
