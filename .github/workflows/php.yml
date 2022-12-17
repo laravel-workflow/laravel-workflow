@@ -65,7 +65,7 @@ jobs:
         mysql -e 'CREATE DATABASE testbench' -h127.0.0.1 -uroot -ppassword -P ${{ job.services.mysql.ports[3306] }}
 
     - name: Run test suite (MySQL)
-      run: vendor/bin/phpunit --testdox
+      run: vendor/bin/phpunit --testdox --testsuite feature
       env:
         APP_KEY: base64:i3g6f+dV8FfsIkcxqd7gbiPn2oXk5r00sTmdD6V5utI=
         DB_CONNECTION: mysql
@@ -80,7 +80,7 @@ jobs:
         REDIS_PORT: 6379
 
     - name: Run test suite (PostgreSQL)
-      run: vendor/bin/phpunit --testdox
+      run: vendor/bin/phpunit --testdox --testsuite feature
       env:
         APP_KEY: base64:i3g6f+dV8FfsIkcxqd7gbiPn2oXk5r00sTmdD6V5utI=
         DB_CONNECTION: pgsql
