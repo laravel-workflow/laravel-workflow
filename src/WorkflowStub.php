@@ -6,6 +6,7 @@ namespace Workflow;
 
 use Carbon\CarbonInterval;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Carbon;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use function React\Promise\resolve;
@@ -23,6 +24,12 @@ final class WorkflowStub
     private function __construct(
         protected $storedWorkflow
     ) {
+        self::setContext([
+            'storedWorkflow' => $storedWorkflow,
+            'index' => 0,
+            'now' => Carbon::now(),
+            'replaying' => false,
+        ]);
     }
 
     public function __call($method, $arguments)
