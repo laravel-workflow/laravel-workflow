@@ -266,7 +266,13 @@ final class WorkflowStub
     {
         $this->storedWorkflow->arguments = Y::serialize($arguments);
         $this->storedWorkflow->output = null;
+        $this->storedWorkflow->exceptions()
+            ->delete();
         $this->storedWorkflow->logs()
+            ->delete();
+        $this->storedWorkflow->signals()
+            ->delete();
+        $this->storedWorkflow->timers()
             ->delete();
 
         $this->dispatch();
