@@ -109,7 +109,7 @@ final class WorkflowStub
                             'result' => Y::serialize($result),
                         ]);
                 } catch (QueryException $exception) {
-                    if (! str_contains($exception->getMessage(), 'Duplicate')) {
+                    if (! str_contains($exception->getMessage(), 'Duplicate') && ! str_contains($exception->getMessage(), 'UNIQUE')) {
                         throw $exception;
                     }
                 }
