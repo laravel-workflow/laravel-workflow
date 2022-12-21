@@ -62,6 +62,7 @@ final class WorkflowStubTest extends TestCase
         $this->assertSame('2022-01-01 00:00:00', WorkflowStub::now()->toDateTimeString());
         $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
         $this->assertSame('workflow', $workflow->output());
+        $this->assertSame(1, $workflow->exceptions()->count());
         $this->assertSame(1, $workflow->logs()->count());
     }
 
@@ -115,7 +116,7 @@ final class WorkflowStubTest extends TestCase
 
         $this->assertSame(0, WorkflowStub::getContext()->index);
 
-        $promise = WorkflowStub::awaitWithTimeout('1 minute', static fn () => false);
+        $promise = WorkflowStub::awaitWithTimeout(60, static fn () => false);
 
         $this->assertSame(1, $workflow->logs()->count());
         $this->assertSame(1, WorkflowStub::getContext()->index);
