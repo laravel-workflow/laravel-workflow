@@ -24,7 +24,7 @@ php artisan vendor:publish --provider="Workflow\Providers\WorkflowServiceProvide
 
 ## Requirements
 
-You can use any queue driver that Laravel supports but this is heavily tested against Redis. Your cache driver must support locks. Also be sure to read the [Wiki](https://github.com/laravel-workflow/laravel-workflow/wiki) too!
+You can use any queue driver that Laravel supports but this is heavily tested against Redis. Your cache driver must support locks. Also be sure to read the [docs](https://laravel-workflow.com/docs/installation#installing-laravel-workflow) too!
 
 ## Usage
 
