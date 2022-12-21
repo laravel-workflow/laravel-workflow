@@ -109,9 +109,7 @@ final class WorkflowStub
                             'result' => Y::serialize($result),
                         ]);
                 } catch (QueryException $exception) {
-                    ++self::$context->index;
-                    $deferred = new Deferred();
-                    return $deferred->promise();
+                    // already logged
                 }
             }
             ++self::$context->index;
@@ -142,9 +140,7 @@ final class WorkflowStub
                             'result' => Y::serialize($result),
                         ]);
                 } catch (QueryException $exception) {
-                    ++self::$context->index;
-                    $deferred = new Deferred();
-                    return $deferred->promise();
+                    // already logged
                 }
             }
             ++self::$context->index;
@@ -197,9 +193,7 @@ final class WorkflowStub
                             'result' => Y::serialize($result),
                         ]);
                 } catch (QueryException $exception) {
-                    ++self::$context->index;
-                    $deferred = new Deferred();
-                    return $deferred->promise();
+                    // already logged
                 }
             }
             ++self::$context->index;
@@ -290,15 +284,16 @@ final class WorkflowStub
         $this->dispatch();
     }
 
-    public function fail($throwable): void
+    public function fail($exception): void
     {
         try {
             $this->storedWorkflow->exceptions()
                 ->create([
                     'class' => $this->storedWorkflow->class,
-                    'exception' => Y::serialize($throwable),
+                    'exception' => Y::serialize($exception),
                 ]);
-        } catch (\Throwable) {
+        } catch (QueryException) {
+            // already logged
         }
 
         $this->storedWorkflow->status->transitionTo(WorkflowFailedStatus::class);
@@ -314,10 +309,8 @@ final class WorkflowStub
                     'class' => $class,
                     'result' => Y::serialize($result),
                 ]);
-        } catch (QueryException $exception) {
-            if (! str_contains($exception->getMessage(), 'Duplicate')) {
-                throw $exception;
-            }
+        } catch (QueryException) {
+            // already logged
         }
 
         $this->dispatch();

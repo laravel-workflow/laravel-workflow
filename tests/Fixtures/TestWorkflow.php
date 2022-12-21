@@ -42,9 +42,9 @@ class TestWorkflow extends Workflow
             assert(! $this->canceled);
         }
 
-        $result = yield ActivityStub::make(TestActivity::class);
-
         yield WorkflowStub::await(fn (): bool => $this->canceled);
+
+        $result = yield ActivityStub::make(TestActivity::class);
 
         return 'workflow_' . $result . '_' . $otherResult;
     }
