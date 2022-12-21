@@ -6,19 +6,13 @@ namespace Tests\Unit;
 
 use BadMethodCallException;
 use Exception;
-use Illuminate\Support\Carbon;
-use Tests\Fixtures\TestAwaitWorkflow;
 use Tests\Fixtures\TestExceptionActivity;
 use Tests\Fixtures\TestInvalidActivity;
 use Tests\Fixtures\TestOtherActivity;
 use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
 use Workflow\Models\StoredWorkflow;
-use Workflow\Serializers\Y;
-use Workflow\Signal;
-use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowFailedStatus;
-use Workflow\States\WorkflowPendingStatus;
 use Workflow\WorkflowStub;
 
 final class ActivityTest extends TestCase
@@ -26,7 +20,9 @@ final class ActivityTest extends TestCase
     public function testActivity(): void
     {
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
-        $activity = new TestOtherActivity(0, now()->toDateTimeString(), StoredWorkflow::findOrFail($workflow->id()), ['other']);
+        $activity = new TestOtherActivity(0, now()->toDateTimeString(), StoredWorkflow::findOrFail($workflow->id()), [
+            'other',
+        ]);
         $activity->timeout = 1;
         $activity->heartbeat();
 
@@ -52,7 +48,9 @@ final class ActivityTest extends TestCase
         $this->expectException(Exception::class);
 
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
-        $activity = new TestExceptionActivity(0, now()->toDateTimeString(), StoredWorkflow::findOrFail($workflow->id()));
+        $activity = new TestExceptionActivity(0, now()->toDateTimeString(), StoredWorkflow::findOrFail(
+            $workflow->id()
+        ));
 
         $activity->handle();
 
@@ -68,7 +66,9 @@ final class ActivityTest extends TestCase
         $this->expectException(\Spatie\ModelStates\Exceptions\TransitionNotFound::class);
 
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
-        $activity = new TestExceptionActivity(0, now()->toDateTimeString(), StoredWorkflow::findOrFail($workflow->id()));
+        $activity = new TestExceptionActivity(0, now()->toDateTimeString(), StoredWorkflow::findOrFail(
+            $workflow->id()
+        ));
 
         $activity->failed(new Exception('failed'));
 
