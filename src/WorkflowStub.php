@@ -4,21 +4,26 @@ declare(strict_types=1);
 
 namespace Workflow;
 
-use Carbon\CarbonInterval;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
-use React\Promise\Deferred;
-use React\Promise\PromiseInterface;
-use function React\Promise\resolve;
 use ReflectionClass;
 use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Y;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowFailedStatus;
 use Workflow\States\WorkflowPendingStatus;
+use Workflow\Traits\Awaits;
+use Workflow\Traits\AwaitWithTimeouts;
+use Workflow\Traits\SideEffects;
+use Workflow\Traits\Timers;
 
 final class WorkflowStub
 {
+    use Awaits;
+    use AwaitWithTimeouts;
+    use SideEffects;
+    use Timers;
+
     private static ?\stdClass $context = null;
 
     private function __construct(
@@ -92,121 +97,6 @@ final class WorkflowStub
     public static function setContext($context): void
     {
         self::$context = (object) $context;
-    }
-
-    public static function await($condition): PromiseInterface
-    {
-        $result = $condition();
-
-        if ($result === true) {
-            if (! self::$context->replaying) {
-                try {
-                    self::$context->storedWorkflow->logs()
-                        ->create([
-                            'index' => self::$context->index,
-                            'now' => self::$context->now,
-                            'class' => Signal::class,
-                            'result' => Y::serialize($result),
-                        ]);
-                } catch (QueryException $exception) {
-                    // already logged
-                }
-            }
-            ++self::$context->index;
-            return resolve(true);
-        }
-
-        ++self::$context->index;
-        $deferred = new Deferred();
-        return $deferred->promise();
-    }
-
-    public static function awaitWithTimeout($seconds, $condition): PromiseInterface
-    {
-        if (is_string($seconds)) {
-            $seconds = CarbonInterval::fromString($seconds)->totalSeconds;
-        }
-
-        $result = $condition();
-
-        if ($result === true) {
-            if (! self::$context->replaying) {
-                try {
-                    self::$context->storedWorkflow->logs()
-                        ->create([
-                            'index' => self::$context->index,
-                            'now' => self::$context->now,
-                            'class' => Signal::class,
-                            'result' => Y::serialize($result),
-                        ]);
-                } catch (QueryException $exception) {
-                    // already logged
-                }
-            }
-            ++self::$context->index;
-            return resolve($result);
-        }
-
-        ++self::$context->index;
-        return self::timer($seconds)->then(static fn ($completed): bool => ! $completed);
-    }
-
-    public static function timer($seconds): PromiseInterface
-    {
-        if (is_string($seconds)) {
-            $seconds = CarbonInterval::fromString($seconds)->totalSeconds;
-        }
-
-        if ($seconds <= 0) {
-            ++self::$context->index;
-            return resolve(true);
-        }
-
-        $timer = self::$context->storedWorkflow->timers()
-            ->whereIndex(self::$context->index)
-            ->first();
-
-        if ($timer === null) {
-            $when = self::$context->now->copy()
-                ->addSeconds($seconds);
-
-            if (! self::$context->replaying) {
-                $timer = self::$context->storedWorkflow->timers()
-                    ->create([
-                        'index' => self::$context->index,
-                        'stop_at' => $when,
-                    ]);
-            }
-        }
-
-        $result = $timer->stop_at
-            ->lessThanOrEqualTo(self::$context->now);
-
-        if ($result === true) {
-            if (! self::$context->replaying) {
-                try {
-                    self::$context->storedWorkflow->logs()
-                        ->create([
-                            'index' => self::$context->index,
-                            'now' => self::$context->now,
-                            'class' => Signal::class,
-                            'result' => Y::serialize($result),
-                        ]);
-                } catch (QueryException $exception) {
-                    // already logged
-                }
-            }
-            ++self::$context->index;
-            return resolve($result);
-        }
-
-        if (! self::$context->replaying) {
-            Signal::dispatch(self::$context->storedWorkflow)->delay($timer->stop_at);
-        }
-
-        ++self::$context->index;
-        $deferred = new Deferred();
-        return $deferred->promise();
     }
 
     public static function now()

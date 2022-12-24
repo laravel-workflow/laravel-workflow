@@ -151,9 +151,13 @@ final class WorkflowStubTest extends TestCase
         $workflow->cancel();
         while (! $workflow->isCanceled());
 
-        $workflow = WorkflowStub::load($workflow->id());
+        $this->assertSame(1, $workflow->logs()->count());
+        $this->assertSame(1, WorkflowStub::getContext()->index);
 
-        $this->assertSame(0, WorkflowStub::getContext()->index);
+        $workflow = WorkflowStub::load($workflow->id());
+        $context = WorkflowStub::getContext();
+        $context->index = 1;
+        WorkflowStub::setContext($context);
 
         $promise = WorkflowStub::awaitWithTimeout('1 minute', static fn () => false);
 
@@ -162,6 +166,7 @@ final class WorkflowStubTest extends TestCase
 
         $workflow = WorkflowStub::load($workflow->id());
         $context = WorkflowStub::getContext();
+        $context->index = 1;
         $context->now = $context->now->addMinute();
         WorkflowStub::setContext($context);
 
