@@ -58,7 +58,6 @@ final class TimersTest extends TestCase
             'arguments' => Y::serialize([]),
             'status' => WorkflowPendingStatus::$name,
         ]);
-
         $storedWorkflow->timers()
             ->create([
                 'index' => 0,
@@ -117,7 +116,6 @@ final class TimersTest extends TestCase
                 'index' => 0,
                 'stop_at' => now(),
             ]);
-
         $storedWorkflow->logs()
             ->create([
                 'index' => 0,
