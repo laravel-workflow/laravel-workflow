@@ -62,7 +62,8 @@ final class TimersTest extends TestCase
         $storedWorkflow->timers()
             ->create([
                 'index' => 0,
-                'stop_at' => now()->addHour(),
+                'stop_at' => now()
+                    ->addHour(),
             ]);
 
         WorkflowStub::timer(60)
