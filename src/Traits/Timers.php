@@ -62,14 +62,14 @@ trait Timers
                             'index' => self::$context->index,
                             'now' => self::$context->now,
                             'class' => Signal::class,
-                            'result' => Y::serialize($result),
+                            'result' => Y::serialize(true),
                         ]);
                 } catch (QueryException $exception) {
                     // already logged
                 }
             }
             ++self::$context->index;
-            return resolve($result);
+            return resolve(true);
         }
 
         if (! self::$context->replaying) {
