@@ -12,15 +12,6 @@ use Workflow\Serializers\Y;
 
 final class ActivityStub
 {
-    private $arguments;
-
-    private function __construct(
-        protected $activity,
-        ...$arguments
-    ) {
-        $this->arguments = $arguments;
-    }
-
     public static function all(iterable $promises): PromiseInterface
     {
         return all([...$promises]);
@@ -39,30 +30,12 @@ final class ActivityStub
             WorkflowStub::setContext($context);
             return resolve(Y::unserialize($log->result));
         }
-        $current = new self($activity, ...$arguments);
 
-        $current->activity()::dispatch(
-            $context->index,
-            $context->now,
-            $context->storedWorkflow,
-            ...$current->arguments()
-        );
+        $activity::dispatch($context->index, $context->now, $context->storedWorkflow, ...$arguments);
 
         ++$context->index;
         WorkflowStub::setContext($context);
-
         $deferred = new Deferred();
-
         return $deferred->promise();
-    }
-
-    public function activity()
-    {
-        return $this->activity;
-    }
-
-    public function arguments()
-    {
-        return $this->arguments;
     }
 }
