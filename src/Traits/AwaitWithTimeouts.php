@@ -41,7 +41,14 @@ trait AwaitWithTimeouts
                             'result' => Y::serialize($result),
                         ]);
                 } catch (QueryException $exception) {
-                    // already logged
+                    $log = self::$context->storedWorkflow->logs()
+                        ->whereIndex(self::$context->index)
+                        ->first();
+
+                    if ($log) {
+                        ++self::$context->index;
+                        return resolve(Y::unserialize($log->result));
+                    }
                 }
             }
             ++self::$context->index;
