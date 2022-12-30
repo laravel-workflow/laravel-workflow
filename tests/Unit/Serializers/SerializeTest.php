@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Serializers;
 
 use Tests\TestCase;
+use Tests\Fixtures\TestEnum;
 use Workflow\Serializers\Y;
 
 final class SerializeTest extends TestCase
@@ -32,6 +33,8 @@ final class SerializeTest extends TestCase
             ],
             'bool true' => [true],
             'bool false' => [false],
+            'enum' => [TestEnum::First],
+            'enum[]' => [[TestEnum::First]],
             'int(PHP_INT_MIN)' => [PHP_INT_MIN],
             'int(PHP_INT_MAX)' => [PHP_INT_MAX],
             'int(-1)' => [-1],
