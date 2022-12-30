@@ -27,8 +27,8 @@ final class SideEffectsTest extends TestCase
             'stored_workflow_id' => $workflow->id(),
             'index' => 0,
             'class' => TestWorkflow::class,
-            'result' => Y::serialize('test'),
         ]);
+        $this->assertSame('test', Y::unserialize($workflow->logs()->firstWhere('index', 0)->result));
     }
 
     public function testLoadsStoredResult(): void
@@ -54,8 +54,8 @@ final class SideEffectsTest extends TestCase
             'stored_workflow_id' => $workflow->id(),
             'index' => 0,
             'class' => TestWorkflow::class,
-            'result' => Y::serialize('test'),
         ]);
+        $this->assertSame('test', Y::unserialize($workflow->logs()->firstWhere('index', 0)->result));
     }
 
     public function testResolvesConflictingResult(): void
@@ -83,7 +83,7 @@ final class SideEffectsTest extends TestCase
             'stored_workflow_id' => $workflow->id(),
             'index' => 0,
             'class' => TestWorkflow::class,
-            'result' => Y::serialize('test'),
         ]);
+        $this->assertSame('test', Y::unserialize($workflow->logs()->firstWhere('index', 0)->result));
     }
 }

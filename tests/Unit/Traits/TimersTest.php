@@ -103,8 +103,8 @@ final class TimersTest extends TestCase
             'stored_workflow_id' => $workflow->id(),
             'index' => 0,
             'class' => Signal::class,
-            'result' => Y::serialize(true),
         ]);
+        $this->assertSame(true, Y::unserialize($workflow->logs()->firstWhere('index', 0)->result));
     }
 
     public function testLoadsStoredResult(): void
@@ -135,7 +135,7 @@ final class TimersTest extends TestCase
             'stored_workflow_id' => $workflow->id(),
             'index' => 0,
             'class' => Signal::class,
-            'result' => Y::serialize(true),
         ]);
+        $this->assertSame(true, Y::unserialize($workflow->logs()->firstWhere('index', 0)->result));
     }
 }
