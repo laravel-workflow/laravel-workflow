@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Serializers;
 
-use Tests\TestCase;
 use Tests\Fixtures\TestEnum;
+use Tests\TestCase;
 use Workflow\Serializers\Y;
 
 final class SerializeTest extends TestCase
