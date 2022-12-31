@@ -91,8 +91,8 @@ final class WorkflowStubTest extends TestCase
             'stored_workflow_id' => $workflow->id(),
             'index' => 1,
             'class' => Signal::class,
-            'result' => Y::serialize(true),
         ]);
+        $this->assertTrue(Y::unserialize($workflow->logs()->firstWhere('index', 1)->result));
 
         $workflow->fresh();
         $context = WorkflowStub::getContext();
@@ -130,8 +130,8 @@ final class WorkflowStubTest extends TestCase
             'stored_workflow_id' => $workflow->id(),
             'index' => 1,
             'class' => Signal::class,
-            'result' => Y::serialize(true),
         ]);
+        $this->assertTrue(Y::unserialize($workflow->logs()->firstWhere('index', 1)->result));
 
         $workflow->fresh();
         $context = WorkflowStub::getContext();
@@ -178,7 +178,7 @@ final class WorkflowStubTest extends TestCase
             'stored_workflow_id' => $workflow->id(),
             'index' => 1,
             'class' => Signal::class,
-            'result' => Y::serialize(true),
         ]);
+        $this->assertTrue(Y::unserialize($workflow->logs()->firstWhere('index', 1)->result));
     }
 }

@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace Workflow\Serializers;
 
-use Opis\Closure\SerializableClosure;
-use function Opis\Closure\serialize as s;
-use function Opis\Closure\unserialize as u;
+use Laravel\SerializableClosure\SerializableClosure;
 
 final class Y implements SerializerInterface
 {
@@ -42,12 +40,16 @@ final class Y implements SerializerInterface
     public static function serialize($data): string
     {
         SerializableClosure::setSecretKey(config('app.key'));
-        return self::encode(s($data));
+        return self::encode(serialize(new SerializableClosure(static fn () => $data)));
     }
 
     public static function unserialize(string $data)
     {
         SerializableClosure::setSecretKey(config('app.key'));
-        return u(self::decode($data));
+        $unserialized = unserialize(self::decode($data));
+        if ($unserialized instanceof SerializableClosure) {
+            $unserialized = ($unserialized->getClosure())();
+        }
+        return $unserialized;
     }
 }

@@ -55,8 +55,8 @@ final class AwaitWithTimeoutsTest extends TestCase
             'stored_workflow_id' => $workflow->id(),
             'index' => 0,
             'class' => Signal::class,
-            'result' => Y::serialize(true),
         ]);
+        $this->assertTrue(Y::unserialize($workflow->logs()->firstWhere('index', 0)->result));
     }
 
     public function testLoadsStoredResult(): void
@@ -82,8 +82,8 @@ final class AwaitWithTimeoutsTest extends TestCase
             'stored_workflow_id' => $workflow->id(),
             'index' => 0,
             'class' => Signal::class,
-            'result' => Y::serialize(true),
         ]);
+        $this->assertTrue(Y::unserialize($workflow->logs()->firstWhere('index', 0)->result));
     }
 
     public function testResolvesConflictingResult(): void
@@ -111,7 +111,7 @@ final class AwaitWithTimeoutsTest extends TestCase
             'stored_workflow_id' => $workflow->id(),
             'index' => 0,
             'class' => Signal::class,
-            'result' => Y::serialize(false),
         ]);
+        $this->assertFalse(Y::unserialize($workflow->logs()->firstWhere('index', 0)->result));
     }
 }

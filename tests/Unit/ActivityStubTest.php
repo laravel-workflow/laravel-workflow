@@ -37,8 +37,8 @@ final class ActivityStubTest extends TestCase
             'stored_workflow_id' => $workflow->id(),
             'index' => 0,
             'class' => TestActivity::class,
-            'result' => Y::serialize('activity'),
         ]);
+        $this->assertSame('activity', Y::unserialize($workflow->logs()->firstWhere('index', 0)->result));
     }
 
     public function testLoadsStoredResult(): void
