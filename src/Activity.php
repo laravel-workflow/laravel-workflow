@@ -65,6 +65,10 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
             throw new BadMethodCallException('Execute method not implemented.');
         }
 
+        if ($this->storedWorkflow->logs()->whereIndex($this->index)->exists()) {
+            return;
+        }
+
         try {
             return $this->{'execute'}(...$this->arguments);
         } catch (\Throwable $throwable) {
