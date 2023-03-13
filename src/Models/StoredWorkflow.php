@@ -64,8 +64,6 @@ class StoredWorkflow extends Model
             'workflow_relationships',
             'child_workflow_id',
             'parent_workflow_id'
-        )->withPivot(
-            ['parent_index', 'parent_now']
-        );
+        )->withPivot(['parent_index', 'parent_now']);
     }
 }
