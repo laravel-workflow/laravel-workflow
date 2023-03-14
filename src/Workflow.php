@@ -99,6 +99,9 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
             return;
         }
 
+        $parentWorkflow = $this->storedWorkflow->parents()
+            ->first();
+
         $log = $this->storedWorkflow->logs()
             ->whereIndex($this->index)
             ->first();
@@ -112,7 +115,11 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
                 $this->{$signal->method}(...Y::unserialize($signal->arguments));
             });
 
-        $this->now = $log ? $log->now : Carbon::now();
+        if ($parentWorkflow) {
+            $this->now = $parentWorkflow->pivot->parent_now;
+        } else {
+            $this->now = $log ? $log->now : Carbon::now();
+        }
 
         WorkflowStub::setContext([
             'storedWorkflow' => $this->storedWorkflow,
@@ -177,6 +184,16 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
             $this->storedWorkflow->output = Y::serialize($this->coroutine->getReturn());
 
             $this->storedWorkflow->status->transitionTo(WorkflowCompletedStatus::class);
+
+            if ($parentWorkflow) {
+                $parentWorkflow->toWorkflow()
+                    ->next(
+                        $parentWorkflow->pivot->parent_index,
+                        $this->now,
+                        $this->storedWorkflow->class,
+                        $this->coroutine->getReturn()
+                    );
+            }
         }
     }
 }

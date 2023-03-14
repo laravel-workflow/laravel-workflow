@@ -1,0 +1,44 @@
+<?php
+
+declare(strict_types=1);
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+final class CreateWorkflowRelationshipsTable extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('workflow_relationships', static function (Blueprint $blueprint) {
+            $blueprint->id('id');
+            $blueprint->foreignId('parent_workflow_id')
+                ->nullable()
+                ->index();
+            $blueprint->unsignedBigInteger('parent_index');
+            $blueprint->timestamp('parent_now');
+            $blueprint->foreignId('child_workflow_id')
+                ->nullable()
+                ->index();
+            $blueprint->foreign('parent_workflow_id')
+                ->references('id')
+                ->on('workflows')
+                ->onDelete('cascade');
+            $blueprint->foreign('child_workflow_id')
+                ->references('id')
+                ->on('workflows')
+                ->onDelete('cascade');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('workflow_relationships');
+    }
+}

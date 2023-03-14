@@ -174,6 +174,19 @@ final class WorkflowStub
         $this->dispatch();
     }
 
+    public function startAsChild(StoredWorkflow $parentWorkflow, int $index, $now, ...$arguments): void
+    {
+        $this->storedWorkflow->arguments = Y::serialize($arguments);
+
+        $this->storedWorkflow->parents()
+            ->attach($parentWorkflow, [
+                'parent_index' => $index,
+                'parent_now' => $now,
+            ]);
+
+        $this->dispatch();
+    }
+
     public function fail($exception): void
     {
         try {
