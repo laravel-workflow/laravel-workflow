@@ -25,7 +25,7 @@ final class WorkflowTest extends TestCase
         $parentWorkflow = WorkflowStub::load(WorkflowStub::make(TestParentWorkflow::class)->id());
 
         $storedParentWorkflow = StoredWorkflow::findOrFail($parentWorkflow->id());
-        $storedParentWorkflow->status = WorkflowPendingStatus::class;
+        $storedParentWorkflow->arguments = Y::serialize([]);
         $storedParentWorkflow->save();
 
         $storedParentWorkflow->logs()
@@ -47,6 +47,7 @@ final class WorkflowTest extends TestCase
         $childWorkflow = WorkflowStub::load(WorkflowStub::make(TestChildWorkflow::class)->id());
 
         $storedChildWorkflow = StoredWorkflow::findOrFail($childWorkflow->id());
+        $storedChildWorkflow->arguments = Y::serialize([]);
         $storedChildWorkflow->status = WorkflowPendingStatus::class;
         $storedChildWorkflow->save();
         $storedChildWorkflow->parents()
@@ -63,11 +64,11 @@ final class WorkflowTest extends TestCase
                 'result' => Y::serialize('other'),
             ]);
 
+        (new (TestChildWorkflow::class)($storedChildWorkflow))->handle();
         (new (TestParentWorkflow::class)($storedParentWorkflow))->handle();
 
         $this->assertSame('2022-01-01 00:00:00', WorkflowStub::now()->toDateTimeString());
-        $this->assertSame(WorkflowCompletedStatus::class, $parentWorkflow->status());
-        $this->assertSame('workflow_activity_child_workflow', $parentWorkflow->output());
-        $this->assertSame(2, $parentWorkflow->logs()->count());
+        $this->assertSame(WorkflowCompletedStatus::class, $childWorkflow->status());
+        $this->assertSame('other', $childWorkflow->output());
     }
 }
