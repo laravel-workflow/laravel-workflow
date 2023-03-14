@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use Illuminate\Support\Carbon;
+use Tests\Fixtures\TestActivity;
 use Tests\Fixtures\TestChildWorkflow;
+use Tests\Fixtures\TestOtherActivity;
 use Tests\Fixtures\TestParentWorkflow;
 use Tests\TestCase;
 use Workflow\Models\StoredWorkflow;
