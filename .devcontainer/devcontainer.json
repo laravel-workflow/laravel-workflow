@@ -1,0 +1,23 @@
+{
+    "name": "codespaces-laravel",
+    "dockerComposeFile": ["docker-compose.yml"],
+    "workspaceFolder": "/workspace",
+    "service": "app",
+    "shutdownAction": "stopCompose",
+    "extensions": [
+		"editorconfig.editorconfig",
+        "ryannaddy.laravel-artisan",
+        "amiralizadeh9480.laravel-extra-intellisense",
+        "stef-k.laravel-goto-controller",
+        "codingyu.laravel-goto-view",
+        "mikestead.dotenv",
+        "eg2.tslint",
+        "christian-kohler.path-intellisense",
+        "esbenp.prettier-vscode",
+        "CoenraadS.bracket-pair-colorizer"
+	],
+    "settings": {
+        "#terminal.integrated.shell.linux": "/bin/bash"
+    },
+	"postCreateCommand": "cp .env.example .env && composer install",
+}
