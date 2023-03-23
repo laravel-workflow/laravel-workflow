@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Workflow\Serializers;
 
-use Closure;
 use Laravel\SerializableClosure\SerializableClosure;
 use Throwable;
 
@@ -39,6 +38,16 @@ final class Y implements SerializerInterface
         return $output;
     }
 
+    public static function serializable($data): bool
+    {
+        try {
+            serialize($data);
+            return true;
+        } catch (\Throwable $th) {
+            return false;
+        }
+    }
+
     public static function serialize($data): string
     {
         SerializableClosure::setSecretKey(config('app.key'));
@@ -50,7 +59,7 @@ final class Y implements SerializerInterface
                 'line' => $data->getLine(),
                 'file' => $data->getFile(),
                 'trace' => collect($data->getTrace())
-                    ->filter(static fn ($trace) => ! $trace instanceof Closure)
+                    ->filter(static fn ($trace) => self::serializable($trace))
                     ->toArray(),
             ];
         }
