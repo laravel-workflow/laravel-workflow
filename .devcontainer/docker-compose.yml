@@ -1,0 +1,32 @@
+version: "3"
+services:
+  app:
+    build: ./docker/app
+    volumes:
+      - ../:/workspace:cached
+    ports:
+      - 80:80
+    tty: true
+    environment:
+        APP_ENV: local
+        PHP_EXTENSION_XDEBUG: 1
+        PHP_EXTENSION_PGSQL: 1
+        PHP_EXTENSION_PDO_PGSQL: 1
+        APACHE_DOCUMENT_ROOT: /workspace/public
+  db:
+    image: postgres:13
+    restart: unless-stopped
+    ports:
+        - 5432:5432
+    environment:
+        POSTGRES_DB: laravel
+        POSTGRES_USER: laravel
+        POSTGRES_PASSWORD: laravel
+  redis:
+    image: redis:6-alpine
+    ports:
+      - 6379:6379
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - 8025:8025

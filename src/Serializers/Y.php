@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Workflow\Serializers;
 
+use Closure;
 use Laravel\SerializableClosure\SerializableClosure;
+use Throwable;
 
 final class Y implements SerializerInterface
 {
@@ -40,6 +42,17 @@ final class Y implements SerializerInterface
     public static function serialize($data): string
     {
         SerializableClosure::setSecretKey(config('app.key'));
+        if ($data instanceof Throwable) {
+            $data = [
+                'class' => get_class($data),
+                'message' => $data->getMessage(),
+                'code' => $data->getCode(),
+                'line' => $data->getLine(),
+                'trace' => collect($data->getTrace())
+                    ->filter(static fn ($trace) => $trace instanceof Closure)
+                    ->toArray(),
+            ];
+        }
         return self::encode(serialize(new SerializableClosure(static fn () => $data)));
     }
 

@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Serializers;
 
+use Closure;
 use Tests\Fixtures\TestEnum;
 use Tests\TestCase;
+use Throwable;
 use Workflow\Serializers\Y;
 
 final class SerializeTest extends TestCase
@@ -17,7 +19,19 @@ final class SerializeTest extends TestCase
     {
         $unserialized = Y::unserialize(Y::serialize($data));
         if (is_object($data)) {
-            $this->assertEqualsCanonicalizing($data, $unserialized);
+            if ($data instanceof Throwable) {
+                $this->assertEquals([
+                    'class' => get_class($data),
+                    'message' => $data->getMessage(),
+                    'code' => $data->getCode(),
+                    'line' => $data->getLine(),
+                    'trace' => collect($data->getTrace())
+                        ->filter(static fn ($trace) => $trace instanceof Closure)
+                        ->toArray(),
+                ], $unserialized);
+            } else {
+                $this->assertEqualsCanonicalizing($data, $unserialized);
+            }
         } else {
             $this->assertSame($data, $unserialized);
         }
