@@ -24,7 +24,9 @@ final class SerializeTest extends TestCase
                     'message' => $data->getMessage(),
                     'code' => $data->getCode(),
                     'line' => $data->getLine(),
-                    'trace' => collect($data->getTrace())->filter(fn ($trace) => $trace instanceof Closure)->toArray(),
+                    'trace' => collect($data->getTrace())
+                        ->filter(static fn ($trace) => $trace instanceof Closure)
+                        ->toArray(),
                 ], $unserialized);
             } else {
                 $this->assertEqualsCanonicalizing($data, $unserialized);
