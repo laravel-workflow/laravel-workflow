@@ -158,6 +158,8 @@ final class WorkflowStub
             ->delete();
         $this->storedWorkflow->timers()
             ->delete();
+        $this->storedWorkflow->parents()
+            ->detach();
 
         $this->dispatch();
     }
@@ -176,15 +178,24 @@ final class WorkflowStub
 
     public function startAsChild(StoredWorkflow $parentWorkflow, int $index, $now, ...$arguments): void
     {
-        $this->storedWorkflow->arguments = Y::serialize($arguments);
-
         $this->storedWorkflow->parents()
             ->attach($parentWorkflow, [
                 'parent_index' => $index,
                 'parent_now' => $now,
             ]);
 
-        $this->dispatch();
+        $this->start($arguments);
+    }
+
+    public function restartAsChild(StoredWorkflow $parentWorkflow, int $index, $now, ...$arguments): void
+    {
+        $this->storedWorkflow->parents()
+            ->attach($parentWorkflow, [
+                'parent_index' => $index,
+                'parent_now' => $now,
+            ]);
+
+        $this->restart($arguments);
     }
 
     public function fail($exception): void
