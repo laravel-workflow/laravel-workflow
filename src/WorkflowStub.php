@@ -190,7 +190,6 @@ final class WorkflowStub
 
     public function fail($exception): void
     {
-        // file_put_contents('/workspace/log.txt', file_get_contents('/workspace/log.txt') . 'ok1' . PHP_EOL);
         try {
             $this->storedWorkflow->exceptions()
                 ->create([

@@ -9,6 +9,7 @@ use Illuminate\Support\Carbon;
 use Tests\Fixtures\TestAwaitWorkflow;
 use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
+use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Y;
 use Workflow\Signal;
 use Workflow\States\WorkflowCompletedStatus;
@@ -22,7 +23,15 @@ final class WorkflowStubTest extends TestCase
     {
         Carbon::setTestNow('2022-01-01');
 
+        $parentWorkflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
+        $storedParentWorkflow = StoredWorkflow::findOrFail($parentWorkflow->id());
+        $storedParentWorkflow->update([
+            'arguments' => Y::serialize([]),
+            'status' => WorkflowPendingStatus::$name,
+        ]);
+
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
+        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
         $workflow->start();
         $workflow->cancel();
         while (! $workflow->isCanceled());
@@ -33,8 +42,13 @@ final class WorkflowStubTest extends TestCase
         $this->assertNull($workflow->output());
         $this->assertSame(1, $workflow->logs()->count());
 
+        $storedWorkflow->parents()->attach($storedParentWorkflow, [
+            'parent_index' => 0,
+            'parent_now' => now(),
+        ]);
         $workflow->fail(new Exception('test'));
-        $this->assertSame(WorkflowFailedStatus::class, $workflow->status());
+        $this->assertTrue($workflow->failed());
+        $this->assertTrue($parentWorkflow->failed());
 
         $workflow->cancel();
         while (! $workflow->isCanceled());
