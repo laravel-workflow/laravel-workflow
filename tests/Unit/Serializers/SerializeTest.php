@@ -55,6 +55,11 @@ final class SerializeTest extends TestCase
             'int(0)' => [0],
             'int(1)' => [1],
             'exception' => [new \Exception('test')],
+            'exception w/ closure' => [call_user_func(function () {
+                $e = new \Exception('test');
+                $e->fn = fn() => null;
+                return $e;
+            })],
             'float PHP_FLOAT_EPSILON' => [PHP_FLOAT_EPSILON],
             'float PHP_FLOAT_MIN' => [PHP_FLOAT_MIN],
             'float -PHP_FLOAT_MIN' => [-PHP_FLOAT_MIN],
