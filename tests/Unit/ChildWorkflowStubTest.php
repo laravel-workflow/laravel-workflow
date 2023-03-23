@@ -73,10 +73,11 @@ final class ChildWorkflowStubTest extends TestCase
             'arguments' => Y::serialize([]),
             'status' => WorkflowPendingStatus::$name,
         ]);
-        $storedChildWorkflow->parents()->attach($storedWorkflow, [
-            'parent_index' => 0,
-            'parent_now' => now(),
-        ]);
+        $storedChildWorkflow->parents()
+            ->attach($storedWorkflow, [
+                'parent_index' => 0,
+                'parent_now' => now(),
+            ]);
 
         $workflow = $storedWorkflow->toWorkflow();
 
