@@ -13,7 +13,6 @@ use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Y;
 use Workflow\Signal;
 use Workflow\States\WorkflowCompletedStatus;
-use Workflow\States\WorkflowFailedStatus;
 use Workflow\States\WorkflowPendingStatus;
 use Workflow\WorkflowStub;
 
@@ -42,10 +41,11 @@ final class WorkflowStubTest extends TestCase
         $this->assertNull($workflow->output());
         $this->assertSame(1, $workflow->logs()->count());
 
-        $storedWorkflow->parents()->attach($storedParentWorkflow, [
-            'parent_index' => 0,
-            'parent_now' => now(),
-        ]);
+        $storedWorkflow->parents()
+            ->attach($storedParentWorkflow, [
+                'parent_index' => 0,
+                'parent_now' => now(),
+            ]);
         $workflow->fail(new Exception('test'));
         $this->assertTrue($workflow->failed());
         $this->assertTrue($parentWorkflow->failed());
