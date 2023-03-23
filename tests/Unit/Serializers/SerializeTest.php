@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Serializers;
 
-use Closure;
 use Tests\Fixtures\TestEnum;
 use Tests\TestCase;
 use Throwable;
@@ -27,7 +26,7 @@ final class SerializeTest extends TestCase
                     'line' => $data->getLine(),
                     'file' => $data->getFile(),
                     'trace' => collect($data->getTrace())
-                        ->filter(static fn ($trace) => $trace instanceof Closure)
+                        ->filter(static fn ($trace) => Y::serializable($trace))
                         ->toArray(),
                 ], $unserialized);
             } else {
