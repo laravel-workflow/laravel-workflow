@@ -133,6 +133,11 @@ final class WorkflowStub
         return ! in_array($this->status(), [WorkflowCompletedStatus::class, WorkflowFailedStatus::class], true);
     }
 
+    public function failed(): bool
+    {
+        return $this->status() === WorkflowFailedStatus::class;
+    }
+
     public function status(): string|bool
     {
         return $this->storedWorkflow->fresh()
@@ -144,24 +149,6 @@ final class WorkflowStub
         $this->storedWorkflow->refresh();
 
         return $this;
-    }
-
-    public function restart(...$arguments): void
-    {
-        $this->storedWorkflow->arguments = Y::serialize($arguments);
-        $this->storedWorkflow->output = null;
-        $this->storedWorkflow->exceptions()
-            ->delete();
-        $this->storedWorkflow->logs()
-            ->delete();
-        $this->storedWorkflow->signals()
-            ->delete();
-        $this->storedWorkflow->timers()
-            ->delete();
-        $this->storedWorkflow->parents()
-            ->detach();
-
-        $this->dispatch();
     }
 
     public function resume(): void
@@ -179,27 +166,20 @@ final class WorkflowStub
     public function startAsChild(StoredWorkflow $parentWorkflow, int $index, $now, ...$arguments): void
     {
         $this->storedWorkflow->parents()
-            ->attach($parentWorkflow, [
-                'parent_index' => $index,
-                'parent_now' => $now,
-            ]);
+            ->detach();
 
-        $this->start($arguments);
-    }
-
-    public function restartAsChild(StoredWorkflow $parentWorkflow, int $index, $now, ...$arguments): void
-    {
         $this->storedWorkflow->parents()
             ->attach($parentWorkflow, [
                 'parent_index' => $index,
                 'parent_now' => $now,
             ]);
 
-        $this->restart($arguments);
+        $this->start(...$arguments);
     }
 
     public function fail($exception): void
     {
+        // file_put_contents('/workspace/log.txt', file_get_contents('/workspace/log.txt') . 'ok1' . PHP_EOL);
         try {
             $this->storedWorkflow->exceptions()
                 ->create([
@@ -211,6 +191,16 @@ final class WorkflowStub
         }
 
         $this->storedWorkflow->status->transitionTo(WorkflowFailedStatus::class);
+
+        $this->storedWorkflow->parents()
+            ->each(static function ($parentWorkflow) use ($exception) {
+                try {
+                    $parentWorkflow->toWorkflow()
+                        ->fail($exception);
+                } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
+                    return;
+                }
+            });
     }
 
     public function next($index, $now, $class, $result): void

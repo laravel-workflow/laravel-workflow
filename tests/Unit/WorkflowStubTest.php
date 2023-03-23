@@ -36,11 +36,6 @@ final class WorkflowStubTest extends TestCase
         $workflow->fail(new Exception('test'));
         $this->assertSame(WorkflowFailedStatus::class, $workflow->status());
 
-        $workflow->restart();
-        $workflow->fresh();
-        $this->assertSame(WorkflowPendingStatus::class, $workflow->status());
-        $this->assertSame(0, $workflow->logs()->count());
-
         $workflow->cancel();
         while (! $workflow->isCanceled());
 

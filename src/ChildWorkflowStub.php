@@ -9,7 +9,6 @@ use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use function React\Promise\resolve;
 use Workflow\Serializers\Y;
-use Workflow\States\WorkflowFailedStatus;
 
 final class ChildWorkflowStub
 {
@@ -46,8 +45,8 @@ final class ChildWorkflowStub
                 } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
                 }
                 $childWorkflowRunning = true;
-            } elseif ($childWorkflow->status() === WorkflowFailedStatus::class) {
-                $childWorkflow->restartAsChild($context->storedWorkflow, $context->index, $context->now, ...$arguments);
+            } elseif ($childWorkflow->failed()) {
+                $childWorkflow->startAsChild($context->storedWorkflow, $context->index, $context->now, ...$arguments);
                 $childWorkflowRunning = true;
             }
         }
