@@ -42,7 +42,7 @@ final class WorkflowStubTest extends TestCase
         $workflow->fresh();
         $this->assertSame(WorkflowPendingStatus::class, $workflow->status());
         $this->assertNull($workflow->output());
-        $this->assertSame(1, $workflow->logs()->count());
+        $this->assertSame(2, $workflow->logs()->count());
     }
 
     public function testComplete(): void
