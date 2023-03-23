@@ -50,7 +50,7 @@ final class Y implements SerializerInterface
                 'line' => $data->getLine(),
                 'file' => $data->getFile(),
                 'trace' => collect($data->getTrace())
-                    ->filter(static fn ($trace) => $trace instanceof Closure)
+                    ->filter(static fn ($trace) => ! $trace instanceof Closure)
                     ->toArray(),
             ];
         }
