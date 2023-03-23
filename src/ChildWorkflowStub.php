@@ -41,6 +41,7 @@ final class ChildWorkflowStub
             try {
                 $childWorkflow->resume();
             } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
+                // already running
             }
         } elseif (! $childWorkflow->completed()) {
             $childWorkflow->startAsChild($context->storedWorkflow, $context->index, $context->now, ...$arguments);
