@@ -40,7 +40,7 @@ final class Y implements SerializerInterface
     public static function serialize($data): string
     {
         SerializableClosure::setSecretKey(config('app.key'));
-        return self::encode(serialize(new SerializableClosure(static fn () => $data)));
+        return self::encode(serialize(new SerializableClosure(function () { return $data; })));
     }
 
     public static function unserialize(string $data)
