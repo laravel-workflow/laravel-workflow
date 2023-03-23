@@ -31,8 +31,21 @@ final class ChildWorkflowStub
             return resolve(Y::unserialize($log->result));
         }
 
-        WorkflowStub::make($workflow)
-            ->startAsChild($context->storedWorkflow, $context->index, $context->now, ...$arguments);
+        $storedChildWorkflow = $context->storedWorkflow->children()
+            ->wherePivot('parent_index', $context->index)
+            ->first();
+
+        $childWorkflow = $storedChildWorkflow ? $storedChildWorkflow->toWorkflow() : WorkflowStub::make($workflow);
+
+        if ($childWorkflow->running() && ! $childWorkflow->created()) {
+            try {
+                $childWorkflow->resume();
+            } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
+                // already running
+            }
+        } elseif (! $childWorkflow->completed()) {
+            $childWorkflow->startAsChild($context->storedWorkflow, $context->index, $context->now, ...$arguments);
+        }
 
         ++$context->index;
         WorkflowStub::setContext($context);

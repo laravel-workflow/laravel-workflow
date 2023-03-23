@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use Tests\Fixtures\TestActivity;
+use Tests\Fixtures\TestChildExceptionWorkflow;
 use Tests\Fixtures\TestChildWorkflow;
+use Tests\Fixtures\TestParentExceptionWorkflow;
 use Tests\Fixtures\TestParentWorkflow;
 use Tests\TestCase;
 use Workflow\States\WorkflowCompletedStatus;
+use Workflow\States\WorkflowFailedStatus;
 use Workflow\WorkflowStub;
 
 final class ParentWorkflowTest extends TestCase
@@ -24,6 +27,31 @@ final class ParentWorkflowTest extends TestCase
         $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
         $this->assertSame('workflow_activity_other', $workflow->output());
         $this->assertSame([TestActivity::class, TestChildWorkflow::class], $workflow->logs()
+            ->pluck('class')
+            ->sort()
+            ->values()
+            ->toArray());
+    }
+
+    public function testRetry(): void
+    {
+        $workflow = WorkflowStub::make(TestParentExceptionWorkflow::class);
+
+        $workflow->start(shouldThrow: true);
+
+        while ($workflow->running());
+
+        $this->assertSame(WorkflowFailedStatus::class, $workflow->status());
+        $this->assertNull($workflow->output());
+
+        $workflow->fresh()
+            ->start(shouldThrow: false);
+
+        while ($workflow->running());
+
+        $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
+        $this->assertSame('workflow_activity_other', $workflow->output());
+        $this->assertSame([TestActivity::class, TestChildExceptionWorkflow::class], $workflow->logs()
             ->pluck('class')
             ->sort()
             ->values()

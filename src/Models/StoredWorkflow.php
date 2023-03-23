@@ -66,4 +66,14 @@ class StoredWorkflow extends Model
             'parent_workflow_id'
         )->withPivot(['parent_index', 'parent_now']);
     }
+
+    public function children(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(
+            config('workflows.stored_workflow_model', self::class),
+            'workflow_relationships',
+            'parent_workflow_id',
+            'child_workflow_id'
+        )->withPivot(['parent_index', 'parent_now']);
+    }
 }
