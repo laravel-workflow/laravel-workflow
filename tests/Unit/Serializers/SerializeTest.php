@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Serializers;
 
+use Closure;
 use Tests\Fixtures\TestEnum;
 use Tests\TestCase;
 use Throwable;

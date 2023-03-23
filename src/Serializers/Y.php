@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Workflow\Serializers;
 
+use Closure;
 use Laravel\SerializableClosure\SerializableClosure;
 use Throwable;
 
