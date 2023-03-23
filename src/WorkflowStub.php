@@ -10,6 +10,7 @@ use ReflectionClass;
 use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Y;
 use Workflow\States\WorkflowCompletedStatus;
+use Workflow\States\WorkflowCreatedStatus;
 use Workflow\States\WorkflowFailedStatus;
 use Workflow\States\WorkflowPendingStatus;
 use Workflow\Traits\Awaits;
@@ -128,14 +129,24 @@ final class WorkflowStub
         return Y::unserialize($this->storedWorkflow->fresh()->output);
     }
 
-    public function running(): bool
+    public function completed(): bool
     {
-        return ! in_array($this->status(), [WorkflowCompletedStatus::class, WorkflowFailedStatus::class], true);
+        return $this->status() === WorkflowCompletedStatus::class;
+    }
+
+    public function created(): bool
+    {
+        return $this->status() === WorkflowCreatedStatus::class;
     }
 
     public function failed(): bool
     {
         return $this->status() === WorkflowFailedStatus::class;
+    }
+
+    public function running(): bool
+    {
+        return ! in_array($this->status(), [WorkflowCompletedStatus::class, WorkflowFailedStatus::class], true);
     }
 
     public function status(): string|bool
