@@ -57,6 +57,9 @@ final class WorkflowStubTest extends TestCase
         $this->assertSame(WorkflowPendingStatus::class, $workflow->status());
         $this->assertNull($workflow->output());
         $this->assertSame(2, $workflow->logs()->count());
+
+        $this->assertSame('redis', WorkflowStub::connection());
+        $this->assertSame('default', WorkflowStub::queue());
     }
 
     public function testComplete(): void
@@ -171,7 +174,7 @@ final class WorkflowStubTest extends TestCase
         $promise = WorkflowStub::awaitWithTimeout('1 minute', static fn () => false);
 
         $this->assertSame(1, $workflow->logs()->count());
-        $this->assertSame(1, WorkflowStub::getContext()->index);
+        $this->assertSame(2, WorkflowStub::getContext()->index);
 
         $workflow = WorkflowStub::load($workflow->id());
         $context = WorkflowStub::getContext();

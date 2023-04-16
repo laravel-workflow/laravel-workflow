@@ -116,7 +116,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
             });
 
         if ($parentWorkflow) {
-            $this->now = $parentWorkflow->pivot->parent_now;
+            $this->now = Carbon::parse($parentWorkflow->pivot->parent_now);
         } else {
             $this->now = $log ? $log->now : Carbon::now();
         }

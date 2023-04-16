@@ -6,8 +6,10 @@ namespace Tests\Feature;
 
 use Tests\Fixtures\TestActivity;
 use Tests\Fixtures\TestChildExceptionWorkflow;
+use Tests\Fixtures\TestChildTimerWorkflow;
 use Tests\Fixtures\TestChildWorkflow;
 use Tests\Fixtures\TestParentExceptionWorkflow;
+use Tests\Fixtures\TestParentTimerWorkflow;
 use Tests\Fixtures\TestParentWorkflow;
 use Tests\TestCase;
 use Workflow\States\WorkflowCompletedStatus;
@@ -52,6 +54,23 @@ final class ParentWorkflowTest extends TestCase
         $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
         $this->assertSame('workflow_activity_other', $workflow->output());
         $this->assertSame([TestActivity::class, TestChildExceptionWorkflow::class], $workflow->logs()
+            ->pluck('class')
+            ->sort()
+            ->values()
+            ->toArray());
+    }
+
+    public function testTimer(): void
+    {
+        $workflow = WorkflowStub::make(TestParentTimerWorkflow::class);
+
+        $workflow->start(1);
+
+        while ($workflow->running());
+
+        $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
+        $this->assertSame('workflow_activity_other', $workflow->output());
+        $this->assertSame([TestActivity::class, TestChildTimerWorkflow::class], $workflow->logs()
             ->pluck('class')
             ->sort()
             ->values()

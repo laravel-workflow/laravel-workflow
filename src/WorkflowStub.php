@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Workflow;
 
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use ReflectionClass;
 use Workflow\Models\StoredWorkflow;
@@ -52,7 +53,7 @@ final class WorkflowStub
                     'arguments' => Y::serialize($arguments),
                 ]);
 
-            return Signal::dispatch($this->storedWorkflow);
+            return Signal::dispatch($this->storedWorkflow, self::connection(), self::queue());
         }
 
         if (collect((new ReflectionClass($this->storedWorkflow->class))->getMethods())
@@ -67,6 +68,19 @@ final class WorkflowStub
             ))
                 ->query($method);
         }
+    }
+
+    public static function connection()
+    {
+        return Arr::get(
+            (new ReflectionClass(self::$context->storedWorkflow->class))->getDefaultProperties(),
+            'connection'
+        );
+    }
+
+    public static function queue()
+    {
+        return Arr::get((new ReflectionClass(self::$context->storedWorkflow->class))->getDefaultProperties(), 'queue');
     }
 
     public static function make($class): static
