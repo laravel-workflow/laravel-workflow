@@ -75,10 +75,15 @@ trait Timers
         if (! self::$context->replaying) {
             $workflow = new (self::$context->storedWorkflow->class)(self::$context->storedWorkflow);
 
-            Signal::dispatch(self::$context->storedWorkflow)
-                ->onConnection($workflow->connection)
-                ->onQueue($workflow->queue)
-                ->delay($timer->stop_at);
+            $signal = Signal::dispatch(self::$context->storedWorkflow)->delay($timer->stop_at);
+
+            if (property_exists($workflow, 'connection')) {
+                $signal->onConnection($workflow->connection);
+            }
+
+            if (property_exists($workflow, 'queue')) {
+                $signal->onQueue($workflow->queue);
+            }
         }
 
         ++self::$context->index;

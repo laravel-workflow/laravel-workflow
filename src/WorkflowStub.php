@@ -52,7 +52,19 @@ final class WorkflowStub
                     'arguments' => Y::serialize($arguments),
                 ]);
 
-            return Signal::dispatch($this->storedWorkflow);
+            $workflow = new ($this->storedWorkflow->class)($this->storedWorkflow);
+
+            $signal = Signal::dispatch($this->storedWorkflow);
+
+            if (property_exists($workflow, 'connection')) {
+                $signal->onConnection($workflow->connection);
+            }
+
+            if (property_exists($workflow, 'queue')) {
+                $signal->onQueue($workflow->queue);
+            }
+
+            return $signal;
         }
 
         if (collect((new ReflectionClass($this->storedWorkflow->class))->getMethods())
