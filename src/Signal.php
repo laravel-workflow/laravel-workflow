@@ -25,8 +25,12 @@ final class Signal implements ShouldBeEncrypted, ShouldQueue
     public int $maxExceptions = 0;
 
     public function __construct(
-        public StoredWorkflow $storedWorkflow
+        public StoredWorkflow $storedWorkflow,
+        $connection = null,
+        $queue = null
     ) {
+        $this->onConnection($connection ?? config('queue.default'));
+        $this->onQueue($queue ?? 'default');
     }
 
     public function middleware()

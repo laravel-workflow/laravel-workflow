@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Workflow;
 
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use ReflectionClass;
 use Workflow\Models\StoredWorkflow;
@@ -52,17 +53,7 @@ final class WorkflowStub
                     'arguments' => Y::serialize($arguments),
                 ]);
 
-            $signal = Signal::dispatch($this->storedWorkflow);
-
-            if (self::connection()) {
-                $signal->onConnection(self::connection());
-            }
-
-            if (self::queue()) {
-                $signal->onQueue(self::queue());
-            }
-
-            return $signal;
+            return Signal::dispatch($this->storedWorkflow, self::connection(), self::queue());
         }
 
         if (collect((new ReflectionClass($this->storedWorkflow->class))->getMethods())
@@ -81,20 +72,15 @@ final class WorkflowStub
 
     public static function connection()
     {
-        try {
-            return (new ReflectionClass(self::$context->storedWorkflow->class))->getDefaultProperties()['connection'];
-        } catch (\Throwable $th) {
-            // no such property
-        }
+        return Arr::get(
+            (new ReflectionClass(self::$context->storedWorkflow->class))->getDefaultProperties(),
+            'connection'
+        );
     }
 
     public static function queue()
     {
-        try {
-            return (new ReflectionClass(self::$context->storedWorkflow->class))->getDefaultProperties()['queue'];
-        } catch (\Throwable $th) {
-            // no such property
-        }
+        return Arr::get((new ReflectionClass(self::$context->storedWorkflow->class))->getDefaultProperties(), 'queue');
     }
 
     public static function make($class): static

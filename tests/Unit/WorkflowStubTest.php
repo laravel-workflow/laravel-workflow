@@ -174,7 +174,7 @@ final class WorkflowStubTest extends TestCase
         $promise = WorkflowStub::awaitWithTimeout('1 minute', static fn () => false);
 
         $this->assertSame(1, $workflow->logs()->count());
-        $this->assertSame(1, WorkflowStub::getContext()->index);
+        $this->assertSame(2, WorkflowStub::getContext()->index);
 
         $workflow = WorkflowStub::load($workflow->id());
         $context = WorkflowStub::getContext();
