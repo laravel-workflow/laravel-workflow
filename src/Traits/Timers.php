@@ -73,7 +73,12 @@ trait Timers
         }
 
         if (! self::$context->replaying) {
-            Signal::dispatch(self::$context->storedWorkflow)->delay($timer->stop_at);
+            $workflow = new (self::$context->storedWorkflow->class)(self::$context->storedWorkflow);
+
+            Signal::dispatch(self::$context->storedWorkflow)
+                ->onConnection($workflow->connection)
+                ->onQueue($workflow->queue)
+                ->delay($timer->stop_at);
         }
 
         ++self::$context->index;
