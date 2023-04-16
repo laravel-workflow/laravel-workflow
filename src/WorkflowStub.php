@@ -54,14 +54,12 @@ final class WorkflowStub
 
             $signal = Signal::dispatch($this->storedWorkflow);
 
-            $connection = self::getPropertyValue($this->storedWorkflow->class, 'connection');
-            if ($connection) {
-                $signal->onConnection($connection);
+            if (self::connection()) {
+                $signal->onConnection(self::connection());
             }
 
-            $queue = self::getPropertyValue($this->storedWorkflow->class, 'queue');
-            if ($queue) {
-                $signal->onQueue($queue);
+            if (self::queue()) {
+                $signal->onQueue(self::queue());
             }
 
             return $signal;
@@ -81,10 +79,19 @@ final class WorkflowStub
         }
     }
 
-    public static function getPropertyValue($class, $property)
+    public static function connection()
     {
         try {
-            return (new ReflectionClass($class))->getDefaultProperties()[$property];
+            return (new ReflectionClass(self::$context->storedWorkflow->class))->getDefaultProperties()['connection'];
+        } catch (\Throwable $th) {
+            // no such property
+        }
+    }
+
+    public static function queue()
+    {
+        try {
+            return (new ReflectionClass(self::$context->storedWorkflow->class))->getDefaultProperties()['queue'];
         } catch (\Throwable $th) {
             // no such property
         }
