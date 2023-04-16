@@ -57,6 +57,10 @@ final class WorkflowStubTest extends TestCase
         $this->assertSame(WorkflowPendingStatus::class, $workflow->status());
         $this->assertNull($workflow->output());
         $this->assertSame(2, $workflow->logs()->count());
+
+        $this->assertSame('redis', WorkflowStub::getPropertyValue(TestWorkflow::class, 'connection'));
+        $this->assertSame('default', WorkflowStub::getPropertyValue(TestWorkflow::class, 'queue'));
+        $this->assertNull(WorkflowStub::getPropertyValue(TestWorkflow::class, 'nothing'));
     }
 
     public function testComplete(): void

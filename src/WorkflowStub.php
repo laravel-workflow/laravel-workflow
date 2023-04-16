@@ -52,16 +52,16 @@ final class WorkflowStub
                     'arguments' => Y::serialize($arguments),
                 ]);
 
-            $workflow = new ($this->storedWorkflow->class)($this->storedWorkflow);
-
             $signal = Signal::dispatch($this->storedWorkflow);
 
-            if (property_exists($workflow, 'connection')) {
-                $signal->onConnection($workflow->connection);
+            $connection = self::getPropertyValue($this->storedWorkflow->class, 'connection');
+            if ($connection) {
+                $signal->onConnection($connection);
             }
 
-            if (property_exists($workflow, 'queue')) {
-                $signal->onQueue($workflow->queue);
+            $queue = self::getPropertyValue($this->storedWorkflow->class, 'queue');
+            if ($queue) {
+                $signal->onQueue($queue);
             }
 
             return $signal;
@@ -78,6 +78,15 @@ final class WorkflowStub
                 ...Y::unserialize($this->storedWorkflow->arguments),
             ))
                 ->query($method);
+        }
+    }
+
+    public static function getPropertyValue($class, $property)
+    {
+        try {
+            return (new ReflectionClass($class))->getDefaultProperties()[$property];
+        } catch (\Throwable $th) {
+            // no such property
         }
     }
 
