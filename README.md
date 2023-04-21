@@ -19,6 +19,10 @@ Some key features and benefits of Laravel Workflow include:
 
 Documentation for Laravel Workflow can be found on the [Laravel Workflow website](https://laravel-workflow.com/docs/installation).
 
+## Community
+
+You can find us in the [GitHub discussions](https://github.com/laravel-workflow/laravel-workflow/discussions) and also on our [Discord channel](https://discord.gg/xu5aDDpqVy)
+
 ## Usage
 
 **1. Create a workflow.**
