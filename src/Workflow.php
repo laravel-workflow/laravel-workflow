@@ -134,22 +134,24 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
             $this->index = WorkflowStub::getContext()->index;
 
             $nextLog = $this->storedWorkflow->logs()
-                ->whereIndex($this->index + 1)
+                ->whereIndex($this->index)
                 ->first();
 
-            $this->storedWorkflow
-                ->signals()
-                ->when($nextLog, static function ($query, $nextLog): void {
-                    $query->where('created_at', '<=', $nextLog->created_at->format('Y-m-d H:i:s.u'));
-                })
-                ->when($log, static function ($query, $log): void {
-                    $query->where('created_at', '>', $log->created_at->format('Y-m-d H:i:s.u'));
-                })
-                ->each(function ($signal): void {
-                    $this->{$signal->method}(...Y::unserialize($signal->arguments));
-                });
+            if ($log) {
+                $this->storedWorkflow
+                    ->signals()
+                    ->where('created_at', '>', $log->created_at->format('Y-m-d H:i:s.u'))
+                    ->when($nextLog, static function ($query, $nextLog): void {
+                        $query->where('created_at', '<=', $nextLog->created_at->format('Y-m-d H:i:s.u'));
+                    })
+                    ->each(function ($signal): void {
+                        $this->{$signal->method}(...Y::unserialize($signal->arguments));
+                    });
+            }
 
-            $this->now = $nextLog ? $nextLog->now : Carbon::now();
+            $log = $nextLog;
+
+            $this->now = $log ? $log->now : Carbon::now();
 
             WorkflowStub::setContext([
                 'storedWorkflow' => $this->storedWorkflow,
