@@ -38,9 +38,9 @@ final class StateMachineWorkflowTest extends TestCase
         $workflow = WorkflowStub::make(TestStateMachineWorkflow::class);
 
         $workflow->start();
-        sleep(1);
+        sleep(3);
         $workflow->submit();
-        sleep(1);
+        sleep(3);
         $workflow->deny();
 
         while ($workflow->running());
