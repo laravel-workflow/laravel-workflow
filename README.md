@@ -23,6 +23,10 @@ Documentation for Laravel Workflow can be found on the [Laravel Workflow website
 
 You can find us in the [GitHub discussions](https://github.com/laravel-workflow/laravel-workflow/discussions) and also on our [Discord channel](https://discord.gg/xu5aDDpqVy).
 
+## Sample App
+
+There's also a [sample application](https://github.com/laravel-workflow/sample-app) that you can run directly from GitHub in your browser.
+
 ## Usage
 
 **1. Create a workflow.**
