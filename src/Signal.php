@@ -29,8 +29,10 @@ final class Signal implements ShouldBeEncrypted, ShouldQueue
         $connection = null,
         $queue = null
     ) {
-        $this->onConnection($connection ?? config('queue.default'));
-        $this->onQueue($queue ?? 'default');
+        $connection = $connection ?? config('queue.default');
+        $queue = $queue ?? config('queue.connections.' . $connection . '.queue', 'default');
+        $this->onConnection($connection);
+        $this->onQueue($queue);
     }
 
     public function middleware()
