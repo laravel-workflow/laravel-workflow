@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Workflow\Traits;
 
+use Throwable;
 use Workflow\ActivityStub;
 
 trait Sagas
@@ -45,7 +46,13 @@ trait Sagas
             yield ActivityStub::all($compensations);
         } else {
             foreach ($this->compensations as $compensation) {
-                yield $compensation();
+                try {
+                    yield $compensation();
+                } catch (Throwable $th) {
+                    if (! $this->continueWithError) {
+                        throw $th;
+                    }
+                }
             }
         }
     }
