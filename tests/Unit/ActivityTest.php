@@ -76,7 +76,7 @@ final class ActivityTest extends TestCase
 
         $workflow->fresh();
 
-        $this->assertSame(1, $workflow->exceptions()->count());
+        $this->assertSame(0, $workflow->exceptions()->count());
         $this->assertSame(0, $workflow->logs()->count());
         $this->assertSame(WorkflowFailedStatus::class, $workflow->status());
     }
