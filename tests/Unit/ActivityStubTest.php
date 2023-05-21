@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Exception;
 use Tests\Fixtures\TestActivity;
 use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
@@ -63,6 +64,32 @@ final class ActivityStubTest extends TestCase
             });
 
         $this->assertSame('test', $result);
+    }
+
+    public function testLoadsStoredException(): void
+    {
+        $this->expectException(Exception::class);
+
+        $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
+        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
+        $storedWorkflow->update([
+            'arguments' => Y::serialize([]),
+            'status' => WorkflowPendingStatus::$name,
+        ]);
+        $storedWorkflow->logs()
+            ->create([
+                'index' => 0,
+                'now' => WorkflowStub::now(),
+                'class' => TestActivity::class,
+                'result' => Y::serialize(new Exception('test')),
+            ]);
+
+        ActivityStub::make(TestActivity::class)
+            ->then(static function ($value) use (&$result) {
+                $result = $value;
+            });
+
+        $this->assertSame('test', $result['message']);
     }
 
     public function testAll(): void
