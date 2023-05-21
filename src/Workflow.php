@@ -21,12 +21,14 @@ use Workflow\Serializers\Y;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowRunningStatus;
 use Workflow\States\WorkflowWaitingStatus;
+use Workflow\Traits\Sagas;
 
 class Workflow implements ShouldBeEncrypted, ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
     use Queueable;
+    use Sagas;
     use SerializesModels;
 
     public int $tries = 0;
@@ -183,18 +185,19 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
         }
 
         if (! $this->replaying) {
-            $this->storedWorkflow->output = Y::serialize($this->coroutine->getReturn());
+            try {
+                $return = $this->coroutine->getReturn();
+            } catch (Throwable $th) {
+                throw new Exception('Workflow failed.');
+            }
+
+            $this->storedWorkflow->output = Y::serialize($return);
 
             $this->storedWorkflow->status->transitionTo(WorkflowCompletedStatus::class);
 
             if ($parentWorkflow) {
                 $parentWorkflow->toWorkflow()
-                    ->next(
-                        $parentWorkflow->pivot->parent_index,
-                        $this->now,
-                        $this->storedWorkflow->class,
-                        $this->coroutine->getReturn()
-                    );
+                    ->next($parentWorkflow->pivot->parent_index, $this->now, $this->storedWorkflow->class, $return);
             }
         }
     }
