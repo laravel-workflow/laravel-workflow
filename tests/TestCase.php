@@ -10,7 +10,7 @@ use Symfony\Component\Process\Process;
 
 abstract class TestCase extends BaseTestCase
 {
-    const NUMBER_OF_WORKERS = 2;
+    public const NUMBER_OF_WORKERS = 2;
 
     private static $workers = [];
 
@@ -18,7 +18,7 @@ abstract class TestCase extends BaseTestCase
     {
         Dotenv::createImmutable(__DIR__ . '/..')->safeLoad();
 
-        for ($i = 0; $i < self::NUMBER_OF_WORKERS; $i++) { 
+        for ($i = 0; $i < self::NUMBER_OF_WORKERS; $i++) {
             self::$workers[$i] = new Process(['php', 'artisan', 'queue:work']);
             self::$workers[$i]->start();
         }
