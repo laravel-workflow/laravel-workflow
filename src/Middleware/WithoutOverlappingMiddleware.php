@@ -6,7 +6,6 @@ namespace Workflow\Middleware;
 
 use Illuminate\Container\Container;
 use Illuminate\Contracts\Cache\Repository as Cache;
-use Illuminate\Queue\Events\WorkerStopping;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\InteractsWithTime;
 
@@ -44,7 +43,7 @@ class WithoutOverlappingMiddleware
         $locked = $this->lock();
 
         if ($locked) {
-            Queue::stopping(fn (WorkerStopping $event) => $this->unlock());
+            Queue::stopping(fn () => $this->unlock());
             try {
                 $next($job);
             } finally {
