@@ -94,6 +94,17 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
     {
         $workflow = $this->storedWorkflow->toWorkflow();
 
+        $throwable = [
+            'class' => get_class($throwable),
+            'message' => $throwable->getMessage(),
+            'code' => $throwable->getCode(),
+            'line' => $throwable->getLine(),
+            'file' => $throwable->getFile(),
+            'trace' => collect($throwable->getTrace())
+                ->filter(static fn ($trace) => Y::serializable($trace))
+                ->toArray(),
+        ];
+
         Exception::dispatch(
             $this->index,
             $this->now,
