@@ -13,6 +13,7 @@ use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
 use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Y;
+use Workflow\States\WorkflowCreatedStatus;
 use Workflow\States\WorkflowFailedStatus;
 use Workflow\WorkflowStub;
 
@@ -78,7 +79,7 @@ final class ActivityTest extends TestCase
 
         $this->assertSame(0, $workflow->exceptions()->count());
         $this->assertSame(0, $workflow->logs()->count());
-        $this->assertSame(WorkflowFailedStatus::class, $workflow->status());
+        $this->assertSame(WorkflowCreatedStatus::class, $workflow->status());
     }
 
     public function testActivityAlreadyComplete(): void
