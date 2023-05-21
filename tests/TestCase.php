@@ -10,29 +10,35 @@ use Symfony\Component\Process\Process;
 
 abstract class TestCase extends BaseTestCase
 {
-    private static \Symfony\Component\Process\Process $process;
+    public const NUMBER_OF_WORKERS = 2;
+
+    private static $workers = [];
 
     public static function setUpBeforeClass(): void
     {
         Dotenv::createImmutable(__DIR__ . '/..')->safeLoad();
 
-        self::$process = new Process(['php', 'artisan', 'queue:work']);
-        self::$process->start();
+        for ($i = 0; $i < self::NUMBER_OF_WORKERS; $i++) {
+            self::$workers[$i] = new Process(['php', 'artisan', 'queue:work']);
+            self::$workers[$i]->start();
+        }
     }
 
     public static function tearDownAfterClass(): void
     {
-        self::$process->stop();
+        foreach (self::$workers as $worker) {
+            $worker->stop();
+        }
     }
 
     protected function defineDatabaseMigrations()
     {
-        $this->loadLaravelMigrations();
-
         $this->artisan('migrate:fresh', [
             '--path' => dirname(__DIR__) . '/src/migrations',
             '--realpath' => true,
         ]);
+
+        $this->loadLaravelMigrations();
     }
 
     protected function getPackageProviders($app)

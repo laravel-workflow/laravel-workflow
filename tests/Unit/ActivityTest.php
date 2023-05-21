@@ -13,6 +13,7 @@ use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
 use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Y;
+use Workflow\States\WorkflowCreatedStatus;
 use Workflow\States\WorkflowFailedStatus;
 use Workflow\WorkflowStub;
 
@@ -65,8 +66,6 @@ final class ActivityTest extends TestCase
 
     public function testFailedActivity(): void
     {
-        $this->expectException(\Spatie\ModelStates\Exceptions\TransitionNotFound::class);
-
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $activity = new TestExceptionActivity(0, now()->toDateTimeString(), StoredWorkflow::findOrFail(
             $workflow->id()
@@ -76,9 +75,9 @@ final class ActivityTest extends TestCase
 
         $workflow->fresh();
 
-        $this->assertSame(1, $workflow->exceptions()->count());
+        $this->assertSame(0, $workflow->exceptions()->count());
         $this->assertSame(0, $workflow->logs()->count());
-        $this->assertSame(WorkflowFailedStatus::class, $workflow->status());
+        $this->assertSame(WorkflowCreatedStatus::class, $workflow->status());
     }
 
     public function testActivityAlreadyComplete(): void

@@ -92,8 +92,27 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
 
     public function failed(Throwable $throwable): void
     {
-        $this->storedWorkflow->toWorkflow()
-            ->fail($throwable);
+        $workflow = $this->storedWorkflow->toWorkflow();
+
+        $throwable = [
+            'class' => get_class($throwable),
+            'message' => $throwable->getMessage(),
+            'code' => $throwable->getCode(),
+            'line' => $throwable->getLine(),
+            'file' => $throwable->getFile(),
+            'trace' => collect($throwable->getTrace())
+                ->filter(static fn ($trace) => Y::serializable($trace))
+                ->toArray(),
+        ];
+
+        Exception::dispatch(
+            $this->index,
+            $this->now,
+            $this->storedWorkflow,
+            $throwable,
+            $workflow->connection(),
+            $workflow->queue()
+        );
     }
 
     public function heartbeat(): void

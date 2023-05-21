@@ -8,6 +8,7 @@ use function React\Promise\all;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use function React\Promise\resolve;
+use Throwable;
 use Workflow\Serializers\Y;
 
 final class ActivityStub
@@ -28,7 +29,15 @@ final class ActivityStub
         if ($log) {
             ++$context->index;
             WorkflowStub::setContext($context);
-            return resolve(Y::unserialize($log->result));
+            $result = Y::unserialize($log->result);
+            if (
+                is_array($result) &&
+                array_key_exists('class', $result) &&
+                is_subclass_of($result['class'], Throwable::class)
+            ) {
+                throw new $result['class']($result['message'], (int) $result['code']);
+            }
+            return resolve($result);
         }
 
         $activity::dispatch($context->index, $context->now, $context->storedWorkflow, ...$arguments);
