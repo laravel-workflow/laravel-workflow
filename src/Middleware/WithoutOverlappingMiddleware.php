@@ -6,6 +6,7 @@ namespace Workflow\Middleware;
 
 use Illuminate\Container\Container;
 use Illuminate\Contracts\Cache\Repository as Cache;
+use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\InteractsWithTime;
 
@@ -29,6 +30,10 @@ class WithoutOverlappingMiddleware
 
     private $cache;
 
+    private $job;
+
+    private $active = true;
+
     public function __construct($workflowId, $type, $releaseAfter = 0, $expiresAfter = 0)
     {
         $this->key = "{$workflowId}";
@@ -43,7 +48,10 @@ class WithoutOverlappingMiddleware
         $locked = $this->lock();
 
         if ($locked) {
-            Queue::stopping(fn () => $this->unlock());
+            Queue::before(
+                fn (JobProcessing $event) => $this->active = $job->job->getJobId() === $event->job->getJobId()
+            );
+            Queue::stopping(fn () => $this->active ? $this->unlock() : null);
             try {
                 $next($job);
             } finally {
