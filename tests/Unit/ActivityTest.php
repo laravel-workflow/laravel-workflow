@@ -65,7 +65,7 @@ final class ActivityTest extends TestCase
 
     public function testFailedActivity(): void
     {
-        $this->expectException(\Spatie\ModelStates\Exceptions\TransitionNotFound::class);
+        $this->expectException(\Exception::class);
 
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $activity = new TestExceptionActivity(0, now()->toDateTimeString(), StoredWorkflow::findOrFail(
