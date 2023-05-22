@@ -40,14 +40,14 @@ trait Sagas
     {
         if ($this->parallelCompensation) {
             $compensations = [];
-            for (end($this->compensations); key($this->compensations) !== null; prev($this->compensations)) {
-                $compensations[] = current($this->compensations);
+            foreach ($this->compensations as $compensation) {
+                $compensations[] = $compensation();
             }
             yield ActivityStub::all($compensations);
         } else {
-            foreach ($this->compensations as $compensation) {
+            for (end($this->compensations); key($this->compensations) !== null; prev($this->compensations)) {
                 try {
-                    yield $compensation();
+                    yield current($this->compensations)();
                 } catch (Throwable $th) {
                     if (! $this->continueWithError) {
                         throw $th;
