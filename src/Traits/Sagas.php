@@ -45,9 +45,9 @@ trait Sagas
             }
             yield ActivityStub::all($compensations);
         } else {
-            foreach ($this->compensations as $compensation) {
+            for (end($this->compensations); key($this->compensations) !== null; prev($this->compensations)) {
                 try {
-                    yield $compensation();
+                    yield current($this->compensations)();
                 } catch (Throwable $th) {
                     if (! $this->continueWithError) {
                         throw $th;
