@@ -12,6 +12,7 @@ use React\Promise\PromiseInterface;
 use function React\Promise\resolve;
 use Throwable;
 use Workflow\Serializers\Y;
+use ReflectionClass;
 
 final class ActivityStub
 {
