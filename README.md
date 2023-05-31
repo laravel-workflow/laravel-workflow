@@ -5,7 +5,7 @@
 
 Laravel Workflow is a package for the Laravel web framework that provides tools for defining and managing workflows and activities. A workflow is a series of interconnected activities that are executed in a specific order to achieve a desired result. Activities are individual tasks or pieces of logic that are executed as part of a workflow.
 
-Laravel Workflow can be used to automate and manage complex processes, such as financial transactions, data analysis, data pipelines, microservices, job tracking, user signup flows and other business processes. By using Laravel Workflow, developers can break down large, complex processes into smaller, modular units that can be easily maintained and updated.
+Laravel Workflow can be used to automate and manage complex processes, such as financial transactions, data analysis, data pipelines, microservices, job tracking, user signup flows, sagas and other business processes. By using Laravel Workflow, developers can break down large, complex processes into smaller, modular units that can be easily maintained and updated.
 
 Some key features and benefits of Laravel Workflow include:
 
