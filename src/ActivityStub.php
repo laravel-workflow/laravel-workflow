@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Workflow;
 
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Queue;
 use function React\Promise\all;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
@@ -37,6 +39,26 @@ final class ActivityStub
             ) {
                 throw new $result['class']($result['message'], (int) $result['code']);
             }
+            return resolve($result);
+        }
+
+        $connection = Arr::get(
+            (new ReflectionClass($activity))->getDefaultProperties(),
+            'connection'
+        ) ?: Queue::getDefaultDriver();
+
+        if ($connection === 'sync') {
+            $result = $activity::dispatchNow($context->index, $context->now, $context->storedWorkflow, ...$arguments);
+            $context->storedWorkflow->logs()
+                ->create([
+                    'index' => $context->index,
+                    'now' => $context->now,
+                    'class' => $activity,
+                    'result' => Y::serialize($result),
+                ]);
+
+            ++$context->index;
+            WorkflowStub::setContext($context);
             return resolve($result);
         }
 
