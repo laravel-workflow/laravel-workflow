@@ -50,7 +50,6 @@ final class Y implements SerializerInterface
 
     public static function serialize($data): string
     {
-        SerializableClosure::setSecretKey(config('app.key'));
         if ($data instanceof Throwable) {
             $data = [
                 'class' => get_class($data),
@@ -68,7 +67,6 @@ final class Y implements SerializerInterface
 
     public static function unserialize(string $data)
     {
-        SerializableClosure::setSecretKey(config('app.key'));
         $unserialized = unserialize(self::decode($data));
         if ($unserialized instanceof SerializableClosure) {
             $unserialized = ($unserialized->getClosure())();
