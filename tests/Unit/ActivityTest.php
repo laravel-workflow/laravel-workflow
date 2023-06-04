@@ -24,9 +24,7 @@ final class ActivityTest extends TestCase
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $activity = new TestOtherActivity(0, now()->toDateTimeString(), StoredWorkflow::whereUuid(
             $workflow->id()
-        )->firstOrFail(), [
-            'other',
-        ]);
+        )->firstOrFail(), ['other']);
         $activity->timeout = 1;
         $activity->heartbeat();
 
@@ -95,9 +93,7 @@ final class ActivityTest extends TestCase
         ]);
         $activity = new TestOtherActivity(0, now()->toDateTimeString(), StoredWorkflow::whereUuid(
             $workflow->id()
-        )->firstOrFail(), [
-            'other',
-        ]);
+        )->firstOrFail(), ['other']);
         $activity->timeout = 1;
         $activity->heartbeat();
 
