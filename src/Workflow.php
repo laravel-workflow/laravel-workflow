@@ -21,12 +21,10 @@ use Workflow\Serializers\Y;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowRunningStatus;
 use Workflow\States\WorkflowWaitingStatus;
-use Workflow\Traits\Continues;
 use Workflow\Traits\Sagas;
 
 class Workflow implements ShouldBeEncrypted, ShouldQueue
 {
-    use Continues;
     use Dispatchable;
     use InteractsWithQueue;
     use Queueable;

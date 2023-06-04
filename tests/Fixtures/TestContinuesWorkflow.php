@@ -21,6 +21,6 @@ final class TestContinuesWorkflow extends Workflow
         if ($count >= 10) {
             return $results;
         }
-        return WorkflowStub::continueAsNew($count);
+        WorkflowStub::continueAsNew($count);
     }
 }
