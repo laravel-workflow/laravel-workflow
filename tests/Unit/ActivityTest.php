@@ -22,7 +22,9 @@ final class ActivityTest extends TestCase
     public function testActivity(): void
     {
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
-        $activity = new TestOtherActivity(0, now()->toDateTimeString(), StoredWorkflow::findOrFail($workflow->id()), [
+        $activity = new TestOtherActivity(0, now()->toDateTimeString(), StoredWorkflow::whereUuid(
+            $workflow->id()
+        )->firstOrFail(), [
             'other',
         ]);
         $activity->timeout = 1;
@@ -41,7 +43,9 @@ final class ActivityTest extends TestCase
         $this->expectException(BadMethodCallException::class);
 
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
-        $activity = new TestInvalidActivity(0, now()->toDateTimeString(), StoredWorkflow::findOrFail($workflow->id()));
+        $activity = new TestInvalidActivity(0, now()->toDateTimeString(), StoredWorkflow::whereUuid(
+            $workflow->id()
+        )->firstOrFail());
 
         $activity->handle();
     }
@@ -67,9 +71,9 @@ final class ActivityTest extends TestCase
     public function testFailedActivity(): void
     {
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
-        $activity = new TestExceptionActivity(0, now()->toDateTimeString(), StoredWorkflow::findOrFail(
+        $activity = new TestExceptionActivity(0, now()->toDateTimeString(), StoredWorkflow::whereUuid(
             $workflow->id()
-        ));
+        )->firstOrFail());
 
         $activity->failed(new Exception('failed'));
 
@@ -83,13 +87,15 @@ final class ActivityTest extends TestCase
     public function testActivityAlreadyComplete(): void
     {
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
-        StoredWorkflow::findOrFail($workflow->id())->logs()->create([
+        StoredWorkflow::whereUuid($workflow->id())->firstOrFail()->logs()->create([
             'index' => 0,
             'now' => now(),
             'class' => TestOtherActivity::class,
             'result' => Y::serialize('other'),
         ]);
-        $activity = new TestOtherActivity(0, now()->toDateTimeString(), StoredWorkflow::findOrFail($workflow->id()), [
+        $activity = new TestOtherActivity(0, now()->toDateTimeString(), StoredWorkflow::whereUuid(
+            $workflow->id()
+        )->firstOrFail(), [
             'other',
         ]);
         $activity->timeout = 1;

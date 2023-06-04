@@ -18,7 +18,7 @@ final class ChildWorkflowStubTest extends TestCase
     public function testStoresResult(): void
     {
         $workflow = WorkflowStub::load(WorkflowStub::make(TestParentWorkflow::class)->id());
-        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
+        $storedWorkflow = StoredWorkflow::whereUuid($workflow->id())->firstOrFail();
         $storedWorkflow->update([
             'arguments' => Y::serialize([]),
             'status' => WorkflowPendingStatus::$name,
@@ -37,7 +37,7 @@ final class ChildWorkflowStubTest extends TestCase
     public function testLoadsStoredResult(): void
     {
         $workflow = WorkflowStub::load(WorkflowStub::make(TestParentWorkflow::class)->id());
-        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
+        $storedWorkflow = StoredWorkflow::whereUuid($workflow->id())->firstOrFail();
         $storedWorkflow->update([
             'arguments' => Y::serialize([]),
             'status' => WorkflowPendingStatus::$name,
@@ -61,14 +61,14 @@ final class ChildWorkflowStubTest extends TestCase
     public function testLoadsChildWorkflow(): void
     {
         $workflow = WorkflowStub::load(WorkflowStub::make(TestParentWorkflow::class)->id());
-        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
+        $storedWorkflow = StoredWorkflow::whereUuid($workflow->id())->firstOrFail();
         $storedWorkflow->update([
             'arguments' => Y::serialize([]),
             'status' => WorkflowPendingStatus::$name,
         ]);
 
         $childWorkflow = WorkflowStub::load(WorkflowStub::make(TestChildWorkflow::class)->id());
-        $storedChildWorkflow = StoredWorkflow::findOrFail($childWorkflow->id());
+        $storedChildWorkflow = StoredWorkflow::whereUuid($childWorkflow->id())->firstOrFail();
         $storedChildWorkflow->update([
             'arguments' => Y::serialize([]),
             'status' => WorkflowPendingStatus::$name,
@@ -92,7 +92,7 @@ final class ChildWorkflowStubTest extends TestCase
     public function testAll(): void
     {
         $workflow = WorkflowStub::load(WorkflowStub::make(TestParentWorkflow::class)->id());
-        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
+        $storedWorkflow = StoredWorkflow::whereUuid($workflow->id())->firstOrFail();
         $storedWorkflow->update([
             'arguments' => Y::serialize([]),
             'status' => WorkflowPendingStatus::$name,

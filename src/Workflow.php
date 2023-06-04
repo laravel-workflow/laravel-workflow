@@ -197,11 +197,11 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
             } else {
                 $this->storedWorkflow->output = Y::serialize($return);
                 $this->storedWorkflow->status->transitionTo(WorkflowCompletedStatus::class);
-            }
 
-            if ($parentWorkflow) {
-                $parentWorkflow->toWorkflow()
-                    ->next($parentWorkflow->pivot->parent_index, $this->now, $this->storedWorkflow->class, $return);
+                if ($parentWorkflow) {
+                    $parentWorkflow->toWorkflow()
+                        ->next($parentWorkflow->pivot->parent_index, $this->now, $this->storedWorkflow->class, $return);
+                }
             }
         }
     }

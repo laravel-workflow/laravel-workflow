@@ -17,7 +17,7 @@ final class AwaitWithTimeoutsTest extends TestCase
     public function testDefersIfNoResult(): void
     {
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
-        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
+        $storedWorkflow = StoredWorkflow::whereUuid($workflow->id())->firstOrFail();
         $storedWorkflow->update([
             'arguments' => Y::serialize([]),
             'status' => WorkflowPendingStatus::$name,
@@ -52,7 +52,7 @@ final class AwaitWithTimeoutsTest extends TestCase
         $this->assertSame(true, $result);
         $this->assertSame(1, $workflow->logs()->count());
         $this->assertDatabaseHas('workflow_logs', [
-            'stored_workflow_id' => $workflow->id(),
+            'stored_workflow_id' => StoredWorkflow::whereUuid($workflow->id())->firstOrFail()->id,
             'index' => 0,
             'class' => Signal::class,
         ]);
@@ -62,7 +62,7 @@ final class AwaitWithTimeoutsTest extends TestCase
     public function testLoadsStoredResult(): void
     {
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
-        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
+        $storedWorkflow = StoredWorkflow::whereUuid($workflow->id())->firstOrFail();
         $storedWorkflow->logs()
             ->create([
                 'index' => 0,
@@ -79,7 +79,7 @@ final class AwaitWithTimeoutsTest extends TestCase
         $this->assertSame(true, $result);
         $this->assertSame(1, $workflow->logs()->count());
         $this->assertDatabaseHas('workflow_logs', [
-            'stored_workflow_id' => $workflow->id(),
+            'stored_workflow_id' => StoredWorkflow::whereUuid($workflow->id())->firstOrFail()->id,
             'index' => 0,
             'class' => Signal::class,
         ]);
@@ -91,7 +91,7 @@ final class AwaitWithTimeoutsTest extends TestCase
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
 
         WorkflowStub::awaitWithTimeout('1 minute', static function () use ($workflow) {
-            $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
+            $storedWorkflow = StoredWorkflow::whereUuid($workflow->id())->firstOrFail();
             $storedWorkflow->logs()
                 ->create([
                     'index' => 0,
@@ -108,7 +108,7 @@ final class AwaitWithTimeoutsTest extends TestCase
         $this->assertSame(false, $result);
         $this->assertSame(1, $workflow->logs()->count());
         $this->assertDatabaseHas('workflow_logs', [
-            'stored_workflow_id' => $workflow->id(),
+            'stored_workflow_id' => StoredWorkflow::whereUuid($workflow->id())->firstOrFail()->id,
             'index' => 0,
             'class' => Signal::class,
         ]);

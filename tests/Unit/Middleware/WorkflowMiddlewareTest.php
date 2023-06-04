@@ -25,7 +25,7 @@ final class WorkflowMiddlewareTest extends TestCase
         $workflow = WorkflowStub::make(TestWorkflow::class);
         $workflow->start();
 
-        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
+        $storedWorkflow = StoredWorkflow::whereUuid($workflow->id())->firstOrFail();
         $storedWorkflow->update([
             'status' => WorkflowWaitingStatus::class,
         ]);
@@ -52,7 +52,7 @@ final class WorkflowMiddlewareTest extends TestCase
         $workflow = WorkflowStub::make(TestWorkflow::class);
         $workflow->start();
 
-        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
+        $storedWorkflow = StoredWorkflow::whereUuid($workflow->id())->firstOrFail();
         $storedWorkflow->update([
             'status' => WorkflowCompletedStatus::class,
         ]);
@@ -79,7 +79,7 @@ final class WorkflowMiddlewareTest extends TestCase
         $workflow = WorkflowStub::make(TestWorkflow::class);
         $workflow->start();
 
-        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
+        $storedWorkflow = StoredWorkflow::whereUuid($workflow->id())->firstOrFail();
         $storedWorkflow->update([
             'status' => WorkflowRunningStatus::class,
         ]);

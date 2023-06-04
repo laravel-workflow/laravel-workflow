@@ -23,14 +23,14 @@ final class WorkflowStubTest extends TestCase
         Carbon::setTestNow('2022-01-01');
 
         $parentWorkflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
-        $storedParentWorkflow = StoredWorkflow::findOrFail($parentWorkflow->id());
+        $storedParentWorkflow = StoredWorkflow::whereUuid($parentWorkflow->id())->firstOrFail();
         $storedParentWorkflow->update([
             'arguments' => Y::serialize([]),
             'status' => WorkflowPendingStatus::$name,
         ]);
 
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
-        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
+        $storedWorkflow = StoredWorkflow::whereUuid($workflow->id())->firstOrFail();
         $workflow->start();
         $workflow->cancel();
         while (! $workflow->isCanceled());
@@ -100,7 +100,7 @@ final class WorkflowStubTest extends TestCase
         $this->assertSame(2, $workflow->logs()->count());
         $this->assertSame(2, WorkflowStub::getContext()->index);
         $this->assertDatabaseHas('workflow_logs', [
-            'stored_workflow_id' => $workflow->id(),
+            'stored_workflow_id' => StoredWorkflow::whereUuid($workflow->id())->firstOrFail()->id,
             'index' => 1,
             'class' => Signal::class,
         ]);
@@ -139,7 +139,7 @@ final class WorkflowStubTest extends TestCase
         $this->assertSame(2, $workflow->logs()->count());
         $this->assertSame(2, WorkflowStub::getContext()->index);
         $this->assertDatabaseHas('workflow_logs', [
-            'stored_workflow_id' => $workflow->id(),
+            'stored_workflow_id' => StoredWorkflow::whereUuid($workflow->id())->firstOrFail()->id,
             'index' => 1,
             'class' => Signal::class,
         ]);
@@ -187,7 +187,7 @@ final class WorkflowStubTest extends TestCase
         $this->assertSame(2, $workflow->logs()->count());
         $this->assertSame(2, WorkflowStub::getContext()->index);
         $this->assertDatabaseHas('workflow_logs', [
-            'stored_workflow_id' => $workflow->id(),
+            'stored_workflow_id' => StoredWorkflow::whereUuid($workflow->id())->firstOrFail()->id,
             'index' => 1,
             'class' => Signal::class,
         ]);

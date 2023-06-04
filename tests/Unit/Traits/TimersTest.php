@@ -30,7 +30,7 @@ final class TimersTest extends TestCase
     public function testCreatesTimer(): void
     {
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
-        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
+        $storedWorkflow = StoredWorkflow::whereUuid($workflow->id())->firstOrFail();
         $storedWorkflow->update([
             'arguments' => Y::serialize([]),
             'status' => WorkflowPendingStatus::$name,
@@ -44,7 +44,7 @@ final class TimersTest extends TestCase
         $this->assertNull($result);
         $this->assertSame(0, $workflow->logs()->count());
         $this->assertDatabaseHas('workflow_timers', [
-            'stored_workflow_id' => $workflow->id(),
+            'stored_workflow_id' => StoredWorkflow::whereUuid($workflow->id())->firstOrFail()->id,
             'index' => 0,
             'stop_at' => WorkflowStub::now()->addMinute(),
         ]);
@@ -53,7 +53,7 @@ final class TimersTest extends TestCase
     public function testDefersIfNotElapsed(): void
     {
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
-        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
+        $storedWorkflow = StoredWorkflow::whereUuid($workflow->id())->firstOrFail();
         $storedWorkflow->update([
             'arguments' => Y::serialize([]),
             'status' => WorkflowPendingStatus::$name,
@@ -85,7 +85,7 @@ final class TimersTest extends TestCase
     public function testStoresResult(): void
     {
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
-        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
+        $storedWorkflow = StoredWorkflow::whereUuid($workflow->id())->firstOrFail();
         $storedWorkflow->timers()
             ->create([
                 'index' => 0,
@@ -100,7 +100,7 @@ final class TimersTest extends TestCase
         $this->assertSame(true, $result);
         $this->assertSame(1, $workflow->logs()->count());
         $this->assertDatabaseHas('workflow_logs', [
-            'stored_workflow_id' => $workflow->id(),
+            'stored_workflow_id' => StoredWorkflow::whereUuid($workflow->id())->firstOrFail()->id,
             'index' => 0,
             'class' => Signal::class,
         ]);
@@ -110,7 +110,7 @@ final class TimersTest extends TestCase
     public function testLoadsStoredResult(): void
     {
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
-        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
+        $storedWorkflow = StoredWorkflow::whereUuid($workflow->id())->firstOrFail();
         $storedWorkflow->timers()
             ->create([
                 'index' => 0,
@@ -132,7 +132,7 @@ final class TimersTest extends TestCase
         $this->assertSame(true, $result);
         $this->assertSame(1, $workflow->logs()->count());
         $this->assertDatabaseHas('workflow_logs', [
-            'stored_workflow_id' => $workflow->id(),
+            'stored_workflow_id' => StoredWorkflow::whereUuid($workflow->id())->firstOrFail()->id,
             'index' => 0,
             'class' => Signal::class,
         ]);

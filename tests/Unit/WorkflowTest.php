@@ -24,9 +24,9 @@ final class WorkflowTest extends TestCase
     {
         $exception = new \Exception('test');
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
-        $activity = new Exception(0, now()->toDateTimeString(), StoredWorkflow::findOrFail(
+        $activity = new Exception(0, now()->toDateTimeString(), StoredWorkflow::whereUuid(
             $workflow->id()
-        ), $exception);
+        )->firstOrFail(), $exception);
 
         $result = $activity->handle();
 
@@ -37,10 +37,10 @@ final class WorkflowTest extends TestCase
     {
         $exception = new \Exception('test');
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
-        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
-        $activity = new Exception(0, now()->toDateTimeString(), StoredWorkflow::findOrFail(
+        $storedWorkflow = StoredWorkflow::whereUuid($workflow->id())->firstOrFail();
+        $activity = new Exception(0, now()->toDateTimeString(), StoredWorkflow::whereUuid(
             $workflow->id()
-        ), $exception);
+        )->firstOrFail(), $exception);
 
         $storedWorkflow->logs()
             ->create([
@@ -61,7 +61,7 @@ final class WorkflowTest extends TestCase
 
         $parentWorkflow = WorkflowStub::load(WorkflowStub::make(TestParentWorkflow::class)->id());
 
-        $storedParentWorkflow = StoredWorkflow::findOrFail($parentWorkflow->id());
+        $storedParentWorkflow = StoredWorkflow::whereUuid($parentWorkflow->id())->firstOrFail();
         $storedParentWorkflow->arguments = Y::serialize([]);
         $storedParentWorkflow->save();
 
@@ -83,7 +83,7 @@ final class WorkflowTest extends TestCase
 
         $childWorkflow = WorkflowStub::load(WorkflowStub::make(TestChildWorkflow::class)->id());
 
-        $storedChildWorkflow = StoredWorkflow::findOrFail($childWorkflow->id());
+        $storedChildWorkflow = StoredWorkflow::whereUuid($childWorkflow->id())->firstOrFail();
         $storedChildWorkflow->arguments = Y::serialize([]);
         $storedChildWorkflow->status = WorkflowPendingStatus::class;
         $storedChildWorkflow->save();
