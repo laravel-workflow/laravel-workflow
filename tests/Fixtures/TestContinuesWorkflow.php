@@ -10,17 +10,17 @@ use Workflow\WorkflowStub;
 
 final class TestContinuesWorkflow extends Workflow
 {
-    private const CONTINUE_AS_NEW_FREQUENCY = 2;
+    private const CONTINUE_FREQUENCY = 2;
 
     public function execute($count = 0)
     {
-        for ($i = 0; $i < self::CONTINUE_AS_NEW_FREQUENCY; $i++) {
+        for ($i = 0; $i < self::CONTINUE_FREQUENCY; $i++) {
             $count++;
             $results[] = yield ActivityStub::make(TestOtherActivity::class, (string) $count);
         }
         if ($count >= 10) {
             return $results;
         }
-        WorkflowStub::continueAsNew($count);
+        return WorkflowStub::continue($count);
     }
 }

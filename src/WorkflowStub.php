@@ -50,6 +50,8 @@ final class WorkflowStub
             ->map(static fn ($method) => $method->getName())
             ->contains($method)
         ) {
+            $this->fresh();
+
             $this->storedWorkflow->signals()
                 ->create([
                     'method' => $method,
@@ -65,6 +67,8 @@ final class WorkflowStub
             ->map(static fn ($method) => $method->getName())
             ->contains($method)
         ) {
+            $this->fresh();
+
             return (new $this->storedWorkflow->class(
                 $this->storedWorkflow,
                 ...Y::unserialize($this->storedWorkflow->arguments),
@@ -99,15 +103,10 @@ final class WorkflowStub
     public static function load($id)
     {
         return static::fromStoredWorkflow(
-            config('workflows.stored_workflow_model', StoredWorkflow::class)::findOrFail($id)
+            config('workflows.stored_workflow_model', StoredWorkflow::class)::where('uuid', $id)
+                ->orderByDesc('id')
+                ->firstOrFail()
         );
-    }
-
-    public static function search($uuid)
-    {
-        return config('workflows.stored_workflow_model', StoredWorkflow::class)::whereUuid($uuid)
-            ->get()
-            ->map(static fn ($workflow) => static::fromStoredWorkflow($workflow));
     }
 
     public static function fromStoredWorkflow(StoredWorkflow $storedWorkflow): static
@@ -132,31 +131,28 @@ final class WorkflowStub
 
     public function id()
     {
-        return $this->storedWorkflow->id;
-    }
-
-    public function uuid()
-    {
         return $this->storedWorkflow->uuid;
     }
 
     public function logs()
     {
-        return $this->storedWorkflow->logs;
+        return $this->fresh()
+            ->storedWorkflow->logs;
     }
 
     public function exceptions()
     {
-        return $this->storedWorkflow->exceptions;
+        return $this->fresh()
+            ->storedWorkflow->exceptions;
     }
 
     public function output()
     {
-        if ($this->storedWorkflow->fresh()->output === null) {
+        if ($this->fresh()->storedWorkflow->output === null) {
             return null;
         }
 
-        return Y::unserialize($this->storedWorkflow->fresh()->output);
+        return Y::unserialize($this->fresh()->storedWorkflow->output);
     }
 
     public function completed(): bool
@@ -181,20 +177,25 @@ final class WorkflowStub
 
     public function status(): string|bool
     {
-        return $this->storedWorkflow->fresh()
-            ->status::class;
+        return $this->fresh()
+            ->storedWorkflow->status::class;
     }
 
     public function fresh(): static
     {
-        $this->storedWorkflow->refresh();
+        $this->storedWorkflow = config('workflows.stored_workflow_model', StoredWorkflow::class)::whereUuid(
+            $this->storedWorkflow->uuid
+        )
+            ->orderByDesc('id')
+            ->firstOrFail();
 
         return $this;
     }
 
     public function resume(): void
     {
-        $this->dispatch();
+        $this->fresh()
+            ->dispatch();
     }
 
     public function start(...$arguments): void

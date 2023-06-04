@@ -16,27 +16,14 @@ final class ContinuesWorkflowTest extends TestCase
     {
         $workflow = WorkflowStub::make(TestContinuesWorkflow::class);
         $id = $workflow->id();
-        $uuid = $workflow->uuid();
         $workflow->start();
 
-        while (WorkflowStub::search($uuid)->count() < 5);
-
-        $workflows = WorkflowStub::search($uuid);
-        $workflows->each(static function ($workflow) {
-            while ($workflow->running());
-        });
-        $workflows = WorkflowStub::search($uuid);
+        while ($workflow->running());
 
         $this->assertSame($id, $workflow->id());
         $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
-        $this->assertNull($workflow->output());
+        $this->assertSame(['9', '10'], $workflow->output());
         $this->assertSame([TestOtherActivity::class, TestOtherActivity::class], $workflow->logs()
-            ->pluck('class')
-            ->sort()
-            ->values()
-            ->toArray());
-        $this->assertSame(['9', '10'], $workflows->get(4)->output());
-        $this->assertSame([TestOtherActivity::class, TestOtherActivity::class], $workflows->get(4)->logs()
             ->pluck('class')
             ->sort()
             ->values()

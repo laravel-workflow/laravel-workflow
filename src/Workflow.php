@@ -19,6 +19,7 @@ use Workflow\Middleware\WithoutOverlappingMiddleware;
 use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Y;
 use Workflow\States\WorkflowCompletedStatus;
+use Workflow\States\WorkflowContinuedStatus;
 use Workflow\States\WorkflowRunningStatus;
 use Workflow\States\WorkflowWaitingStatus;
 use Workflow\Traits\Sagas;
@@ -191,9 +192,12 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
                 throw new Exception('Workflow failed.');
             }
 
-            $this->storedWorkflow->output = Y::serialize($return);
-
-            $this->storedWorkflow->status->transitionTo(WorkflowCompletedStatus::class);
+            if ($return === WorkflowContinuedStatus::class) {
+                $this->storedWorkflow->status->transitionTo(WorkflowContinuedStatus::class);
+            } else {
+                $this->storedWorkflow->output = Y::serialize($return);
+                $this->storedWorkflow->status->transitionTo(WorkflowCompletedStatus::class);
+            }
 
             if ($parentWorkflow) {
                 $parentWorkflow->toWorkflow()
