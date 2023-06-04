@@ -7,6 +7,7 @@ namespace Workflow;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 use ReflectionClass;
 use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Y;
@@ -16,6 +17,7 @@ use Workflow\States\WorkflowFailedStatus;
 use Workflow\States\WorkflowPendingStatus;
 use Workflow\Traits\Awaits;
 use Workflow\Traits\AwaitWithTimeouts;
+use Workflow\Traits\Continues;
 use Workflow\Traits\SideEffects;
 use Workflow\Traits\Timers;
 
@@ -23,6 +25,7 @@ final class WorkflowStub
 {
     use Awaits;
     use AwaitWithTimeouts;
+    use Continues;
     use SideEffects;
     use Timers;
 
@@ -83,10 +86,11 @@ final class WorkflowStub
         return Arr::get((new ReflectionClass(self::$context->storedWorkflow->class))->getDefaultProperties(), 'queue');
     }
 
-    public static function make($class): static
+    public static function make($class, $uuid = null): static
     {
         $storedWorkflow = config('workflows.stored_workflow_model', StoredWorkflow::class)::create([
             'class' => $class,
+            'uuid' => $uuid ?? (string) Str::orderedUuid(),
         ]);
 
         return new self($storedWorkflow);
@@ -97,6 +101,13 @@ final class WorkflowStub
         return static::fromStoredWorkflow(
             config('workflows.stored_workflow_model', StoredWorkflow::class)::findOrFail($id)
         );
+    }
+
+    public static function search($uuid)
+    {
+        return config('workflows.stored_workflow_model', StoredWorkflow::class)::whereUuid($uuid)
+            ->get()
+            ->map(static fn ($workflow) => static::fromStoredWorkflow($workflow));
     }
 
     public static function fromStoredWorkflow(StoredWorkflow $storedWorkflow): static
@@ -122,6 +133,11 @@ final class WorkflowStub
     public function id()
     {
         return $this->storedWorkflow->id;
+    }
+
+    public function uuid()
+    {
+        return $this->storedWorkflow->uuid;
     }
 
     public function logs()
