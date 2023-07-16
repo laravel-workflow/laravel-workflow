@@ -31,6 +31,8 @@ final class WorkflowMiddleware
             if ($job->storedWorkflow->toWorkflow()->running()) {
                 $job->release();
             }
+        } finally {
+            $this->active = false;
         }
     }
 }
