@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Workflow\Providers;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\ServiceProvider;
 use Laravel\SerializableClosure\SerializableClosure;
 
@@ -11,6 +12,10 @@ final class WorkflowServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
+        if (! class_exists('Workflow\Models\Model')) {
+            class_alias(config('workflows.base_model', Model::class), 'Workflow\Models\Model');
+        }
+
         SerializableClosure::setSecretKey(config('app.key'));
 
         $this->publishes([
