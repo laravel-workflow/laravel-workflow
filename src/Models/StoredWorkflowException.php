@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Workflow\Models;
 
-use Illuminate\Database\Eloquent\Model;
-
+/**
+ * @extends Illuminate\Database\Eloquent\Model
+ */
 class StoredWorkflowException extends Model
 {
     public const UPDATED_AT = null;
