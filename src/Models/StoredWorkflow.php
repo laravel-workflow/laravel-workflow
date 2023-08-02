@@ -8,6 +8,9 @@ use Spatie\ModelStates\HasStates;
 use Workflow\States\WorkflowStatus;
 use Workflow\WorkflowStub;
 
+/**
+ * @extends Illuminate\Database\Eloquent\Model
+ */
 class StoredWorkflow extends Model
 {
     use HasStates;
