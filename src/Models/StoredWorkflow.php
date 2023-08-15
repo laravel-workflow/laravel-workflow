@@ -63,7 +63,7 @@ class StoredWorkflow extends Model
     {
         return $this->belongsToMany(
             config('workflows.stored_workflow_model', self::class),
-            'workflow_relationships',
+            config('workflows.workflow_relationships_table', 'workflow_relationships'),
             'child_workflow_id',
             'parent_workflow_id'
         )->withPivot(['parent_index', 'parent_now']);
@@ -73,7 +73,7 @@ class StoredWorkflow extends Model
     {
         return $this->belongsToMany(
             config('workflows.stored_workflow_model', self::class),
-            'workflow_relationships',
+            config('workflows.workflow_relationships_table', 'workflow_relationships'),
             'parent_workflow_id',
             'child_workflow_id'
         )->withPivot(['parent_index', 'parent_now']);

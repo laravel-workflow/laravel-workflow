@@ -14,4 +14,6 @@ return [
     'stored_workflow_signal_model' => Workflow\Models\StoredWorkflowSignal::class,
 
     'stored_workflow_timer_model' => Workflow\Models\StoredWorkflowTimer::class,
+
+    'workflow_relationships_table' => 'workflow_relationships',
 ];
