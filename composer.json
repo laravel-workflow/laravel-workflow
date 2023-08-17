@@ -31,7 +31,7 @@
         "php": "^8.0.2",
         "laravel/framework": "^9.0|^10.0",
         "spatie/laravel-model-states": "^2.1",
-        "react/promise": "^2.9"
+        "react/promise": "^2.9|^3.0"
     },
     "require-dev": {
         "orchestra/testbench": "^7.1",
