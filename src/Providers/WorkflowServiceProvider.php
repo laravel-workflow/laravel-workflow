@@ -7,6 +7,8 @@ namespace Workflow\Providers;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\ServiceProvider;
 use Laravel\SerializableClosure\SerializableClosure;
+use Workflow\Commands\ActivityMakeCommand;
+use Workflow\Commands\WorkflowMakeCommand;
 
 final class WorkflowServiceProvider extends ServiceProvider
 {
@@ -25,6 +27,8 @@ final class WorkflowServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/../migrations/' => database_path('/migrations'),
         ], 'migrations');
+
+        $this->commands([ActivityMakeCommand::class, WorkflowMakeCommand::class]);
     }
 
     public function register(): void
