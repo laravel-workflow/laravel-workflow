@@ -1,0 +1,13 @@
+<?php
+
+namespace {{ namespace }};
+
+use Workflow\Activity;
+
+class {{ class }} extends Activity
+{
+    public function execute()
+    {
+        //
+    }
+}
