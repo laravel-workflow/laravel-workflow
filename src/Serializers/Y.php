@@ -4,11 +4,28 @@ declare(strict_types=1);
 
 namespace Workflow\Serializers;
 
+use Illuminate\Queue\SerializesAndRestoresModelIdentifiers;
 use Laravel\SerializableClosure\SerializableClosure;
 use Throwable;
 
 final class Y implements SerializerInterface
 {
+    use SerializesAndRestoresModelIdentifiers;
+
+    private static $instance = null;
+
+    private function __construct()
+    {
+    }
+
+    public static function getInstance(): self
+    {
+        if (self::$instance === null) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+
     public static function encode(string $data): string
     {
         $output = '';
@@ -48,10 +65,14 @@ final class Y implements SerializerInterface
         }
     }
 
-    public static function serialize($data): string
+    public static function serializeModels($data)
     {
-        SerializableClosure::setSecretKey(config('app.key'));
-        if ($data instanceof Throwable) {
+        if (is_array($data)) {
+            $self = self::getInstance();
+            foreach ($data as $key => $value) {
+                $data[$key] = $self->getSerializedPropertyValue($value);
+            }
+        } elseif ($data instanceof Throwable) {
             $data = [
                 'class' => get_class($data),
                 'message' => $data->getMessage(),
@@ -63,6 +84,24 @@ final class Y implements SerializerInterface
                     ->toArray(),
             ];
         }
+        return $data;
+    }
+
+    public static function unserializeModels($data)
+    {
+        if (is_array($data)) {
+            $self = self::getInstance();
+            foreach ($data as $key => $value) {
+                $data[$key] = $self->getRestoredPropertyValue($value);
+            }
+        }
+        return $data;
+    }
+
+    public static function serialize($data): string
+    {
+        SerializableClosure::setSecretKey(config('app.key'));
+        $data = self::serializeModels($data);
         return self::encode(serialize(new SerializableClosure(static fn () => $data)));
     }
 
@@ -73,6 +112,6 @@ final class Y implements SerializerInterface
         if ($unserialized instanceof SerializableClosure) {
             $unserialized = ($unserialized->getClosure())();
         }
-        return $unserialized;
+        return self::unserializeModels($unserialized);
     }
 }
