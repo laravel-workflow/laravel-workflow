@@ -16,11 +16,11 @@ class TestParentAsyncWorkflow extends Workflow
 
     public function execute()
     {
-        $results = yield ActivityStub::async(function() {
+        $results = yield ActivityStub::async(static function () {
             $otherResult = yield ChildWorkflowStub::make(TestChildWorkflow::class);
 
             $result = yield ActivityStub::make(TestActivity::class);
-            
+
             return [$otherResult, $result];
         });
 

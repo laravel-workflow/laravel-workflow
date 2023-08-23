@@ -6,17 +6,16 @@ namespace Tests\Fixtures;
 
 use Workflow\ActivityStub;
 use Workflow\Workflow;
-use Workflow\WorkflowStub;
 
 final class TestAsyncWorkflow extends Workflow
 {
     public function execute()
     {
-        $results = yield ActivityStub::async(function() {
+        $results = yield ActivityStub::async(static function () {
             $otherResult = yield ActivityStub::make(TestOtherActivity::class, 'other');
 
             $result = yield ActivityStub::make(TestActivity::class);
-            
+
             return [$otherResult, $result];
         });
 
