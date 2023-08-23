@@ -8,10 +8,12 @@ use Tests\Fixtures\TestActivity;
 use Tests\Fixtures\TestChildExceptionWorkflow;
 use Tests\Fixtures\TestChildTimerWorkflow;
 use Tests\Fixtures\TestChildWorkflow;
+use Tests\Fixtures\TestParentAsyncWorkflow;
 use Tests\Fixtures\TestParentExceptionWorkflow;
 use Tests\Fixtures\TestParentTimerWorkflow;
 use Tests\Fixtures\TestParentWorkflow;
 use Tests\TestCase;
+use Workflow\AsyncWorkflow;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowFailedStatus;
 use Workflow\WorkflowStub;
@@ -71,6 +73,23 @@ final class ParentWorkflowTest extends TestCase
         $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
         $this->assertSame('workflow_activity_other', $workflow->output());
         $this->assertSame([TestActivity::class, TestChildTimerWorkflow::class], $workflow->logs()
+            ->pluck('class')
+            ->sort()
+            ->values()
+            ->toArray());
+    }
+
+    public function testAsync(): void
+    {
+        $workflow = WorkflowStub::make(TestParentAsyncWorkflow::class);
+
+        $workflow->start();
+
+        while ($workflow->running());
+
+        $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
+        $this->assertSame('workflow_activity_other', $workflow->output());
+        $this->assertSame([AsyncWorkflow::class], $workflow->logs()
             ->pluck('class')
             ->sort()
             ->values()
