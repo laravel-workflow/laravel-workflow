@@ -89,10 +89,6 @@ final class ParentWorkflowTest extends TestCase
 
         $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
         $this->assertSame('workflow_activity_other', $workflow->output());
-        $this->assertSame([AsyncWorkflow::class], $workflow->logs()
-            ->pluck('class')
-            ->sort()
-            ->values()
-            ->toArray());
+        $this->assertSame([AsyncWorkflow::class], $workflow->logs()->pluck('class')->sort()->values()->toArray());
     }
 }
