@@ -115,4 +115,30 @@ final class ActivityStubTest extends TestCase
 
         $this->assertSame(['test'], $result);
     }
+
+    public function testAsync(): void
+    {
+        $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
+        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
+        $storedWorkflow->update([
+            'arguments' => Y::serialize([]),
+            'status' => WorkflowPendingStatus::$name,
+        ]);
+        $storedWorkflow->logs()
+            ->create([
+                'index' => 0,
+                'now' => WorkflowStub::now(),
+                'class' => TestActivity::class,
+                'result' => Y::serialize('test'),
+            ]);
+
+        ActivityStub::async(static function () {
+            yield ActivityStub::make(TestActivity::class);
+        })
+            ->then(static function ($value) use (&$result) {
+                $result = $value;
+            });
+
+        $this->assertSame('test', $result);
+    }
 }

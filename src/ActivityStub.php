@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Workflow;
 
+use Laravel\SerializableClosure\SerializableClosure;
 use function React\Promise\all;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
@@ -16,6 +17,11 @@ final class ActivityStub
     public static function all(iterable $promises): PromiseInterface
     {
         return all([...$promises]);
+    }
+
+    public static function async(callable $callback): PromiseInterface
+    {
+        return ChildWorkflowStub::make(AsyncWorkflow::class, new SerializableClosure($callback));
     }
 
     public static function make($activity, ...$arguments): PromiseInterface
