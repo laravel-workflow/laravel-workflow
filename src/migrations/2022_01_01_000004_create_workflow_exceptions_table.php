@@ -23,8 +23,7 @@ final class CreateWorkflowExceptionsTable extends Migration
                 ->nullable();
             $blueprint->foreign('stored_workflow_id')
                 ->references('id')
-                ->on('workflows')
-                ->onDelete('cascade');
+                ->on('workflows');
         });
     }
 
