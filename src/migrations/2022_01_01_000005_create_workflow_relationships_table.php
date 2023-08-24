@@ -25,12 +25,10 @@ final class CreateWorkflowRelationshipsTable extends Migration
                 ->index();
             $blueprint->foreign('parent_workflow_id')
                 ->references('id')
-                ->on('workflows')
-                ->onDelete('cascade');
+                ->on('workflows');
             $blueprint->foreign('child_workflow_id')
                 ->references('id')
-                ->on('workflows')
-                ->onDelete('cascade');
+                ->on('workflows');
         });
     }
 

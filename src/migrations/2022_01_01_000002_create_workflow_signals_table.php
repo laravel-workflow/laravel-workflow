@@ -25,8 +25,7 @@ final class CreateWorkflowSignalsTable extends Migration
             $blueprint->index(['stored_workflow_id', 'created_at']);
             $blueprint->foreign('stored_workflow_id')
                 ->references('id')
-                ->on('workflows')
-                ->onDelete('cascade');
+                ->on('workflows');
         });
     }
 

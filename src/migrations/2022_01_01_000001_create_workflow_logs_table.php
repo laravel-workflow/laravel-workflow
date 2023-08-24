@@ -18,7 +18,7 @@ final class CreateWorkflowLogsTable extends Migration
             $blueprint->foreignId('stored_workflow_id')
                 ->index();
             $blueprint->unsignedBigInteger('index');
-            $blueprint->timestamp('now');
+            $blueprint->timestamp('now', 6);
             $blueprint->text('class');
             $blueprint->text('result')
                 ->nullable();
@@ -27,8 +27,7 @@ final class CreateWorkflowLogsTable extends Migration
             $blueprint->unique(['stored_workflow_id', 'index']);
             $blueprint->foreign('stored_workflow_id')
                 ->references('id')
-                ->on('workflows')
-                ->onDelete('cascade');
+                ->on('workflows');
         });
     }
 
