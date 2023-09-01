@@ -69,6 +69,12 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
 
     public function middleware()
     {
+        $parentWorkflow = $this->storedWorkflow->parents()
+            ->first();
+
+        if ($parentWorkflow) {
+            return [new WithoutOverlappingMiddleware($parentWorkflow->id, WithoutOverlappingMiddleware::ACTIVITY)];
+        }
         return [
             new WithoutOverlappingMiddleware($this->storedWorkflow->id, WithoutOverlappingMiddleware::WORKFLOW),
         ];
