@@ -90,7 +90,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
         }
     }
 
-    public function handle(): void
+    public function handle(ResolvesMethodDependencies $resolvesMethodDependencies): void
     {
         if (! method_exists($this, 'execute')) {
             throw new BadMethodCallException('Execute method not implemented.');
@@ -136,7 +136,10 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
             'replaying' => $this->replaying,
         ]);
 
-        $this->coroutine = $this->{'execute'}(...$this->arguments);
+        $this->coroutine = call_user_func_array(
+			[$this, 'execute'],
+			$resolvesMethodDependencies->handle($this->arguments, $this, 'execute')
+		);
 
         while ($this->coroutine->valid()) {
             $this->index = WorkflowStub::getContext()->index;
