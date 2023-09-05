@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Workflow;
 
+use Illuminate\Container\Container;
 use Workflow\Models\StoredWorkflow;
 
 class Exception extends Activity
@@ -22,7 +23,7 @@ class Exception extends Activity
         $this->onQueue($queue);
     }
 
-    public function handle()
+    public function handle(Container $container)
     {
         if ($this->storedWorkflow->logs()->whereIndex($this->index)->exists()) {
             return;

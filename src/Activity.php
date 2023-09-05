@@ -6,6 +6,7 @@ namespace Workflow;
 
 use BadMethodCallException;
 use Illuminate\Bus\Queueable;
+use Illuminate\Container\Container;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -59,7 +60,7 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
         return $this->storedWorkflow->id;
     }
 
-    public function handle()
+    public function handle(Container $container)
     {
         if (! method_exists($this, 'execute')) {
             throw new BadMethodCallException('Execute method not implemented.');
@@ -70,7 +71,7 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
         }
 
         try {
-            return $this->{'execute'}(...$this->arguments);
+            return $container->call([$this, 'execute'], $this->arguments);
         } catch (\Throwable $throwable) {
             $this->storedWorkflow->exceptions()
                 ->create([
