@@ -11,6 +11,8 @@ use ReflectionFunction;
 
 final class AsyncWorkflow extends Workflow
 {
+    private Container $container;
+
     public function execute($callback)
     {
         $this->container = App::make(Container::class);
