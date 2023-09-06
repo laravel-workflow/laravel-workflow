@@ -17,8 +17,9 @@ use stdClass;
  */
 class ResolvesMethodDependencies
 {
-    public function __construct(private Container $container)
-    {
+    public function __construct(
+        private Container $container
+    ) {
     }
 
     public function handle(array $parameters, object $instance, string $method): array
@@ -57,8 +58,11 @@ class ResolvesMethodDependencies
         return $parameters;
     }
 
-    protected function transformDependency(ReflectionParameter $parameter, $parameters, stdClass $skippableValue): mixed
-    {
+    protected function transformDependency(
+        ReflectionParameter $parameter,
+        $parameters,
+        stdClass $skippableValue
+    ): mixed {
         $className = Reflector::getParameterClassName($parameter);
 
         if ($className && ! $this->alreadyInParameters($className, $parameters)) {
@@ -74,7 +78,7 @@ class ResolvesMethodDependencies
 
     protected function alreadyInParameters(?string $class, array $parameters): bool
     {
-        return ! is_null(Arr::first($parameters, fn ($value) => $value instanceof $class));
+        return Arr::first($parameters, static fn ($value) => $value instanceof $class) !== null;
     }
 
     protected function spliceIntoParameters(array &$parameters, int $offset, mixed $value): void

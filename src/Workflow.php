@@ -137,9 +137,9 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
         ]);
 
         $this->coroutine = call_user_func_array(
-			[$this, 'execute'],
-			$resolvesMethodDependencies->handle($this->arguments, $this, 'execute')
-		);
+            [$this, 'execute'],
+            $resolvesMethodDependencies->handle($this->arguments, $this, 'execute')
+        );
 
         while ($this->coroutine->valid()) {
             $this->index = WorkflowStub::getContext()->index;
