@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
+use Illuminate\Contracts\Foundation\Application;
 use Workflow\ActivityStub;
 use Workflow\QueryMethod;
 use Workflow\SignalMethod;
@@ -30,8 +31,10 @@ class TestWorkflow extends Workflow
         return $this->canceled;
     }
 
-    public function execute($shouldAssert = false)
+    public function execute(Application $app, $shouldAssert = false)
     {
+        assert($app->runningInConsole());
+
         if ($shouldAssert) {
             assert(! $this->canceled);
         }

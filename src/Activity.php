@@ -6,11 +6,14 @@ namespace Workflow;
 
 use BadMethodCallException;
 use Illuminate\Bus\Queueable;
+use Illuminate\Container\Container;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Routing\RouteDependencyResolverTrait;
+use Illuminate\Support\Facades\App;
 use Throwable;
 use Workflow\Middleware\WithoutOverlappingMiddleware;
 use Workflow\Middleware\WorkflowMiddleware;
@@ -22,6 +25,7 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
     use Dispatchable;
     use InteractsWithQueue;
     use Queueable;
+    use RouteDependencyResolverTrait;
     use SerializesModels;
 
     public $tries = PHP_INT_MAX;
@@ -32,12 +36,16 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
 
     public $arguments;
 
+    private Container $container;
+
     public function __construct(
         public int $index,
         public string $now,
         public StoredWorkflow $storedWorkflow,
         ...$arguments
     ) {
+        $this->container = App::make(Container::class);
+
         $this->arguments = $arguments;
 
         if (property_exists($this, 'connection')) {
@@ -70,7 +78,7 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
         }
 
         try {
-            return $this->{'execute'}(...$this->arguments);
+            return $this->{'execute'}(...$this->resolveClassMethodDependencies($this->arguments, $this, 'execute'));
         } catch (\Throwable $throwable) {
             $this->storedWorkflow->exceptions()
                 ->create([

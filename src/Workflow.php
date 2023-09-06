@@ -7,12 +7,15 @@ namespace Workflow;
 use BadMethodCallException;
 use Exception;
 use Illuminate\Bus\Queueable;
+use Illuminate\Container\Container;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Routing\RouteDependencyResolverTrait;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\App;
 use React\Promise\PromiseInterface;
 use Throwable;
 use Workflow\Middleware\WithoutOverlappingMiddleware;
@@ -28,6 +31,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
     use Dispatchable;
     use InteractsWithQueue;
     use Queueable;
+    use RouteDependencyResolverTrait;
     use Sagas;
     use SerializesModels;
 
@@ -45,10 +49,14 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
 
     public bool $replaying = false;
 
+    private Container $container;
+
     public function __construct(
         public StoredWorkflow $storedWorkflow,
         ...$arguments
     ) {
+        $this->container = App::make(Container::class);
+
         $this->arguments = $arguments;
 
         if (property_exists($this, 'connection')) {
@@ -136,7 +144,11 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
             'replaying' => $this->replaying,
         ]);
 
-        $this->coroutine = $this->{'execute'}(...$this->arguments);
+        $this->coroutine = $this->{'execute'}(...$this->resolveClassMethodDependencies(
+            $this->arguments,
+            $this,
+            'execute'
+        ));
 
         while ($this->coroutine->valid()) {
             $this->index = WorkflowStub::getContext()->index;
