@@ -44,8 +44,6 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
         public StoredWorkflow $storedWorkflow,
         ...$arguments
     ) {
-        $this->container = App::make(Container::class);
-
         $this->arguments = $arguments;
 
         if (property_exists($this, 'connection')) {
@@ -72,6 +70,8 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
         if (! method_exists($this, 'execute')) {
             throw new BadMethodCallException('Execute method not implemented.');
         }
+
+        $this->container = App::make(Container::class);
 
         if ($this->storedWorkflow->logs()->whereIndex($this->index)->exists()) {
             return;

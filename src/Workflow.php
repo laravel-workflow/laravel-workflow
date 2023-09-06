@@ -55,8 +55,6 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
         public StoredWorkflow $storedWorkflow,
         ...$arguments
     ) {
-        $this->container = App::make(Container::class);
-
         $this->arguments = $arguments;
 
         if (property_exists($this, 'connection')) {
@@ -103,6 +101,8 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
         if (! method_exists($this, 'execute')) {
             throw new BadMethodCallException('Execute method not implemented.');
         }
+
+        $this->container = App::make(Container::class);
 
         try {
             if (! $this->replaying) {
