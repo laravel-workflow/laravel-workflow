@@ -7,6 +7,8 @@ namespace Workflow\Middleware;
 use Exception;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
+use LimitIterator;
+use SplFileObject;
 use Workflow\Events\ActivityCompleted;
 use Workflow\Events\ActivityFailed;
 use Workflow\Events\ActivityStarted;
@@ -49,7 +51,17 @@ final class WorkflowMiddleware
                 }
             }
         } catch (\Throwable $throwable) {
-            ActivityFailed::dispatch($uuid, json_encode($throwable), now()->format('Y-m-d\TH:i:s.u\Z'));
+            $snippet = array_slice(iterator_to_array(new LimitIterator(new SplFileObject($throwable->getFile()), max(0, $throwable->getLine() - 4), 7)), 0, 7);
+
+            ActivityFailed::dispatch($uuid, json_encode([
+                'class' => get_class($throwable),
+                'message' => $throwable->getMessage(),
+                'code' => $throwable->getCode(),
+                'line' => $throwable->getLine(),
+                'file' => $throwable->getFile(),
+                'trace' => $throwable->getTrace(),
+                'snippet' => $snippet,
+            ]), now()->format('Y-m-d\TH:i:s.u\Z'));
             throw $throwable;
         } finally {
             $this->active = false;
