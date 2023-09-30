@@ -51,7 +51,8 @@ final class WorkflowMiddleware
                 }
             }
         } catch (\Throwable $throwable) {
-            $snippet = array_slice(iterator_to_array(new LimitIterator(new SplFileObject($throwable->getFile()), max(0, $throwable->getLine() - 4), 7)), 0, 7);
+            $file = new SplFileObject($throwable->getFile());
+            $iterator = new LimitIterator($file, max(0, $throwable->getLine() - 4), 7);
 
             ActivityFailed::dispatch($uuid, json_encode([
                 'class' => get_class($throwable),
@@ -60,8 +61,9 @@ final class WorkflowMiddleware
                 'line' => $throwable->getLine(),
                 'file' => $throwable->getFile(),
                 'trace' => $throwable->getTrace(),
-                'snippet' => $snippet,
-            ]), now()->format('Y-m-d\TH:i:s.u\Z'));
+                'snippet' => array_slice(iterator_to_array($iterator), 0, 7),
+            ]), now()
+                ->format('Y-m-d\TH:i:s.u\Z'));
             throw $throwable;
         } finally {
             $this->active = false;
