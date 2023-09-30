@@ -23,9 +23,11 @@ class MonitorWorkflowCompleted implements ShouldQueue
             ->withHeaders([
                 'apiKey' => $auth['public'],
             ])
-            ->withQueryParameters([
-                'user_id' => 'eq.' . $auth['user'],
-                'workflow_id' => 'eq.' . $event->workflowId,
+            ->withOptions([
+                'query' => [
+                    'user_id' => 'eq.' . $auth['user'],
+                    'workflow_id' => 'eq.' . $event->workflowId,
+                ],
             ])
             ->patch(config('workflows.monitor_url') . '/rest/v1/workflows', [
                 'output' => $event->output,

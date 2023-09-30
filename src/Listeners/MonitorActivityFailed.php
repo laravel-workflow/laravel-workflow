@@ -23,8 +23,10 @@ class MonitorActivityFailed implements ShouldQueue
             ->withHeaders([
                 'apiKey' => $auth['public'],
             ])
-            ->withQueryParameters([
-                'id' => 'eq.' . $event->activityId,
+            ->withOptions([
+                'query' => [
+                    'id' => 'eq.' . $event->activityId,
+                ],
             ])
             ->patch(config('workflows.monitor_url') . '/rest/v1/activities', [
                 'output' => $event->output,
