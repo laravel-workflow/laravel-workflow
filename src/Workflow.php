@@ -18,6 +18,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\App;
 use React\Promise\PromiseInterface;
 use Throwable;
+use Workflow\Events\WorkflowCompleted;
 use Workflow\Middleware\WithoutOverlappingMiddleware;
 use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Y;
@@ -212,6 +213,13 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
             $this->storedWorkflow->output = Y::serialize($return);
 
             $this->storedWorkflow->status->transitionTo(WorkflowCompletedStatus::class);
+
+            WorkflowCompleted::dispatch(
+                $this->storedWorkflow->id,
+                json_encode($return),
+                now()
+                    ->format('Y-m-d\TH:i:s.u\Z')
+            );
 
             if ($parentWorkflow) {
                 $parentWorkflow->toWorkflow()

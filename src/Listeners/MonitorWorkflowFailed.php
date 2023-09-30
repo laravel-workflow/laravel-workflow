@@ -1,0 +1,36 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Workflow\Listeners;
+
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Http;
+use Workflow\Events\WorkflowFailed;
+use Workflow\Traits\FetchesMonitorAuth;
+
+class MonitorWorkflowFailed implements ShouldQueue
+{
+    use FetchesMonitorAuth;
+
+    public function handle(WorkflowFailed $event): void
+    {
+        $auth = $this->auth();
+
+        Http::withToken($auth['token'])
+            ->withHeaders([
+                'apiKey' => $auth['public'],
+            ])
+            ->withOptions([
+                'query' => [
+                    'user_id' => 'eq.' . $auth['user'],
+                    'workflow_id' => 'eq.' . $event->workflowId,
+                ],
+            ])
+            ->patch(config('workflows.monitor_url') . '/rest/v1/workflows', [
+                'output' => $event->output,
+                'status' => 'failed',
+                'updated_at' => $event->timestamp,
+            ]);
+    }
+}

@@ -18,4 +18,10 @@ return [
     'stored_workflow_timer_model' => Workflow\Models\StoredWorkflowTimer::class,
 
     'workflow_relationships_table' => 'workflow_relationships',
+
+    'monitor' => env('WORKFLOW_MONITOR', false),
+
+    'monitor_url' => env('WORKFLOW_MONITOR_URL'),
+
+    'monitor_api_key' => env('WORKFLOW_MONITOR_API_KEY'),
 ];
