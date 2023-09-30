@@ -6,6 +6,10 @@ namespace Workflow\Middleware;
 
 use Exception;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Str;
+use Workflow\Events\ActivityCompleted;
+use Workflow\Events\ActivityFailed;
+use Workflow\Events\ActivityStarted;
 use Workflow\Serializers\Y;
 
 final class WorkflowMiddleware
@@ -20,15 +24,33 @@ final class WorkflowMiddleware
                 'exception' => Y::serialize(new Exception('Activity timed out.')),
             ]) : null);
 
-        $result = $next($job);
+        $uuid = (string) Str::uuid();
+
+        ActivityStarted::dispatch(
+            $job->storedWorkflow->id,
+            $uuid,
+            $job::class,
+            $job->index,
+            json_encode($job->arguments),
+            now()
+                ->format('Y-m-d\TH:i:s.u\Z')
+        );
 
         try {
-            $job->storedWorkflow->toWorkflow()
-                ->next($job->index, $job->now, $job::class, $result);
-        } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
-            if ($job->storedWorkflow->toWorkflow()->running()) {
-                $job->release();
+            $result = $next($job);
+
+            try {
+                $job->storedWorkflow->toWorkflow()
+                    ->next($job->index, $job->now, $job::class, $result);
+                ActivityCompleted::dispatch($uuid, json_encode($result), now()->format('Y-m-d\TH:i:s.u\Z'));
+            } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
+                if ($job->storedWorkflow->toWorkflow()->running()) {
+                    $job->release();
+                }
             }
+        } catch (\Throwable $throwable) {
+            ActivityFailed::dispatch($uuid, json_encode($throwable), now()->format('Y-m-d\TH:i:s.u\Z'));
+            throw $throwable;
         } finally {
             $this->active = false;
         }

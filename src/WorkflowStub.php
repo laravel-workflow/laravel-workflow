@@ -8,6 +8,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use ReflectionClass;
+use Workflow\Events\WorkflowStarted;
 use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Y;
 use Workflow\States\WorkflowCompletedStatus;
@@ -184,6 +185,14 @@ final class WorkflowStub
     public function start(...$arguments): void
     {
         $this->storedWorkflow->arguments = Y::serialize($arguments);
+
+        WorkflowStarted::dispatch(
+            $this->storedWorkflow->id,
+            $this->storedWorkflow->class,
+            json_encode($arguments),
+            now()
+                ->format('Y-m-d\TH:i:s.u\Z')
+        );
 
         $this->dispatch();
     }
