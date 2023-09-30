@@ -5,19 +5,17 @@ declare(strict_types=1);
 namespace Workflow\Listeners;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Workflow\Events\WorkflowFailed;
+use Workflow\Traits\FetchesMonitorAuth;
 
 class MonitorWorkflowFailed implements ShouldQueue
 {
+    use FetchesMonitorAuth;
+
     public function handle(WorkflowFailed $event): void
     {
-        $auth = Cache::remember('workflows.monitor_auth', 360, static function () {
-            return Http::withToken(config('workflows.monitor_api_key'))
-                ->get(config('workflows.monitor_url') . '/functions/v1/get-user')
-                ->json();
-        });
+        $auth = $this->auth();
 
         Http::withToken($auth['token'])
             ->withHeaders([

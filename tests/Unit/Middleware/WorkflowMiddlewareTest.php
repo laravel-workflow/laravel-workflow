@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Middleware;
 
+use Exception;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use Mockery\MockInterface;
 use Tests\Fixtures\TestActivity;
 use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
+use Workflow\Events\ActivityCompleted;
+use Workflow\Events\ActivityFailed;
+use Workflow\Events\ActivityStarted;
 use Workflow\Middleware\WorkflowMiddleware;
 use Workflow\Models\StoredWorkflow;
 use Workflow\States\WorkflowCompletedStatus;
@@ -20,6 +25,7 @@ final class WorkflowMiddlewareTest extends TestCase
 {
     public function testMiddleware(): void
     {
+        Event::fake();
         Queue::fake();
 
         $workflow = WorkflowStub::make(TestWorkflow::class);
@@ -42,11 +48,14 @@ final class WorkflowMiddlewareTest extends TestCase
             return true;
         });
 
+        Event::assertDispatched(ActivityStarted::class);
+        Event::assertDispatched(ActivityCompleted::class);
         Queue::assertPushed(TestWorkflow::class, 2);
     }
 
     public function testAlreadyCompleted(): void
     {
+        Event::fake();
         Queue::fake();
 
         $workflow = WorkflowStub::make(TestWorkflow::class);
@@ -69,11 +78,15 @@ final class WorkflowMiddlewareTest extends TestCase
             return true;
         });
 
+        Event::assertDispatched(ActivityStarted::class);
+        Event::assertNotDispatched(ActivityCompleted::class);
+        Event::assertNotDispatched(ActivityFailed::class);
         Queue::assertPushed(TestWorkflow::class, 1);
     }
 
     public function testAlreadyRunning(): void
     {
+        Event::fake();
         Queue::fake();
 
         $workflow = WorkflowStub::make(TestWorkflow::class);
@@ -99,6 +112,43 @@ final class WorkflowMiddlewareTest extends TestCase
             return true;
         });
 
+        Event::assertDispatched(ActivityStarted::class);
+        Event::assertNotDispatched(ActivityCompleted::class);
+        Event::assertNotDispatched(ActivityFailed::class);
+        Queue::assertPushed(TestWorkflow::class, 1);
+    }
+
+    public function testException(): void
+    {
+        Event::fake();
+        Queue::fake();
+
+        $workflow = WorkflowStub::make(TestWorkflow::class);
+        $workflow->start();
+
+        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
+        $storedWorkflow->update([
+            'status' => WorkflowWaitingStatus::class,
+        ]);
+
+        $activity = $this->mock(TestActivity::class);
+        $activity->index = 0;
+        $activity->now = now()
+            ->toDateTimeString();
+        $activity->storedWorkflow = $storedWorkflow;
+
+        $middleware = new WorkflowMiddleware();
+
+        try {
+            $middleware->handle($activity, static function ($job) {
+                throw new Exception('test');
+            });
+        } catch (Exception $exception) {
+            $this->assertSame('test', $exception->getMessage());
+        }
+
+        Event::assertDispatched(ActivityStarted::class);
+        Event::assertDispatched(ActivityFailed::class);
         Queue::assertPushed(TestWorkflow::class, 1);
     }
 }
