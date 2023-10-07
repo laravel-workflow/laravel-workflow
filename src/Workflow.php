@@ -216,7 +216,6 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
 
             WorkflowCompleted::dispatch(
                 $this->storedWorkflow->id,
-                json_encode($return),
                 now()
                     ->format('Y-m-d\TH:i:s.u\Z')
             );

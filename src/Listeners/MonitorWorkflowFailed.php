@@ -28,7 +28,6 @@ class MonitorWorkflowFailed implements ShouldQueue
                 ],
             ])
             ->patch(config('workflows.monitor_url') . '/rest/v1/workflows', [
-                'output' => $event->output,
                 'status' => 'failed',
                 'updated_at' => $event->timestamp,
             ]);
