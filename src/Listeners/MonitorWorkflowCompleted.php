@@ -8,10 +8,12 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Http;
 use Workflow\Events\WorkflowCompleted;
 use Workflow\Traits\FetchesMonitorAuth;
+use Workflow\Traits\MonitorQueueConnection;
 
 class MonitorWorkflowCompleted implements ShouldQueue
 {
     use FetchesMonitorAuth;
+    use MonitorQueueConnection;
 
     public function handle(WorkflowCompleted $event): void
     {

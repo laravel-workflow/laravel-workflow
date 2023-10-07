@@ -8,10 +8,12 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Http;
 use Workflow\Events\ActivityFailed;
 use Workflow\Traits\FetchesMonitorAuth;
+use Workflow\Traits\MonitorQueueConnection;
 
 class MonitorActivityFailed implements ShouldQueue
 {
     use FetchesMonitorAuth;
+    use MonitorQueueConnection;
 
     public function handle(ActivityFailed $event): void
     {
