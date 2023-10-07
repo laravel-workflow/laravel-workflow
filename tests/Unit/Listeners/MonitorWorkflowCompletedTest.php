@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit;
+namespace Tests\Unit\Listeners;
 
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;

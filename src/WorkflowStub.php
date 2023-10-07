@@ -7,9 +7,7 @@ namespace Workflow;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
-use LimitIterator;
 use ReflectionClass;
-use SplFileObject;
 use Workflow\Events\WorkflowFailed;
 use Workflow\Events\WorkflowStarted;
 use Workflow\Models\StoredWorkflow;
@@ -228,19 +226,7 @@ final class WorkflowStub
 
         $this->storedWorkflow->status->transitionTo(WorkflowFailedStatus::class);
 
-        $file = new SplFileObject($exception->getFile());
-        $iterator = new LimitIterator($file, max(0, $exception->getLine() - 4), 7);
-
-        WorkflowFailed::dispatch($this->storedWorkflow->id, json_encode([
-            'class' => get_class($exception),
-            'message' => $exception->getMessage(),
-            'code' => $exception->getCode(),
-            'line' => $exception->getLine(),
-            'file' => $exception->getFile(),
-            'trace' => $exception->getTrace(),
-            'snippet' => array_slice(iterator_to_array($iterator), 0, 7),
-        ]), now()
-            ->format('Y-m-d\TH:i:s.u\Z'));
+        WorkflowFailed::dispatch($this->storedWorkflow->id, now()->format('Y-m-d\TH:i:s.u\Z'));
 
         $this->storedWorkflow->parents()
             ->each(static function ($parentWorkflow) use ($exception) {
