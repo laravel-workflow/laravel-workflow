@@ -24,4 +24,11 @@ return [
     'monitor_url' => env('WORKFLOW_MONITOR_URL'),
 
     'monitor_api_key' => env('WORKFLOW_MONITOR_API_KEY'),
+
+    'monitor_connection' => env('WORKFLOW_MONITOR_CONNECTION', config('queue.default')),
+
+    'monitor_queue' => env(
+        'WORKFLOW_MONITOR_QUEUE',
+        config('queue.connections.' . config('queue.default') . '.queue', 'default')
+    ),
 ];
