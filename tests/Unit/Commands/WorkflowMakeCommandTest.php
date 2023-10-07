@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit;
+namespace Tests\Unit\Commands;
 
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
