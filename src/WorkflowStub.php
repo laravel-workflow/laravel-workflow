@@ -226,8 +226,7 @@ final class WorkflowStub
 
         $this->storedWorkflow->status->transitionTo(WorkflowFailedStatus::class);
 
-        WorkflowFailed::dispatch($this->storedWorkflow->id, json_encode($exception->getMessage()), now()
-            ->format('Y-m-d\TH:i:s.u\Z'));
+        WorkflowFailed::dispatch($this->storedWorkflow->id, now() ->format('Y-m-d\TH:i:s.u\Z'));
 
         $this->storedWorkflow->parents()
             ->each(static function ($parentWorkflow) use ($exception) {
