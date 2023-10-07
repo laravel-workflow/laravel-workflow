@@ -27,5 +27,8 @@ return [
 
     'monitor_connection' => env('WORKFLOW_MONITOR_CONNECTION', config('queue.default')),
 
-    'monitor_queue' => env('WORKFLOW_MONITOR_QUEUE', config('queue.connections.' . config('queue.default') . '.queue', 'default')),
+    'monitor_queue' => env(
+        'WORKFLOW_MONITOR_QUEUE',
+        config('queue.connections.' . config('queue.default') . '.queue', 'default')
+    ),
 ];
