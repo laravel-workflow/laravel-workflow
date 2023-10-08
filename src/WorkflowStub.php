@@ -228,7 +228,6 @@ final class WorkflowStub
 
         $this->storedWorkflow->status->transitionTo(WorkflowFailedStatus::class);
 
-
         $file = new SplFileObject($exception->getFile());
         $iterator = new LimitIterator($file, max(0, $exception->getLine() - 4), 7);
 
@@ -240,7 +239,8 @@ final class WorkflowStub
             'file' => $exception->getFile(),
             'trace' => $exception->getTrace(),
             'snippet' => array_slice(iterator_to_array($iterator), 0, 7),
-        ]), now()->format('Y-m-d\TH:i:s.u\Z'));
+        ]), now()
+            ->format('Y-m-d\TH:i:s.u\Z'));
 
         $this->storedWorkflow->parents()
             ->each(static function ($parentWorkflow) use ($exception) {

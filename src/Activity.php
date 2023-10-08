@@ -14,6 +14,8 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Routing\RouteDependencyResolverTrait;
 use Illuminate\Support\Facades\App;
+use LimitIterator;
+use SplFileObject;
 use Throwable;
 use Workflow\Middleware\WithoutOverlappingMiddleware;
 use Workflow\Middleware\WorkflowMiddleware;
@@ -102,6 +104,9 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
     {
         $workflow = $this->storedWorkflow->toWorkflow();
 
+        $file = new SplFileObject($throwable->getFile());
+        $iterator = new LimitIterator($file, max(0, $throwable->getLine() - 4), 7);
+
         $throwable = [
             'class' => get_class($throwable),
             'message' => $throwable->getMessage(),
@@ -111,6 +116,7 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
             'trace' => collect($throwable->getTrace())
                 ->filter(static fn ($trace) => Y::serializable($trace))
                 ->toArray(),
+            'snippet' => array_slice(iterator_to_array($iterator), 0, 7),
         ];
 
         Exception::dispatch(
