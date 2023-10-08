@@ -30,7 +30,7 @@ final class MonitorWorkflowFailedTest extends TestCase
             'rest/v1/workflows?user_id=eq.user&workflow_id=eq.1' => Http::response(),
         ]);
 
-        $event = new WorkflowFailed(1, 'time');
+        $event = new WorkflowFailed(1, 'output', 'time');
         $listener = new MonitorWorkflowFailed();
         $listener->handle($event);
 
@@ -45,6 +45,7 @@ final class MonitorWorkflowFailedTest extends TestCase
                 $request->hasHeader('Authorization', 'Bearer token') &&
                 $request->url() === 'http://test/rest/v1/workflows?user_id=eq.user&workflow_id=eq.1' &&
                 $data->status === 'failed' &&
+                $data->output === 'output' &&
                 $data->updated_at === 'time';
         });
     }

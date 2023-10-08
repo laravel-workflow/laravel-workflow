@@ -14,6 +14,7 @@ class WorkflowFailed
 
     public function __construct(
         public int $workflowId,
+        public string $output,
         public string $timestamp,
     ) {
     }
