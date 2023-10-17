@@ -34,6 +34,8 @@ class WithoutOverlappingMiddleware
 
     private $active = true;
 
+    private $timeoutKey;
+
     public function __construct($workflowId, $type, $releaseAfter = 0, $expiresAfter = 0)
     {
         $this->key = "{$workflowId}";
@@ -80,7 +82,14 @@ class WithoutOverlappingMiddleware
     public function lock()
     {
         $workflowSemaphore = (int) $this->cache->get($this->getWorkflowSemaphoreKey(), 0);
-        $activitySemaphore = (int) $this->cache->get($this->getActivitySemaphoreKey(), 0);
+        $activitySemaphore = 0;
+        $activitySemaphores = $this->cache->get($this->getActivitySemaphoreKey(), []);
+
+        foreach ($activitySemaphores as $semaphore) {
+            if ($this->cache->has($semaphore)) {
+                $activitySemaphore++;
+            }
+        }
 
         switch ($this->type) {
             case self::WORKFLOW:
@@ -88,8 +97,9 @@ class WithoutOverlappingMiddleware
                 if ($workflowSemaphore === 0 && $activitySemaphore === 0) {
                     $locked = $this->compareAndSet(
                         $this->getWorkflowSemaphoreKey(),
-                        $workflowSemaphore,
-                        $workflowSemaphore + 1
+                        (int) $workflowSemaphore,
+                        (int) $workflowSemaphore + 1,
+                        $this->expiresAfter
                     );
                 }
                 break;
@@ -97,11 +107,15 @@ class WithoutOverlappingMiddleware
             case self::ACTIVITY:
                 $locked = false;
                 if ($workflowSemaphore === 0) {
+                    $this->timeoutKey = $this->getActivitySemaphoreKey() . bin2hex(random_bytes(16));
                     $locked = $this->compareAndSet(
                         $this->getActivitySemaphoreKey(),
-                        $activitySemaphore,
-                        $activitySemaphore + 1
+                        $activitySemaphores,
+                        array_merge($activitySemaphores, [$this->timeoutKey])
                     );
+                    if ($locked) {
+                        $this->cache->put($this->timeoutKey, $this->expiresAfter);
+                    }
                 }
                 break;
 
@@ -119,11 +133,12 @@ class WithoutOverlappingMiddleware
             case self::WORKFLOW:
                 $unlocked = false;
                 while (! $unlocked) {
-                    $workflowSemaphore = (int) $this->cache->get($this->getWorkflowSemaphoreKey());
+                    $workflowSemaphore = (int) $this->cache->get($this->getWorkflowSemaphoreKey(), 0);
                     $unlocked = $this->compareAndSet(
                         $this->getWorkflowSemaphoreKey(),
-                        $workflowSemaphore,
-                        max($workflowSemaphore - 1, 0)
+                        (int) $workflowSemaphore,
+                        (int) max($workflowSemaphore - 1, 0),
+                        $this->expiresAfter
                     );
                 }
                 break;
@@ -131,27 +146,32 @@ class WithoutOverlappingMiddleware
             case self::ACTIVITY:
                 $unlocked = false;
                 while (! $unlocked) {
-                    $activitySemaphore = (int) $this->cache->get($this->getActivitySemaphoreKey());
+                    $activitySemaphore = $this->cache->get($this->getActivitySemaphoreKey(), []);
                     $unlocked = $this->compareAndSet(
                         $this->getActivitySemaphoreKey(),
                         $activitySemaphore,
-                        max($activitySemaphore - 1, 0)
+                        array_diff($activitySemaphore, [$this->timeoutKey])
                     );
+                    if ($unlocked) {
+                        $this->cache->forget($this->timeoutKey);
+                    }
                 }
                 break;
         }
     }
 
-    private function compareAndSet($key, $expectedValue, $newValue)
+    private function compareAndSet($key, $expectedValue, $newValue, $expiresAfter = 0)
     {
-        $lock = $this->cache->lock($this->getLockKey(), $this->expiresAfter);
+        $lock = $this->cache->lock($this->getLockKey());
 
         if ($lock->get()) {
             try {
-                $currentValue = (int) $this->cache->get($key, null);
+                $currentValue = $this->cache->get($key, $expectedValue);
+
+                $currentValue = is_int($expectedValue) ? (int) $currentValue : $currentValue;
 
                 if ($currentValue === $expectedValue) {
-                    $this->cache->put($key, (int) $newValue);
+                    $this->cache->put($key, $newValue, $expiresAfter);
                     return true;
                 }
             } finally {
