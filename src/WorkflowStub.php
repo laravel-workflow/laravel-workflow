@@ -189,14 +189,6 @@ final class WorkflowStub
     {
         $this->storedWorkflow->arguments = Y::serialize($arguments);
 
-        WorkflowStarted::dispatch(
-            $this->storedWorkflow->id,
-            $this->storedWorkflow->class,
-            json_encode($arguments),
-            now()
-                ->format('Y-m-d\TH:i:s.u\Z')
-        );
-
         $this->dispatch();
     }
 
@@ -272,6 +264,16 @@ final class WorkflowStub
 
     private function dispatch(): void
     {
+        if ($this->created()) {
+            WorkflowStarted::dispatch(
+                $this->storedWorkflow->id,
+                $this->storedWorkflow->class,
+                json_encode(Y::unserialize($this->storedWorkflow->arguments)),
+                now()
+                    ->format('Y-m-d\TH:i:s.u\Z')
+            );
+        }
+
         $this->storedWorkflow->status->transitionTo(WorkflowPendingStatus::class);
 
         $this->storedWorkflow->class::dispatch(
