@@ -268,7 +268,7 @@ final class WorkflowStub
             WorkflowStarted::dispatch(
                 $this->storedWorkflow->id,
                 $this->storedWorkflow->class,
-                json_encode($arguments),
+                json_encode(Y::unserialize($this->storedWorkflow->arguments)),
                 now()
                     ->format('Y-m-d\TH:i:s.u\Z')
             );
