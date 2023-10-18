@@ -80,10 +80,12 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
             ->first();
 
         if ($parentWorkflow) {
-            return [new WithoutOverlappingMiddleware($parentWorkflow->id, WithoutOverlappingMiddleware::ACTIVITY)];
+            return [
+                new WithoutOverlappingMiddleware($parentWorkflow->id, WithoutOverlappingMiddleware::ACTIVITY, 0, 15),
+            ];
         }
         return [
-            new WithoutOverlappingMiddleware($this->storedWorkflow->id, WithoutOverlappingMiddleware::WORKFLOW),
+            new WithoutOverlappingMiddleware($this->storedWorkflow->id, WithoutOverlappingMiddleware::WORKFLOW, 0, 15),
         ];
     }
 

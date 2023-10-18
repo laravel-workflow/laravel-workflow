@@ -85,11 +85,11 @@ final class WithoutOverlappingMiddlewareTest extends TestCase
             $middleware3
         ) {
             $this->assertNull(Cache::get($middleware1->getWorkflowSemaphoreKey()));
-            $this->assertSame(1, Cache::get($middleware1->getActivitySemaphoreKey()));
+            $this->assertSame(1, count(Cache::get($middleware1->getActivitySemaphoreKey())));
 
             $middleware2->handle($activity2, function ($job) use ($middleware2) {
                 $this->assertNull(Cache::get($middleware2->getWorkflowSemaphoreKey()));
-                $this->assertSame(2, Cache::get($middleware2->getActivitySemaphoreKey()));
+                $this->assertSame(2, count(Cache::get($middleware2->getActivitySemaphoreKey())));
             });
 
             $middleware3->handle($workflow1, static function ($job) {
@@ -97,6 +97,6 @@ final class WithoutOverlappingMiddlewareTest extends TestCase
         });
 
         $this->assertNull(Cache::get($middleware1->getWorkflowSemaphoreKey()));
-        $this->assertSame(0, Cache::get($middleware1->getActivitySemaphoreKey()));
+        $this->assertSame(0, count(Cache::get($middleware1->getActivitySemaphoreKey())));
     }
 }

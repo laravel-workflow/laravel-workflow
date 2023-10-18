@@ -9,6 +9,7 @@ use Illuminate\Contracts\Cache\Repository as Cache;
 use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\InteractsWithTime;
+use Illuminate\Support\Str;
 
 class WithoutOverlappingMiddleware
 {
@@ -30,8 +31,6 @@ class WithoutOverlappingMiddleware
 
     private $cache;
 
-    private $job;
-
     private $active = true;
 
     public function __construct($workflowId, $type, $releaseAfter = 0, $expiresAfter = 0)
@@ -45,17 +44,17 @@ class WithoutOverlappingMiddleware
 
     public function handle($job, $next)
     {
-        $locked = $this->lock();
+        $locked = $this->lock($job);
 
         if ($locked) {
             Queue::before(
                 fn (JobProcessing $event) => $this->active = $job->job->getJobId() === $event->job->getJobId()
             );
-            Queue::stopping(fn () => $this->active ? $this->unlock() : null);
+            Queue::stopping(fn () => $this->active ? $this->unlock($job) : null);
             try {
                 $next($job);
             } finally {
-                $this->unlock();
+                $this->unlock($job);
             }
         } elseif ($this->releaseAfter !== null) {
             $job->release($this->releaseAfter);
@@ -77,10 +76,17 @@ class WithoutOverlappingMiddleware
         return $this->getLockKey() . ':activity';
     }
 
-    public function lock()
+    public function lock($job)
     {
         $workflowSemaphore = (int) $this->cache->get($this->getWorkflowSemaphoreKey(), 0);
-        $activitySemaphore = (int) $this->cache->get($this->getActivitySemaphoreKey(), 0);
+        $activitySemaphore = 0;
+        $activitySemaphores = $this->cache->get($this->getActivitySemaphoreKey(), []);
+
+        foreach ($activitySemaphores as $semaphore) {
+            if ($this->cache->has($semaphore)) {
+                $activitySemaphore++;
+            }
+        }
 
         switch ($this->type) {
             case self::WORKFLOW:
@@ -88,8 +94,9 @@ class WithoutOverlappingMiddleware
                 if ($workflowSemaphore === 0 && $activitySemaphore === 0) {
                     $locked = $this->compareAndSet(
                         $this->getWorkflowSemaphoreKey(),
-                        $workflowSemaphore,
-                        $workflowSemaphore + 1
+                        (int) $workflowSemaphore,
+                        (int) $workflowSemaphore + 1,
+                        $this->expiresAfter
                     );
                 }
                 break;
@@ -97,11 +104,19 @@ class WithoutOverlappingMiddleware
             case self::ACTIVITY:
                 $locked = false;
                 if ($workflowSemaphore === 0) {
+                    $job->key = $this->getActivitySemaphoreKey() . ':' . (string) Str::uuid();
                     $locked = $this->compareAndSet(
                         $this->getActivitySemaphoreKey(),
-                        $activitySemaphore,
-                        $activitySemaphore + 1
+                        $activitySemaphores,
+                        array_merge($activitySemaphores, [$job->key])
                     );
+                    if ($locked) {
+                        if ($this->expiresAfter) {
+                            $this->cache->put($job->key, 1, $this->expiresAfter);
+                        } else {
+                            $this->cache->put($job->key, 1);
+                        }
+                    }
                 }
                 break;
 
@@ -113,17 +128,18 @@ class WithoutOverlappingMiddleware
         return $locked;
     }
 
-    public function unlock()
+    public function unlock($job)
     {
         switch ($this->type) {
             case self::WORKFLOW:
                 $unlocked = false;
                 while (! $unlocked) {
-                    $workflowSemaphore = (int) $this->cache->get($this->getWorkflowSemaphoreKey());
+                    $workflowSemaphore = (int) $this->cache->get($this->getWorkflowSemaphoreKey(), 0);
                     $unlocked = $this->compareAndSet(
                         $this->getWorkflowSemaphoreKey(),
-                        $workflowSemaphore,
-                        max($workflowSemaphore - 1, 0)
+                        (int) $workflowSemaphore,
+                        (int) max($workflowSemaphore - 1, 0),
+                        $this->expiresAfter
                     );
                 }
                 break;
@@ -131,27 +147,36 @@ class WithoutOverlappingMiddleware
             case self::ACTIVITY:
                 $unlocked = false;
                 while (! $unlocked) {
-                    $activitySemaphore = (int) $this->cache->get($this->getActivitySemaphoreKey());
+                    $activitySemaphore = $this->cache->get($this->getActivitySemaphoreKey(), []);
                     $unlocked = $this->compareAndSet(
                         $this->getActivitySemaphoreKey(),
                         $activitySemaphore,
-                        max($activitySemaphore - 1, 0)
+                        array_diff($activitySemaphore, [$job->key])
                     );
+                    if ($unlocked) {
+                        $this->cache->forget($job->key);
+                    }
                 }
                 break;
         }
     }
 
-    private function compareAndSet($key, $expectedValue, $newValue)
+    private function compareAndSet($key, $expectedValue, $newValue, $expiresAfter = 0)
     {
-        $lock = $this->cache->lock($this->getLockKey(), $this->expiresAfter);
+        $lock = $this->cache->lock($this->getLockKey());
 
         if ($lock->get()) {
             try {
-                $currentValue = (int) $this->cache->get($key, null);
+                $currentValue = $this->cache->get($key, $expectedValue);
+
+                $currentValue = is_int($expectedValue) ? (int) $currentValue : $currentValue;
 
                 if ($currentValue === $expectedValue) {
-                    $this->cache->put($key, (int) $newValue);
+                    if ($expiresAfter) {
+                        $this->cache->put($key, $newValue, $expiresAfter);
+                    } else {
+                        $this->cache->put($key, $newValue);
+                    }
                     return true;
                 }
             } finally {
