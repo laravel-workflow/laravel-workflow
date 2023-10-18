@@ -14,6 +14,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Routing\RouteDependencyResolverTrait;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Cache;
 use LimitIterator;
 use SplFileObject;
 use Throwable;
@@ -37,6 +38,8 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
     public $timeout = 0;
 
     public $arguments;
+
+    public $key = '';
 
     private Container $container;
 
@@ -137,5 +140,8 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
     public function heartbeat(): void
     {
         pcntl_alarm(max($this->timeout, 0));
+        if ($this->timeout) {
+            Cache::put($this->key, 1, $this->timeout);
+        }
     }
 }

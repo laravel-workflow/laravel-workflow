@@ -31,11 +31,7 @@ class WithoutOverlappingMiddleware
 
     private $cache;
 
-    private $job;
-
     private $active = true;
-
-    private $timeoutKey;
 
     public function __construct($workflowId, $type, $releaseAfter = 0, $expiresAfter = 0)
     {
@@ -48,17 +44,17 @@ class WithoutOverlappingMiddleware
 
     public function handle($job, $next)
     {
-        $locked = $this->lock();
+        $locked = $this->lock($job);
 
         if ($locked) {
             Queue::before(
                 fn (JobProcessing $event) => $this->active = $job->job->getJobId() === $event->job->getJobId()
             );
-            Queue::stopping(fn () => $this->active ? $this->unlock() : null);
+            Queue::stopping(fn () => $this->active ? $this->unlock($job) : null);
             try {
                 $next($job);
             } finally {
-                $this->unlock();
+                $this->unlock($job);
             }
         } elseif ($this->releaseAfter !== null) {
             $job->release($this->releaseAfter);
@@ -80,7 +76,7 @@ class WithoutOverlappingMiddleware
         return $this->getLockKey() . ':activity';
     }
 
-    public function lock()
+    public function lock($job)
     {
         $workflowSemaphore = (int) $this->cache->get($this->getWorkflowSemaphoreKey(), 0);
         $activitySemaphore = 0;
@@ -108,17 +104,17 @@ class WithoutOverlappingMiddleware
             case self::ACTIVITY:
                 $locked = false;
                 if ($workflowSemaphore === 0) {
-                    $this->timeoutKey = $this->getActivitySemaphoreKey() . ':' . (string) Str::uuid();
+                    $job->key = $this->getActivitySemaphoreKey() . ':' . (string) Str::uuid();
                     $locked = $this->compareAndSet(
                         $this->getActivitySemaphoreKey(),
                         $activitySemaphores,
-                        array_merge($activitySemaphores, [$this->timeoutKey])
+                        array_merge($activitySemaphores, [$job->key])
                     );
                     if ($locked) {
                         if ($this->expiresAfter) {
-                            $this->cache->put($this->timeoutKey, 1, $this->expiresAfter);
+                            $this->cache->put($job->key, 1, $this->expiresAfter);
                         } else {
-                            $this->cache->put($this->timeoutKey, 1);
+                            $this->cache->put($job->key, 1);
                         }
                     }
                 }
@@ -132,7 +128,7 @@ class WithoutOverlappingMiddleware
         return $locked;
     }
 
-    public function unlock()
+    public function unlock($job)
     {
         switch ($this->type) {
             case self::WORKFLOW:
@@ -155,10 +151,10 @@ class WithoutOverlappingMiddleware
                     $unlocked = $this->compareAndSet(
                         $this->getActivitySemaphoreKey(),
                         $activitySemaphore,
-                        array_diff($activitySemaphore, [$this->timeoutKey])
+                        array_diff($activitySemaphore, [$job->key])
                     );
                     if ($unlocked) {
-                        $this->cache->forget($this->timeoutKey);
+                        $this->cache->forget($job->key);
                     }
                 }
                 break;
