@@ -95,7 +95,7 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
     public function middleware()
     {
         return [
-            new WithoutOverlappingMiddleware($this->storedWorkflow->id, WithoutOverlappingMiddleware::ACTIVITY),
+            new WithoutOverlappingMiddleware($this->storedWorkflow->id, WithoutOverlappingMiddleware::ACTIVITY, 0, $this->timeout),
             new WorkflowMiddleware(),
         ];
     }
