@@ -9,6 +9,7 @@ use Illuminate\Contracts\Cache\Repository as Cache;
 use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\InteractsWithTime;
+use Illuminate\Support\Str;
 
 class WithoutOverlappingMiddleware
 {
@@ -107,14 +108,18 @@ class WithoutOverlappingMiddleware
             case self::ACTIVITY:
                 $locked = false;
                 if ($workflowSemaphore === 0) {
-                    $this->timeoutKey = $this->getActivitySemaphoreKey() . bin2hex(random_bytes(16));
+                    $this->timeoutKey = $this->getActivitySemaphoreKey() . ':' . (string) Str::uuid();
                     $locked = $this->compareAndSet(
                         $this->getActivitySemaphoreKey(),
                         $activitySemaphores,
                         array_merge($activitySemaphores, [$this->timeoutKey])
                     );
                     if ($locked) {
-                        $this->cache->put($this->timeoutKey, $this->expiresAfter);
+                        if ($this->expiresAfter) {
+                            $this->cache->put($this->timeoutKey, 1, $this->expiresAfter);
+                        } else {
+                            $this->cache->put($this->timeoutKey, 1);
+                        }
                     }
                 }
                 break;
@@ -171,7 +176,11 @@ class WithoutOverlappingMiddleware
                 $currentValue = is_int($expectedValue) ? (int) $currentValue : $currentValue;
 
                 if ($currentValue === $expectedValue) {
-                    $this->cache->put($key, $newValue, $expiresAfter);
+                    if ($expiresAfter) {
+                        $this->cache->put($key, $newValue, $expiresAfter);
+                    } else {
+                        $this->cache->put($key, $newValue);
+                    }
                     return true;
                 }
             } finally {
