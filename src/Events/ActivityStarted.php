@@ -13,7 +13,7 @@ class ActivityStarted
     use InteractsWithSockets;
 
     public function __construct(
-        public int $workflowId,
+        public int|string $workflowId,
         public string $activityId,
         public string $class,
         public int $index,

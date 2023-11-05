@@ -13,7 +13,7 @@ class WorkflowStarted
     use InteractsWithSockets;
 
     public function __construct(
-        public int $workflowId,
+        public int|string $workflowId,
         public string $class,
         public string $arguments,
         public string $timestamp,
