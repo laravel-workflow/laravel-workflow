@@ -57,7 +57,7 @@ final class WorkflowStub
                     'arguments' => Y::serialize($arguments),
                 ]);
 
-            $workflow = $this->storedWorkflow->toWorkflow();
+            $this->storedWorkflow->toWorkflow();
 
             return Signal::dispatch($this->storedWorkflow, self::connection(), self::queue());
         }
