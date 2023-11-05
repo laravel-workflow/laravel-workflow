@@ -32,7 +32,6 @@ final class WorkflowStub
 
     /**
      * It's used only in queues for storing current context
-     * @var \stdClass|null
      */
     private static ?\stdClass $context = null;
 
@@ -66,7 +65,8 @@ final class WorkflowStub
             return Signal::dispatch(
                 $this->storedWorkflow,
                 Arr::get($workflowClassProps, 'connection'),
-                Arr::get($workflowClassProps, 'queue'));
+                Arr::get($workflowClassProps, 'queue')
+            );
         }
 
         if (collect((new ReflectionClass($this->storedWorkflow->class))->getMethods())
