@@ -30,9 +30,6 @@ final class WorkflowStub
     use SideEffects;
     use Timers;
 
-    /**
-     * It's used only in queues for storing current context
-     */
     private static ?\stdClass $context = null;
 
     private function __construct(
@@ -60,13 +57,9 @@ final class WorkflowStub
                     'arguments' => Y::serialize($arguments),
                 ]);
 
-            $workflowClassProps = (new ReflectionClass($this->storedWorkflow->class))->getDefaultProperties();
+            $workflow = $this->storedWorkflow->toWorkflow();
 
-            return Signal::dispatch(
-                $this->storedWorkflow,
-                Arr::get($workflowClassProps, 'connection'),
-                Arr::get($workflowClassProps, 'queue')
-            );
+            return Signal::dispatch($this->storedWorkflow, self::connection(), self::queue());
         }
 
         if (collect((new ReflectionClass($this->storedWorkflow->class))->getMethods())
