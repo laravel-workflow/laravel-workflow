@@ -7,6 +7,7 @@ namespace Tests\Unit;
 use Exception;
 use Illuminate\Support\Carbon;
 use Tests\Fixtures\TestAwaitWorkflow;
+use Tests\Fixtures\TestBadConnectionWorkflow;
 use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
 use Workflow\Models\StoredWorkflow;
@@ -192,5 +193,18 @@ final class WorkflowStubTest extends TestCase
             'class' => Signal::class,
         ]);
         $this->assertTrue(Y::unserialize($workflow->logs()->firstWhere('index', 1)->result));
+    }
+
+    public function testConnection(): void
+    {
+        Carbon::setTestNow('2022-01-01');
+
+        $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
+        $otherWorkflow = WorkflowStub::load(WorkflowStub::make(TestBadConnectionWorkflow::class)->id());
+
+        $workflow->cancel();
+
+        $this->assertSame('redis', WorkflowStub::connection());
+        $this->assertSame('default', WorkflowStub::queue());
     }
 }
