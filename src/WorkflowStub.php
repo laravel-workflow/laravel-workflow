@@ -7,6 +7,7 @@ namespace Workflow;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\App;
 use LimitIterator;
 use ReflectionClass;
 use SplFileObject;
@@ -29,6 +30,8 @@ final class WorkflowStub
     use AwaitWithTimeouts;
     use SideEffects;
     use Timers;
+
+    public const MOCKS_LIST = 'workflow.mocks';
 
     private static ?\stdClass $context = null;
 
@@ -59,6 +62,11 @@ final class WorkflowStub
 
             $this->storedWorkflow->toWorkflow();
 
+            if (static::faked()) {
+                return $this->fresh()
+                    ->resume();
+            }
+
             return Signal::dispatch($this->storedWorkflow, self::connection(), self::queue());
         }
 
@@ -74,6 +82,40 @@ final class WorkflowStub
             ))
                 ->query($method);
         }
+    }
+
+    public static function fake(): void
+    {
+        App::bind(static::MOCKS_LIST, static function ($app) {
+            return [];
+        });
+    }
+
+    public static function faked(): bool
+    {
+        return App::bound(static::MOCKS_LIST);
+    }
+
+    public static function mock($class, $result)
+    {
+        if (! static::faked()) {
+            return;
+        }
+
+        $mocks = static::mocks();
+
+        App::bind(static::MOCKS_LIST, static function ($app) use ($mocks, $class, $result) {
+            $mocks[$class] = $result;
+            return $mocks;
+        });
+    }
+
+    public static function mocks()
+    {
+        if (! static::faked()) {
+            return [];
+        }
+        return App::make(static::MOCKS_LIST);
     }
 
     public static function connection()
@@ -278,9 +320,16 @@ final class WorkflowStub
 
         $this->storedWorkflow->status->transitionTo(WorkflowPendingStatus::class);
 
-        $this->storedWorkflow->class::dispatch(
-            $this->storedWorkflow,
-            ...Y::unserialize($this->storedWorkflow->arguments)
-        );
+        if (static::faked()) {
+            $this->storedWorkflow->class::dispatchNow(
+                $this->storedWorkflow,
+                ...Y::unserialize($this->storedWorkflow->arguments)
+            );
+        } else {
+            $this->storedWorkflow->class::dispatch(
+                $this->storedWorkflow,
+                ...Y::unserialize($this->storedWorkflow->arguments)
+            );
+        }
     }
 }
