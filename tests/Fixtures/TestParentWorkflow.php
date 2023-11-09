@@ -10,10 +10,6 @@ use Workflow\Workflow;
 
 class TestParentWorkflow extends Workflow
 {
-    public $connection = 'redis';
-
-    public $queue = 'default';
-
     public function execute()
     {
         $otherResult = yield ChildWorkflowStub::make(TestChildWorkflow::class);

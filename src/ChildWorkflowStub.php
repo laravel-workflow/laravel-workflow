@@ -25,6 +25,20 @@ final class ChildWorkflowStub
             ->whereIndex($context->index)
             ->first();
 
+        $mocks = WorkflowStub::mocks();
+
+        if (! $log && array_key_exists($workflow, $mocks)) {
+            $result = $mocks[$workflow];
+
+            $log = $context->storedWorkflow->logs()
+                ->create([
+                    'index' => $context->index,
+                    'now' => $context->now,
+                    'class' => $workflow,
+                    'result' => Y::serialize(is_callable($result) ? $result($context, ...$arguments) : $result),
+                ]);
+        }
+
         if ($log) {
             ++$context->index;
             WorkflowStub::setContext($context);
