@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
-use Illuminate\Support\Carbon;
 use Tests\Fixtures\TestActivity;
 use Tests\Fixtures\TestChildWorkflow;
 use Tests\Fixtures\TestConcurrentWorkflow;
@@ -18,9 +17,6 @@ final class WorkflowFakerTest extends TestCase
 {
     public function testTimeTravelWorkflow(): void
     {
-        $now = Carbon::now();
-        Carbon::setTestNow($now);
-
         WorkflowStub::fake();
 
         WorkflowStub::mock(TestActivity::class, 'activity');
@@ -38,7 +34,9 @@ final class WorkflowFakerTest extends TestCase
 
         $workflow->cancel();
 
-        Carbon::setTestNow($now->copy()->addSeconds(300));
+        $this->travel(5)
+            ->minutes();
+
         $workflow->resume();
 
         $this->assertTrue($workflow->isCanceled());

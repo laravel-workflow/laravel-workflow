@@ -226,7 +226,8 @@ final class WorkflowStub
 
     public function resume(): void
     {
-        $this->dispatch();
+        $this->fresh()
+            ->dispatch();
     }
 
     public function start(...$arguments): void
