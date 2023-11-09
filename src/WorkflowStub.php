@@ -321,7 +321,8 @@ final class WorkflowStub
         $this->storedWorkflow->status->transitionTo(WorkflowPendingStatus::class);
 
         if (static::faked()) {
-            $this->storedWorkflow->class::dispatchNow(
+            $method = version_compare(App::version(), '10', '>=') ? 'dispatchSync' : 'dispatchNow';
+            $this->storedWorkflow->class::$method(
                 $this->storedWorkflow,
                 ...Y::unserialize($this->storedWorkflow->arguments)
             );
