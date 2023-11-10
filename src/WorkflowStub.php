@@ -63,8 +63,8 @@ final class WorkflowStub
             $this->storedWorkflow->toWorkflow();
 
             if (static::faked()) {
-                return $this->fresh()
-                    ->resume();
+                $this->resume();
+                return;
             }
 
             return Signal::dispatch($this->storedWorkflow, self::connection(), self::queue());
@@ -321,17 +321,11 @@ final class WorkflowStub
 
         $this->storedWorkflow->status->transitionTo(WorkflowPendingStatus::class);
 
-        if (static::faked()) {
-            $method = version_compare(App::version(), '10', '>=') ? 'dispatchSync' : 'dispatchNow';
-            $this->storedWorkflow->class::$method(
-                $this->storedWorkflow,
-                ...Y::unserialize($this->storedWorkflow->arguments)
-            );
-        } else {
-            $this->storedWorkflow->class::dispatch(
-                $this->storedWorkflow,
-                ...Y::unserialize($this->storedWorkflow->arguments)
-            );
-        }
+        $dispatch = static::faked() ? 'dispatchSync' : 'dispatch';
+
+        $this->storedWorkflow->class::$dispatch(
+            $this->storedWorkflow,
+            ...Y::unserialize($this->storedWorkflow->arguments)
+        );
     }
 }
