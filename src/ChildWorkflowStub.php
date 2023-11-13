@@ -37,6 +37,8 @@ final class ChildWorkflowStub
                     'class' => $workflow,
                     'result' => Y::serialize(is_callable($result) ? $result($context, ...$arguments) : $result),
                 ]);
+
+            WorkflowStub::recordDispatchedWorkflowOrActivity($workflow, $arguments);
         }
 
         if ($log) {

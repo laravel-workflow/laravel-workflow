@@ -29,6 +29,9 @@ final class WorkflowFakerTest extends TestCase
         $workflow = WorkflowStub::make(TestTimeTravelWorkflow::class);
         $workflow->start();
 
+        WorkflowStub::assertDispatchedTimes(TestActivity::class, 0);
+        WorkflowStub::assertDispatchedTimes(TestOtherActivity::class);
+
         $this->assertFalse($workflow->isCanceled());
         $this->assertNull($workflow->output());
 
@@ -54,6 +57,9 @@ final class WorkflowFakerTest extends TestCase
         $workflow = WorkflowStub::make(TestParentWorkflow::class);
         $workflow->start();
 
+        WorkflowStub::assertDispatchedTimes(TestActivity::class);
+        WorkflowStub::assertDispatchedTimes(TestChildWorkflow::class);
+
         $this->assertSame($workflow->output(), 'workflow_activity_other_activity');
     }
 
@@ -70,6 +76,29 @@ final class WorkflowFakerTest extends TestCase
 
         $workflow = WorkflowStub::make(TestConcurrentWorkflow::class);
         $workflow->start();
+
+        WorkflowStub::assertDispatchedTimes(TestActivity::class);
+        WorkflowStub::assertDispatchedTimes(TestOtherActivity::class);
+
+        $this->assertSame($workflow->output(), 'workflow_activity_other_activity');
+    }
+
+
+    public function testChildWorkflowActivities(): void
+    {
+        WorkflowStub::fake();
+
+        WorkflowStub::mock(TestActivity::class, 'activity');
+
+        WorkflowStub::mock(TestOtherActivity::class, 'other_activity');
+
+        $workflow = WorkflowStub::make(TestParentWorkflow::class);
+        $workflow->start();
+
+        $this->markTestIncomplete("WIP: This currently fails because of an issue with locking when using the sync queue");
+
+        WorkflowStub::assertDispatchedTimes(TestOtherActivity::class);
+        WorkflowStub::assertDispatchedTimes(TestActivity::class);
 
         $this->assertSame($workflow->output(), 'workflow_activity_other_activity');
     }

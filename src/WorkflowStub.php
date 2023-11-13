@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Workflow;
 
+use Closure;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use LimitIterator;
+use PHPUnit\Framework\Assert as PHPUnit;
 use ReflectionClass;
 use SplFileObject;
 use Workflow\Events\WorkflowFailed;
@@ -19,6 +22,7 @@ use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowCreatedStatus;
 use Workflow\States\WorkflowFailedStatus;
 use Workflow\States\WorkflowPendingStatus;
+use Workflow\Traits\AssertDispatchedWorkflowsOrActivities;
 use Workflow\Traits\Awaits;
 use Workflow\Traits\AwaitWithTimeouts;
 use Workflow\Traits\SideEffects;
@@ -26,12 +30,14 @@ use Workflow\Traits\Timers;
 
 final class WorkflowStub
 {
+    use AssertDispatchedWorkflowsOrActivities;
     use Awaits;
     use AwaitWithTimeouts;
     use SideEffects;
     use Timers;
 
     public const MOCKS_LIST = 'workflow.mocks';
+    public const DISPATCHED_WORKFLOWS_OR_ACTIVITIES_LIST = 'workflow.dispatched_workflows_or_activities';
 
     private static ?\stdClass $context = null;
 
@@ -87,6 +93,10 @@ final class WorkflowStub
     public static function fake(): void
     {
         App::bind(static::MOCKS_LIST, static function ($app) {
+            return [];
+        });
+
+        App::bind(static::DISPATCHED_WORKFLOWS_OR_ACTIVITIES_LIST, static function ($app) {
             return [];
         });
     }
