@@ -34,6 +34,7 @@ final class WorkflowStub
     use Timers;
 
     public const MOCKS_LIST = 'workflow.mocks';
+
     public const DISPATCHED_WORKFLOWS_OR_ACTIVITIES_LIST = 'workflow.dispatched_workflows_or_activities';
 
     private static ?\stdClass $context = null;

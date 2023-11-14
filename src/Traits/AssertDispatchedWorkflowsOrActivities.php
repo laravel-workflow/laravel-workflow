@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Workflow\Traits;
@@ -17,7 +18,7 @@ trait AssertDispatchedWorkflowsOrActivities
         return App::make(static::DISPATCHED_WORKFLOWS_OR_ACTIVITIES_LIST);
     }
 
-    public static function recordDispatchedWorkflowOrActivity($class, $arguments) : void
+    public static function recordDispatchedWorkflowOrActivity($class, $arguments): void
     {
         if (! static::faked()) {
             return;
@@ -25,7 +26,11 @@ trait AssertDispatchedWorkflowsOrActivities
 
         $dispatchedWorkflowsOrActivities = static::dispatchedWorkflowsOrActivities();
 
-        App::bind(static::DISPATCHED_WORKFLOWS_OR_ACTIVITIES_LIST, static function ($app) use ($dispatchedWorkflowsOrActivities, $class, $arguments) {
+        App::bind(static::DISPATCHED_WORKFLOWS_OR_ACTIVITIES_LIST, static function ($app) use (
+            $dispatchedWorkflowsOrActivities,
+            $class,
+            $arguments
+        ) {
             if (! isset($dispatchedWorkflowsOrActivities[$class])) {
                 $dispatchedWorkflowsOrActivities[$class] = [];
             }
@@ -41,7 +46,7 @@ trait AssertDispatchedWorkflowsOrActivities
      *
      * @param callable|int|null $callback
      */
-    public static function assertDispatched(string $workflowOrActivity, $callback = null) : void
+    public static function assertDispatched(string $workflowOrActivity, $callback = null): void
     {
         if (is_int($callback)) {
             self::assertDispatchedTimes($workflowOrActivity, $callback);
@@ -59,7 +64,8 @@ trait AssertDispatchedWorkflowsOrActivities
         $count = self::dispatched($workflowOrActivity)->count();
 
         PHPUnit::assertSame(
-            $times, $count,
+            $times,
+            $count,
             "The expected [{$workflowOrActivity}] workflow/activity was dispatched {$count} times instead of {$times} times."
         );
     }
@@ -67,21 +73,19 @@ trait AssertDispatchedWorkflowsOrActivities
     /**
      * Get all of the activities matching a truth-test callback.
      *
-     * @param  string  $workflowOrActivity
      * @param  callable|null  $callback
-     * @return Collection
      */
-    public static function dispatched(string $workflowOrActivity, $callback = null) : Collection
+    public static function dispatched(string $workflowOrActivity, $callback = null): Collection
     {
         $dispatchedWorkflowsOrActivities = App::make(self::DISPATCHED_WORKFLOWS_OR_ACTIVITIES_LIST);
         if (! isset($dispatchedWorkflowsOrActivities[$workflowOrActivity])) {
             return collect();
         }
 
-        $callback = $callback ?: fn () => true;
+        $callback = $callback ?: static fn () => true;
 
         return collect($dispatchedWorkflowsOrActivities[$workflowOrActivity])->filter(
-            fn ($arguments) => $callback(...$arguments)
+            static fn ($arguments) => $callback(...$arguments)
         );
     }
 }
