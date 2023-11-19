@@ -18,36 +18,27 @@ trait Fakes
         return App::bound(static::$MOCKS_LIST);
     }
 
-    public static function mock($class, $result)
-    {
-        if (! static::faked()) {
-            return;
-        }
-
-        $mocks = static::mocks();
-
-        App::bind(static::$MOCKS_LIST, static function ($app) use ($mocks, $class, $result) {
-            $mocks[$class] = $result;
-            return $mocks;
-        });
-    }
-
-    public static function mocks()
-    {
-        if (! static::faked()) {
-            return [];
-        }
-        return App::make(static::$MOCKS_LIST);
-    }
-
     public static function fake(): void
     {
+        App::bind(static::$MOCKS_LIST, static function ($app) {
+            return [];
+        });
+
         App::bind(static::$DISPATCHED_LIST, static function ($app) {
             return [];
         });
 
-        App::bind(static::$MOCKS_LIST, static function ($app) {
-            return [];
+        static::macro('mocks', static function () {
+            return App::make(static::$MOCKS_LIST);
+        });
+
+        static::macro('mock', static function ($class, $result) {
+            $mocks = static::mocks();
+
+            App::bind(static::$MOCKS_LIST, static function ($app) use ($mocks, $class, $result) {
+                $mocks[$class] = $result;
+                return $mocks;
+            });
         });
 
         static::macro('recordDispatched', static function ($class, $arguments) {
