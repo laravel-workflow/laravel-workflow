@@ -77,6 +77,21 @@ trait Fakes
             );
         });
 
+        static::macro('assertNotDispatched', static function (string $workflowOrActivity, $callback = null) {
+            \PHPUnit\Framework\Assert::assertTrue(
+                self::dispatched($workflowOrActivity, $callback)->count() === 0,
+                "The unexpected [{$workflowOrActivity}] workflow/activity was dispatched."
+            );
+        });
+
+        static::macro('assertNothingDispatched', static function () {
+            $dispatched = App::make(self::$DISPATCHED_LIST);
+            \PHPUnit\Framework\Assert::assertTrue(
+                count($dispatched) === 0,
+                'An unexpected workflow/activity was dispatched.'
+            );
+        });
+
         static::macro('dispatched', static function (string $workflowOrActivity, $callback = null): Collection {
             $dispatched = App::make(self::$DISPATCHED_LIST);
             if (! isset($dispatched[$workflowOrActivity])) {
