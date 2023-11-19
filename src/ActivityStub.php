@@ -32,18 +32,22 @@ final class ActivityStub
             ->whereIndex($context->index)
             ->first();
 
-        $mocks = WorkflowStub::mocks();
+        if (WorkflowStub::faked()) {
+            $mocks = WorkflowStub::mocks();
 
-        if (! $log && array_key_exists($activity, $mocks)) {
-            $result = $mocks[$activity];
+            if (! $log && array_key_exists($activity, $mocks)) {
+                $result = $mocks[$activity];
 
-            $log = $context->storedWorkflow->logs()
-                ->create([
-                    'index' => $context->index,
-                    'now' => $context->now,
-                    'class' => $activity,
-                    'result' => Y::serialize(is_callable($result) ? $result($context, ...$arguments) : $result),
-                ]);
+                $log = $context->storedWorkflow->logs()
+                    ->create([
+                        'index' => $context->index,
+                        'now' => $context->now,
+                        'class' => $activity,
+                        'result' => Y::serialize(is_callable($result) ? $result($context, ...$arguments) : $result),
+                    ]);
+
+                WorkflowStub::recordDispatched($activity, $arguments);
+            }
         }
 
         if ($log) {

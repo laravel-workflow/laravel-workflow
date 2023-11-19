@@ -7,7 +7,7 @@ namespace Workflow;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\App;
+use Illuminate\Support\Traits\Macroable;
 use LimitIterator;
 use ReflectionClass;
 use SplFileObject;
@@ -21,6 +21,7 @@ use Workflow\States\WorkflowFailedStatus;
 use Workflow\States\WorkflowPendingStatus;
 use Workflow\Traits\Awaits;
 use Workflow\Traits\AwaitWithTimeouts;
+use Workflow\Traits\Fakes;
 use Workflow\Traits\SideEffects;
 use Workflow\Traits\Timers;
 
@@ -28,10 +29,10 @@ final class WorkflowStub
 {
     use Awaits;
     use AwaitWithTimeouts;
+    use Fakes;
+    use Macroable;
     use SideEffects;
     use Timers;
-
-    public const MOCKS_LIST = 'workflow.mocks';
 
     private static ?\stdClass $context = null;
 
@@ -82,40 +83,6 @@ final class WorkflowStub
             ))
                 ->query($method);
         }
-    }
-
-    public static function fake(): void
-    {
-        App::bind(static::MOCKS_LIST, static function ($app) {
-            return [];
-        });
-    }
-
-    public static function faked(): bool
-    {
-        return App::bound(static::MOCKS_LIST);
-    }
-
-    public static function mock($class, $result)
-    {
-        if (! static::faked()) {
-            return;
-        }
-
-        $mocks = static::mocks();
-
-        App::bind(static::MOCKS_LIST, static function ($app) use ($mocks, $class, $result) {
-            $mocks[$class] = $result;
-            return $mocks;
-        });
-    }
-
-    public static function mocks()
-    {
-        if (! static::faked()) {
-            return [];
-        }
-        return App::make(static::MOCKS_LIST);
     }
 
     public static function connection()

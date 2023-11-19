@@ -26,8 +26,13 @@ final class WorkflowFakerTest extends TestCase
             return 'other_activity';
         });
 
+        WorkflowStub::assertNothingDispatched();
+
         $workflow = WorkflowStub::make(TestTimeTravelWorkflow::class);
         $workflow->start();
+
+        WorkflowStub::assertDispatched(TestOtherActivity::class, 1);
+        WorkflowStub::assertNotDispatched(TestActivity::class);
 
         $this->assertFalse($workflow->isCanceled());
         $this->assertNull($workflow->output());
@@ -41,6 +46,12 @@ final class WorkflowFakerTest extends TestCase
 
         $this->assertTrue($workflow->isCanceled());
         $this->assertSame($workflow->output(), 'workflow_activity_other_activity');
+
+        WorkflowStub::assertDispatched(TestOtherActivity::class, static function ($string) {
+            return $string === 'other';
+        });
+
+        WorkflowStub::assertDispatched(TestActivity::class);
     }
 
     public function testParentWorkflow(): void
@@ -53,6 +64,9 @@ final class WorkflowFakerTest extends TestCase
 
         $workflow = WorkflowStub::make(TestParentWorkflow::class);
         $workflow->start();
+
+        WorkflowStub::assertDispatchedTimes(TestActivity::class, 1);
+        WorkflowStub::assertDispatchedTimes(TestChildWorkflow::class, 1);
 
         $this->assertSame($workflow->output(), 'workflow_activity_other_activity');
     }
@@ -70,6 +84,9 @@ final class WorkflowFakerTest extends TestCase
 
         $workflow = WorkflowStub::make(TestConcurrentWorkflow::class);
         $workflow->start();
+
+        WorkflowStub::assertDispatched(TestActivity::class);
+        WorkflowStub::assertDispatched(TestOtherActivity::class);
 
         $this->assertSame($workflow->output(), 'workflow_activity_other_activity');
     }
