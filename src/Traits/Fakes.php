@@ -20,11 +20,11 @@ trait Fakes
 
     public static function fake(): void
     {
-        App::bind(static::$MOCKS_LIST, static function ($app) {
+        App::bind(static::$MOCKS_LIST, static function () {
             return [];
         });
 
-        App::bind(static::$DISPATCHED_LIST, static function ($app) {
+        App::bind(static::$DISPATCHED_LIST, static function () {
             return [];
         });
 
@@ -35,7 +35,7 @@ trait Fakes
         static::macro('mock', static function ($class, $result) {
             $mocks = static::mocks();
 
-            App::bind(static::$MOCKS_LIST, static function ($app) use ($mocks, $class, $result) {
+            App::bind(static::$MOCKS_LIST, static function () use ($mocks, $class, $result) {
                 $mocks[$class] = $result;
                 return $mocks;
             });
@@ -44,7 +44,7 @@ trait Fakes
         static::macro('recordDispatched', static function ($class, $arguments) {
             $dispatched = App::make(static::$DISPATCHED_LIST);
 
-            App::bind(static::$DISPATCHED_LIST, static function ($app) use ($dispatched, $class, $arguments) {
+            App::bind(static::$DISPATCHED_LIST, static function () use ($dispatched, $class, $arguments) {
                 if (! isset($dispatched[$class])) {
                     $dispatched[$class] = [];
                 }
