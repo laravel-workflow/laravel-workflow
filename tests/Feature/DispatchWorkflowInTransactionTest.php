@@ -12,15 +12,12 @@ use Workflow\WorkflowStub;
 
 final class DispatchWorkflowInTransactionTest extends TestCase
 {
-    /**
-     * @TODO: This test is not production ready
-     */
     public function testRaceCondition(): void
     {
         $workflow = null;
         $start = now();
 
-        DB::transaction(function () use (&$workflow) {
+        DB::transaction(static function () use (&$workflow) {
             $workflow = WorkflowStub::make(TestSimpleWorkflow::class);
 
             /**
@@ -47,7 +44,6 @@ final class DispatchWorkflowInTransactionTest extends TestCase
          * the exception is silently caught in src/Workflow.php:115
          */
         while ($workflow->running() && $workflow->exceptions()->isEmpty() && now()->diffInSeconds($start) < 5);
-
 
         $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
         $this->assertEmpty($workflow->exceptions());

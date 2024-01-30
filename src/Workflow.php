@@ -65,6 +65,8 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
         if (property_exists($this, 'queue')) {
             $this->onQueue($this->queue);
         }
+
+        $this->afterCommit = true;
     }
 
     public function query($method)

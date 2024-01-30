@@ -4,12 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
-use Illuminate\Contracts\Foundation\Application;
 use Workflow\ActivityStub;
-use Workflow\QueryMethod;
-use Workflow\SignalMethod;
 use Workflow\Workflow;
-use Workflow\WorkflowStub;
 
 class TestSimpleWorkflow extends Workflow
 {
