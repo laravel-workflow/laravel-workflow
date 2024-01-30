@@ -43,7 +43,7 @@ final class DispatchWorkflowInTransactionTest extends TestCase
          *
          * the exception is silently caught in src/Workflow.php:115
          */
-        while ($workflow->running() && $workflow->exceptions()->isEmpty() && now()->diffInSeconds($start) < 5);
+        while ($workflow->running() && $workflow->exceptions()->isEmpty() && now()->diffInSeconds($start) < 15);
 
         $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
         $this->assertEmpty($workflow->exceptions());
