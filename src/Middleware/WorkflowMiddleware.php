@@ -48,7 +48,8 @@ final class WorkflowMiddleware
                     $job->storedWorkflow->id,
                     $uuid,
                     json_encode($result),
-                    now()->format('Y-m-d\TH:i:s.u\Z')
+                    now()
+                        ->format('Y-m-d\TH:i:s.u\Z')
                 );
             } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
                 if ($job->storedWorkflow->toWorkflow()->running()) {
