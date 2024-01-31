@@ -44,7 +44,13 @@ final class WorkflowMiddleware
             try {
                 $job->storedWorkflow->toWorkflow()
                     ->next($job->index, $job->now, $job::class, $result);
-                ActivityCompleted::dispatch($uuid, json_encode($result), now()->format('Y-m-d\TH:i:s.u\Z'));
+                ActivityCompleted::dispatch(
+                    $job->storedWorkflow->id,
+                    $uuid,
+                    json_encode($result),
+                    now()
+                        ->format('Y-m-d\TH:i:s.u\Z')
+                );
             } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
                 if ($job->storedWorkflow->toWorkflow()->running()) {
                     $job->release();
@@ -54,7 +60,7 @@ final class WorkflowMiddleware
             $file = new SplFileObject($throwable->getFile());
             $iterator = new LimitIterator($file, max(0, $throwable->getLine() - 4), 7);
 
-            ActivityFailed::dispatch($uuid, json_encode([
+            ActivityFailed::dispatch($job->storedWorkflow->id, $uuid, json_encode([
                 'class' => get_class($throwable),
                 'message' => $throwable->getMessage(),
                 'code' => $throwable->getCode(),

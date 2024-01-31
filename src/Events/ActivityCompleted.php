@@ -13,6 +13,7 @@ class ActivityCompleted
     use InteractsWithSockets;
 
     public function __construct(
+        public int|string $workflowId,
         public string $activityId,
         public string $output,
         public string $timestamp,

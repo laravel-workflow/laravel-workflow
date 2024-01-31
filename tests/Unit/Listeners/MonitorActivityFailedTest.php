@@ -33,7 +33,7 @@ final class MonitorActivityFailedTest extends TestCase
             "rest/v1/activities?id=eq.{$activityId}" => Http::response(),
         ]);
 
-        $event = new ActivityFailed($activityId, 'output', 'time');
+        $event = new ActivityFailed(1, $activityId, 'output', 'time');
         $listener = new MonitorActivityFailed();
         $listener->handle($event);
 

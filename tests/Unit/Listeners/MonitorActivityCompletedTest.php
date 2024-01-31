@@ -33,7 +33,7 @@ final class MonitorActivityCompletedTest extends TestCase
             "rest/v1/activities?id=eq.{$activityId}" => Http::response(),
         ]);
 
-        $event = new ActivityCompleted($activityId, 'output', 'time');
+        $event = new ActivityCompleted(1, $activityId, 'output', 'time');
         $listener = new MonitorActivityCompleted();
         $listener->handle($event);
 
