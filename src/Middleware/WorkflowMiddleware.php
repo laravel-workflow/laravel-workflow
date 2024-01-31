@@ -44,7 +44,12 @@ final class WorkflowMiddleware
             try {
                 $job->storedWorkflow->toWorkflow()
                     ->next($job->index, $job->now, $job::class, $result);
-                ActivityCompleted::dispatch($job->storedWorkflow->id, $uuid, json_encode($result), now()->format('Y-m-d\TH:i:s.u\Z'));
+                ActivityCompleted::dispatch(
+                    $job->storedWorkflow->id,
+                    $uuid,
+                    json_encode($result),
+                    now()->format('Y-m-d\TH:i:s.u\Z')
+                );
             } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
                 if ($job->storedWorkflow->toWorkflow()->running()) {
                     $job->release();
