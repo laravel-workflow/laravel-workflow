@@ -14,10 +14,13 @@ use Workflow\Signal;
 
 trait Timers
 {
-    public static function timer($seconds): PromiseInterface
+    /**
+     * @return PromiseInterface<bool>
+     */
+    public static function timer(string|int $seconds): PromiseInterface
     {
         if (is_string($seconds)) {
-            $seconds = CarbonInterval::fromString($seconds)->totalSeconds;
+            $seconds = (int) CarbonInterval::fromString($seconds)->totalSeconds;
         }
 
         if ($seconds <= 0) {
