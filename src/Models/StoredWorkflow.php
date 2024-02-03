@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Workflow\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\ModelStates\HasStates;
@@ -13,7 +14,9 @@ use Workflow\WorkflowStub;
 
 /**
  * @template TWorkflow of Workflow
+ * @template TParentStoredWorkflow of ?self
  * @property class-string<TWorkflow> $class
+ * @property (TParentStoredWorkflow is self ? object{parent_index: int, parent_now: Carbon} : null) $parents_pivot
  */
 class StoredWorkflow extends Model
 {
@@ -76,7 +79,7 @@ class StoredWorkflow extends Model
     }
 
     /**
-     * @return BelongsToMany<StoredWorkflow<Workflow>>
+     * @return BelongsToMany<StoredWorkflow<Workflow, self>>
      */
     public function parents(): BelongsToMany
     {
@@ -85,11 +88,11 @@ class StoredWorkflow extends Model
             config('workflows.workflow_relationships_table', 'workflow_relationships'),
             'child_workflow_id',
             'parent_workflow_id'
-        )->withPivot(['parent_index', 'parent_now']);
+        )->withPivot(['parent_index', 'parent_now'])->as('parents_pivot');
     }
 
     /**
-     * @return BelongsToMany<StoredWorkflow<Workflow>>
+     * @return BelongsToMany<StoredWorkflow<Workflow, null>>
      */
     public function children(): BelongsToMany
     {
@@ -98,6 +101,6 @@ class StoredWorkflow extends Model
             config('workflows.workflow_relationships_table', 'workflow_relationships'),
             'parent_workflow_id',
             'child_workflow_id'
-        )->withPivot(['parent_index', 'parent_now']);
+        )->withPivot(['parent_index', 'parent_now'])->as('children_pivot');
     }
 }

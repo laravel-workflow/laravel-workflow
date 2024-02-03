@@ -17,6 +17,7 @@ use Illuminate\Routing\RouteDependencyResolverTrait;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\App;
 use React\Promise\PromiseInterface;
+use RuntimeException;
 use Throwable;
 use Workflow\Events\WorkflowCompleted;
 use Workflow\Middleware\WithoutOverlappingMiddleware;
@@ -138,7 +139,14 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
             });
 
         if ($parentWorkflow !== null) {
-            $this->now = Carbon::parse($parentWorkflow->pivot->parent_now);
+            if ($parentWorkflow->parents_pivot?->parent_now === null) {
+                /**
+                 * this should not happen, but if it does, we do not want to fall back to Carbon::now()
+                 * as this could lead to inconsistencies in the workflow execution
+                 */
+                throw new RuntimeException('The parent workflow exists, but the parent_now column in the pivot table is empty.');
+            }
+            $this->now = Carbon::parse($parentWorkflow->parents_pivot->parent_now);
         } else {
             $this->now = $log !== null ? $log->now : Carbon::now();
         }
@@ -228,7 +236,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
 
             if ($parentWorkflow !== null) {
                 $parentWorkflow->toWorkflow()
-                    ->next($parentWorkflow->pivot->parent_index, $this->now, $this->storedWorkflow->class, $return);
+                    ->next($parentWorkflow->parents_pivot->parent_index, $this->now, $this->storedWorkflow->class, $return);
             }
         }
     }
