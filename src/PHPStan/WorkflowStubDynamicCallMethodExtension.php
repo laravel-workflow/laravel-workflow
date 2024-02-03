@@ -82,10 +82,6 @@ class WorkflowStubDynamicCallMethodExtension implements MethodsClassReflectionEx
             $workflowReflection = $this->reflectionProvider->getClass(Workflow::class);
         }
 
-        if ($workflowReflection === null) {
-            return null;
-        }
-
         if (! $workflowReflection->hasNativeMethod($methodName)) {
             return null;
         }
