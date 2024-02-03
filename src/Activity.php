@@ -31,14 +31,19 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
     use RouteDependencyResolverTrait;
     use SerializesModels;
 
+    /** @var int  */
     public $tries = PHP_INT_MAX;
 
+    /** @var int  */
     public $maxExceptions = PHP_INT_MAX;
 
+    /** @var int  */
     public $timeout = 0;
 
+    /** @var array<int, mixed> */
     public $arguments;
 
+    /** @var string  */
     public $key = '';
 
     /**
@@ -63,11 +68,17 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
         $this->afterCommit = true;
     }
 
+    /**
+     * @return int[]
+     */
     public function backoff()
     {
         return [1, 2, 5, 10, 15, 30, 60, 120];
     }
 
+    /**
+     * @return int
+     */
     public function workflowId()
     {
         return $this->storedWorkflow->id;
@@ -98,6 +109,9 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
         }
     }
 
+    /**
+     * @return list<mixed>
+     */
     public function middleware()
     {
         return [
@@ -141,7 +155,10 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
     public function heartbeat(): void
     {
         pcntl_alarm(max($this->timeout, 0));
-        if ($this->timeout) {
+        if ($this->timeout > 0) {
+            /**
+             * NOTE: the key is set in @see WithoutOverlappingMiddleware in the lock function
+             */
             Cache::put($this->key, 1, $this->timeout);
         }
     }

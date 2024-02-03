@@ -7,8 +7,14 @@ namespace Workflow;
 use Generator;
 use Illuminate\Container\Container;
 use Illuminate\Support\Facades\App;
+use Laravel\SerializableClosure\Exceptions\PhpVersionNotSupportedException;
+use Laravel\SerializableClosure\SerializableClosure;
+use ReflectionException;
 use ReflectionFunction;
 
+/**
+ * @template TReturn
+ */
 final class AsyncWorkflow extends Workflow
 {
     /**
@@ -18,6 +24,12 @@ final class AsyncWorkflow extends Workflow
      */
     private Container $container;
 
+    /**
+     * @param SerializableClosure $callback
+     * @return TReturn|Generator<int, mixed, void, TReturn>
+     * @throws ReflectionException
+     * @throws PhpVersionNotSupportedException
+     */
     public function execute($callback)
     {
         $this->container = App::make(Container::class);

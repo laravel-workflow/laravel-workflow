@@ -27,6 +27,9 @@ class ActivityMakeCommand extends GeneratorCommand
         return $rootNamespace . '\\' . config('workflows.workflows_folder', 'Workflows');
     }
 
+    /**
+     * @return list<list<string|int>>
+     */
     protected function getOptions()
     {
         return [['force', 'f', InputOption::VALUE_NONE, 'Create the class even if the activity already exists']];

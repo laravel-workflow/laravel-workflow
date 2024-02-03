@@ -13,11 +13,18 @@ use Workflow\Events\ActivityCompleted;
 use Workflow\Events\ActivityFailed;
 use Workflow\Events\ActivityStarted;
 use Workflow\Serializers\Y;
+use Workflow\Workflow;
 
 final class WorkflowMiddleware
 {
-    private $active = true;
+    private bool $active = true;
 
+    /**
+     * @param Workflow $job
+     * @param callable $next
+     * @return void
+     * @throws \Throwable
+     */
     public function handle($job, $next): void
     {
         Queue::stopping(fn () => $this->active ? $job->storedWorkflow->exceptions()

@@ -27,6 +27,9 @@ class WorkflowMakeCommand extends GeneratorCommand
         return $rootNamespace . '\\' . config('workflows.workflows_folder', 'Workflows');
     }
 
+    /**
+     * @return list<list<string|int>>
+     */
     protected function getOptions()
     {
         return [['force', 'f', InputOption::VALUE_NONE, 'Create the class even if the workflow already exists']];

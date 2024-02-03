@@ -21,14 +21,20 @@ class WithoutOverlappingMiddleware
 
     public string $key;
 
+    /**
+     * @var self::WORKFLOW|self::ACTIVITY
+     */
     public int $type;
 
-    public $releaseAfter;
+    public int $releaseAfter;
 
-    public $expiresAfter;
+    public int $expiresAfter;
 
-    public $prefix = 'laravel-workflow-overlap:';
+    public string $prefix = 'laravel-workflow-overlap:';
 
+    /**
+     * @var Cache&LockProvider
+     */
     private $cache;
 
     private $active = true;
@@ -61,17 +67,17 @@ class WithoutOverlappingMiddleware
         }
     }
 
-    public function getLockKey()
+    public function getLockKey(): string
     {
         return $this->prefix . $this->key;
     }
 
-    public function getWorkflowSemaphoreKey()
+    public function getWorkflowSemaphoreKey(): string
     {
         return $this->getLockKey() . ':workflow';
     }
 
-    public function getActivitySemaphoreKey()
+    public function getActivitySemaphoreKey(): string
     {
         return $this->getLockKey() . ':activity';
     }
@@ -111,7 +117,7 @@ class WithoutOverlappingMiddleware
                         array_merge($activitySemaphores, [$job->key])
                     );
                     if ($locked) {
-                        if ($this->expiresAfter) {
+                        if ($this->expiresAfter > 0) {
                             $this->cache->put($job->key, 1, $this->expiresAfter);
                         } else {
                             $this->cache->put($job->key, 1);
@@ -165,14 +171,14 @@ class WithoutOverlappingMiddleware
     {
         $lock = $this->cache->lock($this->getLockKey());
 
-        if ($lock->get()) {
+        if ($lock->get() === true) {
             try {
                 $currentValue = $this->cache->get($key, $expectedValue);
 
                 $currentValue = is_int($expectedValue) ? (int) $currentValue : $currentValue;
 
                 if ($currentValue === $expectedValue) {
-                    if ($expiresAfter) {
+                    if ($expiresAfter > 0) {
                         $this->cache->put($key, $newValue, $expiresAfter);
                     } else {
                         $this->cache->put($key, $newValue);
