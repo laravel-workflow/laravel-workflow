@@ -15,7 +15,9 @@ use Workflow\Serializers\Y;
 use Workflow\Signal;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowPendingStatus;
+use Workflow\Workflow;
 use Workflow\WorkflowStub;
+use function PHPStan\dumpType;
 
 final class WorkflowStubTest extends TestCase
 {

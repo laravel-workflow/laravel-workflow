@@ -22,21 +22,11 @@ class StoredWorkflow extends Model
 {
     use HasStates;
 
-    /**
-     * @var string
-     */
     protected $table = 'workflows';
-
-    /**
-     * @var mixed[]
-     */
     protected $guarded = [];
 
     protected $dateFormat = 'Y-m-d H:i:s.u';
 
-    /**
-     * @var array<string, class-string<WorkflowStatus>>
-     */
     protected $casts = [
         'status' => WorkflowStatus::class,
     ];

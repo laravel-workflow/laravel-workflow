@@ -24,7 +24,6 @@ use Workflow\Traits\AwaitWithTimeouts;
 use Workflow\Traits\Fakes;
 use Workflow\Traits\SideEffects;
 use Workflow\Traits\Timers;
-use function PHPStan\dumpType;
 
 /**
  * @template TStoredWorkflow of StoredWorkflow<TWorkflow, null>
@@ -109,7 +108,7 @@ final class WorkflowStub
     /**
      * @template TWorkflowClass of Workflow
      * @param class-string<TWorkflowClass> $class
-     * @return static<TStoredWorkflow, TWorkflowClass>
+     * @return self<TStoredWorkflow<TWorkflowClass, null>, TWorkflowClass>
      */
     public static function make($class): self
     {
@@ -117,6 +116,11 @@ final class WorkflowStub
             'class' => $class,
         ]);
 
+        if (!$storedWorkflow instanceof StoredWorkflow) {
+            throw new \RuntimeException('StoredWorkflow model must extend ' . StoredWorkflow::class);
+        }
+
+        /** @var TStoredWorkflow<TWorkflowClass, null> $storedWorkflow */
         return new self($storedWorkflow);
     }
 
@@ -127,7 +131,12 @@ final class WorkflowStub
         );
     }
 
-    public static function fromStoredWorkflow(StoredWorkflow $storedWorkflow): static
+    /**
+     * @template TWorkflowClass of Workflow
+     * @param TStoredWorkflow<TWorkflowClass, null> $storedWorkflow
+     * @return self<TStoredWorkflow<TWorkflowClass, null>, TWorkflowClass>
+     */
+    public static function fromStoredWorkflow(StoredWorkflow $storedWorkflow): self
     {
         return new self($storedWorkflow);
     }
