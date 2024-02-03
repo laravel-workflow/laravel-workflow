@@ -22,8 +22,14 @@ use Workflow\Middleware\WithoutOverlappingMiddleware;
 use Workflow\Middleware\WorkflowMiddleware;
 use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Y;
+use function PHPStan\dumpType;
 
-class Activity implements ShouldBeEncrypted, ShouldQueue
+/**
+ * @template TWorkflow of Workflow
+ * @template TStoredWorkflow of StoredWorkflow<TWorkflow, null>
+ * @template TReturn
+ */
+abstract class Activity implements ShouldBeEncrypted, ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
@@ -53,6 +59,12 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
      */
     private Container $container;
 
+    /**
+     * @param int $index
+     * @param string $now
+     * @param TStoredWorkflow $storedWorkflow
+     * @param mixed ...$arguments
+     */
     public function __construct(
         public int $index,
         public string $now,
@@ -84,6 +96,9 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
         return $this->storedWorkflow->id;
     }
 
+    /**
+     * @return void | TReturn
+     */
     public function handle()
     {
         if (! method_exists($this, 'execute')) {

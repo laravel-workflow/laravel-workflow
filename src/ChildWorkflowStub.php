@@ -10,13 +10,25 @@ use React\Promise\PromiseInterface;
 use function React\Promise\resolve;
 use Workflow\Serializers\Y;
 
+/**
+ * @template TWorkflow of Workflow
+ */
 final class ChildWorkflowStub
 {
+    /**
+     * @param iterable<mixed> $promises
+     * @return PromiseInterface<mixed>
+     */
     public static function all(iterable $promises): PromiseInterface
     {
         return all([...$promises]);
     }
 
+    /**
+     * @param class-string<TWorkflow> $workflow
+     * @param mixed ...$arguments
+     * @return PromiseInterface<void>
+     */
     public static function make($workflow, ...$arguments): PromiseInterface
     {
         $context = WorkflowStub::getContext();

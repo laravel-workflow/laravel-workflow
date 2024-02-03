@@ -4,15 +4,28 @@ declare(strict_types=1);
 
 namespace Workflow;
 
+use http\Message;
 use Workflow\Models\StoredWorkflow;
 
+/**
+ * @extends Activity<Workflow, StoredWorkflow<Workflow, null>, mixed>
+ */
 class Exception extends Activity
 {
+    /**
+     * @param int $index
+     * @param string $now
+     * @param StoredWorkflow<Workflow, null> $storedWorkflow
+     * @param array{class: string, message: string, code: int|string, line: int, file: string, trace: mixed[], snippet: string[]} $exception
+     *
+     * @TODO: check if this class really must extend the Activity class. This makes typing more difficult.
+     *
+     */
     public function __construct(
         public int $index,
         public string $now,
-        public StoredWorkflow $storedWorkflow,
-        public $exception,
+        public StoredWorkflow $storedWorkflow, // @phpstan-ignore-line
+        public array $exception,
     ) {
         parent::__construct($index, $now, $storedWorkflow);
     }

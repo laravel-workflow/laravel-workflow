@@ -5,11 +5,16 @@ declare(strict_types=1);
 namespace Workflow\Middleware;
 
 use Illuminate\Container\Container;
+use Illuminate\Contracts\Cache\LockProvider;
 use Illuminate\Contracts\Cache\Repository as Cache;
 use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\InteractsWithTime;
 use Illuminate\Support\Str;
+use Psr\SimpleCache\InvalidArgumentException;
+use Workflow\Activity;
+use Workflow\Models\StoredWorkflow;
+use Workflow\Workflow;
 
 class WithoutOverlappingMiddleware
 {
@@ -37,18 +42,31 @@ class WithoutOverlappingMiddleware
      */
     private $cache;
 
-    private $active = true;
+    private bool $active = true;
 
-    public function __construct($workflowId, $type, $releaseAfter = 0, $expiresAfter = 0)
+    /**
+     * @param scalar $workflowId
+     * @param self::WORKFLOW|self::ACTIVITY $type
+     * @param int $releaseAfter
+     * @param int $expiresAfter
+     * @throws \Illuminate\Contracts\Container\BindingResolutionException
+     */
+    public function __construct($workflowId, $type, int $releaseAfter = 0, int $expiresAfter = 0)
     {
         $this->key = "{$workflowId}";
         $this->type = $type;
         $this->releaseAfter = $releaseAfter;
         $this->expiresAfter = $this->secondsUntil($expiresAfter);
+        // @phpstan-ignore-next-line
         $this->cache = Container::getInstance()->make(Cache::class);
     }
 
-    public function handle($job, $next)
+    /**
+     * @param Workflow | Activity<Workflow, StoredWorkflow<Workflow, null>, mixed> $job
+     * @param callable $next
+     * @return void
+     */
+    public function handle($job, $next) : void
     {
         $locked = $this->lock($job);
 
@@ -82,7 +100,12 @@ class WithoutOverlappingMiddleware
         return $this->getLockKey() . ':activity';
     }
 
-    public function lock($job)
+    /**
+     * @param Workflow | Activity<Workflow, StoredWorkflow<Workflow, null>, mixed> $job
+     * @return bool
+     * @throws InvalidArgumentException
+     */
+    public function lock($job): bool
     {
         $workflowSemaphore = (int) $this->cache->get($this->getWorkflowSemaphoreKey(), 0);
         $activitySemaphore = 0;
@@ -134,7 +157,12 @@ class WithoutOverlappingMiddleware
         return $locked;
     }
 
-    public function unlock($job)
+    /**
+     * @param Workflow | Activity<Workflow, StoredWorkflow<Workflow, null>, mixed> $job
+     * @return void
+     * @throws InvalidArgumentException
+     */
+    public function unlock($job): void
     {
         switch ($this->type) {
             case self::WORKFLOW:
@@ -167,7 +195,16 @@ class WithoutOverlappingMiddleware
         }
     }
 
-    private function compareAndSet($key, $expectedValue, $newValue, $expiresAfter = 0)
+    /**
+     * @template T in int|string[]
+     * @param string $key
+     * @param T $expectedValue
+     * @param T $newValue
+     * @param int $expiresAfter
+     * @return bool
+     * @throws InvalidArgumentException
+     */
+    private function compareAndSet(string $key, $expectedValue, $newValue, int $expiresAfter = 0): bool
     {
         $lock = $this->cache->lock($this->getLockKey());
 
