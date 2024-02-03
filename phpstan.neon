@@ -11,7 +11,7 @@ parameters:
     databaseMigrationsPath:
         - src/migrations/
     editorUrl: 'phpstorm://open?file=%%file%%&line=%%line%%'
-    level: 1
+    level: 2
     bootstrapFiles:
         - classAliases.php
     excludePaths:

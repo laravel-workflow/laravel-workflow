@@ -81,7 +81,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
         $parentWorkflow = $this->storedWorkflow->parents()
             ->first();
 
-        if ($parentWorkflow) {
+        if ($parentWorkflow !== null) {
             return [
                 new WithoutOverlappingMiddleware($parentWorkflow->id, WithoutOverlappingMiddleware::ACTIVITY, 0, 15),
             ];
@@ -136,10 +136,10 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
                 $this->{$signal->method}(...Y::unserialize($signal->arguments));
             });
 
-        if ($parentWorkflow) {
+        if ($parentWorkflow !== null) {
             $this->now = Carbon::parse($parentWorkflow->pivot->parent_now);
         } else {
-            $this->now = $log ? $log->now : Carbon::now();
+            $this->now = $log !== null ? $log->now : Carbon::now();
         }
 
         WorkflowStub::setContext([
@@ -162,7 +162,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
                 ->whereIndex($this->index)
                 ->first();
 
-            if ($log) {
+            if ($log !== null) {
                 $this->storedWorkflow
                     ->signals()
                     ->where('created_at', '>', $log->created_at->format('Y-m-d H:i:s.u'))
@@ -176,7 +176,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
 
             $log = $nextLog;
 
-            $this->now = $log ? $log->now : Carbon::now();
+            $this->now = $log !== null ? $log->now : Carbon::now();
 
             WorkflowStub::setContext([
                 'storedWorkflow' => $this->storedWorkflow,
@@ -225,7 +225,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
                     ->format('Y-m-d\TH:i:s.u\Z')
             );
 
-            if ($parentWorkflow) {
+            if ($parentWorkflow !== null) {
                 $parentWorkflow->toWorkflow()
                     ->next($parentWorkflow->pivot->parent_index, $this->now, $this->storedWorkflow->class, $return);
             }
