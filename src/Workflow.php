@@ -65,13 +65,9 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
     ) {
         $this->arguments = $arguments;
 
-        if (property_exists($this, 'connection')) {
-            $this->onConnection($this->connection);
-        }
+        $this->onConnection($this->connection ?? null);
 
-        if (property_exists($this, 'queue')) {
-            $this->onQueue($this->queue);
-        }
+        $this->onQueue($this->queue ?? null);
 
         $this->afterCommit = true;
     }
