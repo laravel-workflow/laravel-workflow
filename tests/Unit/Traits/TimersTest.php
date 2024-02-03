@@ -73,7 +73,7 @@ final class TimersTest extends TestCase
         $this->assertNull($result);
         $this->assertSame(0, $workflow->logs()->count());
 
-        WorkflowStub::timer('1 minute', static fn () => false)
+        WorkflowStub::timer('1 minute')
             ->then(static function ($value) use (&$result) {
                 $result = $value;
             });
@@ -124,7 +124,7 @@ final class TimersTest extends TestCase
                 'result' => Y::serialize(true),
             ]);
 
-        WorkflowStub::timer('1 minute', static fn () => true)
+        WorkflowStub::timer('1 minute')
             ->then(static function ($value) use (&$result) {
                 $result = $value;
             });

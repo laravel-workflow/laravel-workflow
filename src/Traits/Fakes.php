@@ -7,6 +7,16 @@ namespace Workflow\Traits;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 
+/**
+ * @method static void mock(string $class, mixed $result)
+ * @method static array<string, mixed[]> mocks()
+ * @method static void assertNothingDispatched()
+ * @method static void assertDispatched(string $workflowOrActivity, callable|int|null $callback = null)
+ * @method static void assertNotDispatched(string $workflowOrActivity, callable|null $callback = null)
+ * @method static void assertDispatchedTimes(string $workflowOrActivity, int $times = 1)
+ * @method static void recordDispatched(string $class, mixed $arguments)
+ * @method static Collection<int, mixed[]> dispatched(string $workflowOrActivity, callable|null $callback = null)
+ */
 trait Fakes
 {
     protected static string $DISPATCHED_LIST = 'workflow.dispatched';
@@ -32,7 +42,7 @@ trait Fakes
             return App::make(static::$MOCKS_LIST);
         });
 
-        static::macro('mock', static function ($class, $result) {
+        static::macro('mock', static function (string $class, mixed $result) {
             $mocks = static::mocks();
 
             App::bind(static::$MOCKS_LIST, static function () use ($mocks, $class, $result) {
@@ -41,7 +51,7 @@ trait Fakes
             });
         });
 
-        static::macro('recordDispatched', static function ($class, $arguments) {
+        static::macro('recordDispatched', static function (string $class, mixed $arguments) {
             $dispatched = App::make(static::$DISPATCHED_LIST);
 
             App::bind(static::$DISPATCHED_LIST, static function () use ($dispatched, $class, $arguments) {
@@ -55,7 +65,7 @@ trait Fakes
             });
         });
 
-        static::macro('assertDispatched', static function (string $workflowOrActivity, $callback = null) {
+        static::macro('assertDispatched', static function (string $workflowOrActivity, callable|int|null $callback = null) {
             if (is_int($callback)) {
                 self::assertDispatchedTimes($workflowOrActivity, $callback);
                 return;
@@ -77,7 +87,7 @@ trait Fakes
             );
         });
 
-        static::macro('assertNotDispatched', static function (string $workflowOrActivity, $callback = null) {
+        static::macro('assertNotDispatched', static function (string $workflowOrActivity, callable|null $callback = null) {
             \PHPUnit\Framework\Assert::assertTrue(
                 self::dispatched($workflowOrActivity, $callback)->count() === 0,
                 "The unexpected [{$workflowOrActivity}] workflow/activity was dispatched."
@@ -92,7 +102,7 @@ trait Fakes
             );
         });
 
-        static::macro('dispatched', static function (string $workflowOrActivity, $callback = null): Collection {
+        static::macro('dispatched', static function (string $workflowOrActivity, callable|null $callback = null): Collection {
             $dispatched = App::make(self::$DISPATCHED_LIST);
             if (! isset($dispatched[$workflowOrActivity])) {
                 return collect();
