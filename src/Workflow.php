@@ -140,13 +140,6 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
             });
 
         if ($parentWorkflow !== null) {
-            if ($parentWorkflow->parents_pivot?->parent_now === null) {
-                /**
-                 * this should not happen, but if it does, we do not want to fall back to Carbon::now()
-                 * as this could lead to inconsistencies in the workflow execution
-                 */
-                throw new RuntimeException('The parent workflow exists, but the parent_now column in the pivot table is empty.');
-            }
             $this->now = Carbon::parse($parentWorkflow->parents_pivot->parent_now);
         } else {
             $this->now = $log !== null ? $log->now : Carbon::now();
