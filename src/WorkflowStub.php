@@ -24,9 +24,11 @@ use Workflow\Traits\AwaitWithTimeouts;
 use Workflow\Traits\Fakes;
 use Workflow\Traits\SideEffects;
 use Workflow\Traits\Timers;
+use function PHPStan\dumpType;
 
 /**
- * @template TStoredWorkflow of StoredWorkflow
+ * @template TStoredWorkflow of StoredWorkflow<TWorkflow, null>
+ * @template TWorkflow of Workflow
  */
 final class WorkflowStub
 {
@@ -69,7 +71,7 @@ final class WorkflowStub
 
             $this->storedWorkflow->toWorkflow();
 
-            if (static::faked()) {
+            if (self::faked()) {
                 $this->resume();
                 return;
             }
@@ -104,7 +106,12 @@ final class WorkflowStub
         return Arr::get((new ReflectionClass(self::$context->storedWorkflow->class))->getDefaultProperties(), 'queue');
     }
 
-    public static function make($class): static
+    /**
+     * @template TWorkflowClass of Workflow
+     * @param class-string<TWorkflowClass> $class
+     * @return static<TStoredWorkflow, TWorkflowClass>
+     */
+    public static function make($class): self
     {
         $storedWorkflow = config('workflows.stored_workflow_model', StoredWorkflow::class)::create([
             'class' => $class,
@@ -115,7 +122,7 @@ final class WorkflowStub
 
     public static function load($id)
     {
-        return static::fromStoredWorkflow(
+        return self::fromStoredWorkflow(
             config('workflows.stored_workflow_model', StoredWorkflow::class)::findOrFail($id)
         );
     }

@@ -1,3 +1,5 @@
+includes:
+    - src/PHPStan/extension.neon
 parameters:
     strictRules:
         strictCalls: false
@@ -16,3 +18,4 @@ parameters:
         - classAliases.php
     excludePaths:
         - ./src/migrations/*.php
+

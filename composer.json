@@ -48,6 +48,11 @@
             "providers": [
                 "Workflow\\Providers\\WorkflowServiceProvider"
             ]
+        },
+        "phpstan": {
+            "includes": [
+                "src/PHPStan/extension.neon"
+            ]
         }
     },
     "config": {
