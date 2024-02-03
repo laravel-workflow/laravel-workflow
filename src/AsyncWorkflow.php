@@ -11,6 +11,11 @@ use ReflectionFunction;
 
 final class AsyncWorkflow extends Workflow
 {
+    /**
+     * The container property is needed in the @see RouteDependencyResolverTrait
+     * which in turn is used to dynamically resolve the "execute" method parameters.
+     * @phpstan-ignore-next-line
+     */
     private Container $container;
 
     public function execute($callback)
