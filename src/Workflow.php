@@ -149,7 +149,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
             'replaying' => $this->replaying,
         ]);
 
-        $this->coroutine = $this->{'execute'}(...$this->resolveClassMethodDependencies(
+        $this->coroutine = $this->execute(...$this->resolveClassMethodDependencies(
             $this->arguments,
             $this,
             'execute'
