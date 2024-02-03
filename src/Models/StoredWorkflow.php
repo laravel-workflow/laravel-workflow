@@ -31,8 +31,12 @@ class StoredWorkflow extends Model
         'status' => WorkflowStatus::class,
     ];
 
+    /**
+     * @return WorkflowStub<StoredWorkflow<Workflow, null>, Workflow>
+     */
     public function toWorkflow()
     {
+        /** @var StoredWorkflow<TWorkflow, null> $this */
         return WorkflowStub::fromStoredWorkflow($this);
     }
 
