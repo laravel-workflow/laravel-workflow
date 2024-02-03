@@ -26,6 +26,7 @@ use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowRunningStatus;
 use Workflow\States\WorkflowWaitingStatus;
 use Workflow\Traits\Sagas;
+use function PHPStan\dumpType;
 
 class Workflow implements ShouldBeEncrypted, ShouldQueue
 {
