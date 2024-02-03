@@ -1,4 +1,17 @@
 parameters:
+    strictRules:
+        strictCalls: false
+    parallel:
+        maximumNumberOfProcesses: 4
+    tmpDir: .phpstan
+    paths:
+        - src/
+        - tests/
+    databaseMigrationsPath:
+        - src/migrations/
+    editorUrl: 'phpstorm://open?file=%%file%%&line=%%line%%'
     level: 0
     bootstrapFiles:
         - classAliases.php
+    excludePaths:
+        - ./src/migrations/*.php
