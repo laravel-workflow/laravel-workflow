@@ -42,7 +42,7 @@ class TestWorkflow extends Workflow
         $otherResult = yield ActivityStub::make(TestOtherActivity::class, 'other');
 
         if ($shouldAssert) {
-            assert(! $this->canceled);
+            assert(! $this->canceled); // @phpstan-ignore-line
         }
 
         yield WorkflowStub::await(fn (): bool => $this->canceled);
