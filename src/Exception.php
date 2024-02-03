@@ -13,13 +13,8 @@ class Exception extends Activity
         public string $now,
         public StoredWorkflow $storedWorkflow,
         public $exception,
-        $connection = null,
-        $queue = null
     ) {
-        $connection = $connection ?? config('queue.default');
-        $queue = $queue ?? config('queue.connections.' . $connection . '.queue', 'default');
-        $this->onConnection($connection);
-        $this->onQueue($queue);
+        parent::__construct($index, $now, $storedWorkflow);
     }
 
     public function handle()

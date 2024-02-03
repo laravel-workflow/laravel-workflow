@@ -134,9 +134,7 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
             $this->now,
             $this->storedWorkflow,
             $throwable,
-            $workflow->connection(),
-            $workflow->queue()
-        );
+        )->onConnection($workflow->connection())->onQueue($workflow->queue());
     }
 
     public function heartbeat(): void
