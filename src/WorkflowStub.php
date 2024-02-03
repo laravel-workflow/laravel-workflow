@@ -25,6 +25,9 @@ use Workflow\Traits\Fakes;
 use Workflow\Traits\SideEffects;
 use Workflow\Traits\Timers;
 
+/**
+ * @template TStoredWorkflow of StoredWorkflow
+ */
 final class WorkflowStub
 {
     use Awaits;
@@ -36,6 +39,9 @@ final class WorkflowStub
 
     private static ?\stdClass $context = null;
 
+    /**
+     * @param TStoredWorkflow $storedWorkflow
+     */
     private function __construct(
         protected $storedWorkflow
     ) {
@@ -288,11 +294,16 @@ final class WorkflowStub
 
         $this->storedWorkflow->status->transitionTo(WorkflowPendingStatus::class);
 
-        $dispatch = static::faked() ? 'dispatchSync' : 'dispatch';
-
-        $this->storedWorkflow->class::$dispatch(
-            $this->storedWorkflow,
-            ...Y::unserialize($this->storedWorkflow->arguments)
-        );
+        if (self::faked()) {
+            $this->storedWorkflow->class::dispatchSync(
+                $this->storedWorkflow,
+                ...Y::unserialize($this->storedWorkflow->arguments)
+            );
+        } else {
+            $this->storedWorkflow->class::dispatch(
+                $this->storedWorkflow,
+                ...Y::unserialize($this->storedWorkflow->arguments)
+            );
+        }
     }
 }

@@ -6,8 +6,13 @@ namespace Workflow\Models;
 
 use Spatie\ModelStates\HasStates;
 use Workflow\States\WorkflowStatus;
+use Workflow\Workflow;
 use Workflow\WorkflowStub;
 
+/**
+ * @template TWorkflow of Workflow
+ * @property class-string<TWorkflow> $class
+ */
 class StoredWorkflow extends Model
 {
     use HasStates;
