@@ -85,7 +85,7 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
         }
 
         try {
-            return $this->{'execute'}(...$this->resolveClassMethodDependencies($this->arguments, $this, 'execute'));
+            return $this->execute(...$this->resolveClassMethodDependencies($this->arguments, $this, 'execute'));
         } catch (\Throwable $throwable) {
             $this->storedWorkflow->exceptions()
                 ->create([

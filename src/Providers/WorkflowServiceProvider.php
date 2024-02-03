@@ -33,7 +33,7 @@ final class WorkflowServiceProvider extends ServiceProvider
 
         SerializableClosure::setSecretKey(config('app.key'));
 
-        if (config('workflows.monitor', false)) {
+        if (config('workflows.monitor', false) === true) {
             Event::listen(WorkflowStarted::class, [MonitorWorkflowStarted::class, 'handle']);
             Event::listen(WorkflowCompleted::class, [MonitorWorkflowCompleted::class, 'handle']);
             Event::listen(WorkflowFailed::class, [MonitorWorkflowFailed::class, 'handle']);

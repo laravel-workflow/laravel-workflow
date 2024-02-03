@@ -94,8 +94,8 @@ class WithoutOverlappingMiddleware
                 if ($workflowSemaphore === 0 && $activitySemaphore === 0) {
                     $locked = $this->compareAndSet(
                         $this->getWorkflowSemaphoreKey(),
-                        (int) $workflowSemaphore,
-                        (int) $workflowSemaphore + 1,
+                        $workflowSemaphore,
+                        $workflowSemaphore + 1,
                         $this->expiresAfter
                     );
                 }
@@ -137,8 +137,8 @@ class WithoutOverlappingMiddleware
                     $workflowSemaphore = (int) $this->cache->get($this->getWorkflowSemaphoreKey(), 0);
                     $unlocked = $this->compareAndSet(
                         $this->getWorkflowSemaphoreKey(),
-                        (int) $workflowSemaphore,
-                        (int) max($workflowSemaphore - 1, 0),
+                        $workflowSemaphore,
+                        max($workflowSemaphore - 1, 0),
                         $this->expiresAfter
                     );
                 }

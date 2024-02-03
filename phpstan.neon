@@ -2,7 +2,7 @@ parameters:
     strictRules:
         strictCalls: false
     parallel:
-        maximumNumberOfProcesses: 4
+        maximumNumberOfProcesses: 8
     tmpDir: .phpstan
     paths:
         - src/

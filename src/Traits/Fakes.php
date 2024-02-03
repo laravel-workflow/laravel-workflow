@@ -98,7 +98,7 @@ trait Fakes
                 return collect();
             }
 
-            $callback = $callback ?: static fn () => true;
+            $callback = $callback ?? static fn () => true;
 
             return collect($dispatched[$workflowOrActivity])->filter(
                 static fn ($arguments) => $callback(...$arguments)
