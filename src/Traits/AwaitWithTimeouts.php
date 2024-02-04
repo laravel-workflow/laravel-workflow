@@ -14,7 +14,12 @@ use Workflow\Signal;
 
 trait AwaitWithTimeouts
 {
-    public static function awaitWithTimeout(int|string $seconds, $condition): PromiseInterface
+    /**
+     * @param int|string $seconds
+     * @param callable():bool $condition
+     * @return PromiseInterface<bool>
+     */
+    public static function awaitWithTimeout(int|string $seconds, callable $condition): PromiseInterface
     {
         $log = self::$context->storedWorkflow->logs()
             ->whereIndex(self::$context->index)
