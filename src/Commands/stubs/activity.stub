@@ -6,7 +6,7 @@ use Workflow\Activity;
 
 class {{ class }} extends Activity
 {
-    public function execute(): Generator
+    public function execute()
     {
         //
     }

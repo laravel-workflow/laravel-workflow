@@ -2,6 +2,7 @@
 
 namespace {{ namespace }};
 
+use Generator;
 use Workflow\Workflow;
 
 class {{ class }} extends Workflow

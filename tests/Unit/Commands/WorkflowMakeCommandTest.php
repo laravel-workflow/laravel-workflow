@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Commands;
 
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Testing\PendingCommand;
 use Tests\TestCase;
 
 final class WorkflowMakeCommandTest extends TestCase
@@ -26,9 +26,7 @@ final class WorkflowMakeCommandTest extends TestCase
         $this->assertFalse($filesystem->exists(self::FOLDER));
         $this->assertFalse($filesystem->exists($file));
 
-        if (($command = $this->artisan('make:workflow ' . self::WORKFLOW)) instanceof PendingCommand) {
-            $command->assertSuccessful();
-        }
+        Artisan::call('make:activity', ['name' => self::WORKFLOW]);
 
         $this->assertTrue($filesystem->exists($file));
 
