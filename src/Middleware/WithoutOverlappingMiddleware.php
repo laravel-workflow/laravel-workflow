@@ -62,7 +62,7 @@ class WithoutOverlappingMiddleware
     }
 
     /**
-     * @param Workflow | Activity<Workflow, StoredWorkflow<Workflow, null>, mixed> $job
+     * @param Workflow | Activity<Workflow, mixed> $job
      * @param callable $next
      * @return void
      */
@@ -101,7 +101,7 @@ class WithoutOverlappingMiddleware
     }
 
     /**
-     * @param Workflow | Activity<Workflow, StoredWorkflow<Workflow, null>, mixed> $job
+     * @param Workflow | Activity<Workflow, mixed> $job
      * @return bool
      * @throws InvalidArgumentException
      */
@@ -158,7 +158,7 @@ class WithoutOverlappingMiddleware
     }
 
     /**
-     * @param Workflow | Activity<Workflow, StoredWorkflow<Workflow, null>, mixed> $job
+     * @param Workflow | Activity<Workflow, mixed> $job
      * @return void
      * @throws InvalidArgumentException
      */

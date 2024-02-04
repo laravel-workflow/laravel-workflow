@@ -26,7 +26,6 @@ use Workflow\Traits\SideEffects;
 use Workflow\Traits\Timers;
 
 /**
- * @template TStoredWorkflow of StoredWorkflow<TWorkflow, null>
  * @template TWorkflow of Workflow
  */
 final class WorkflowStub
@@ -41,7 +40,7 @@ final class WorkflowStub
     private static ?\stdClass $context = null;
 
     /**
-     * @param TStoredWorkflow $storedWorkflow
+     * @param StoredWorkflow $storedWorkflow
      */
     private function __construct(
         protected $storedWorkflow
@@ -108,7 +107,7 @@ final class WorkflowStub
     /**
      * @template TWorkflowClass of Workflow
      * @param class-string<TWorkflowClass> $class
-     * @return self<TStoredWorkflow<TWorkflowClass, null>, TWorkflowClass>
+     * @return self<StoredWorkflow<TWorkflowClass>, TWorkflowClass>
      */
     public static function make($class): self
     {
@@ -120,7 +119,7 @@ final class WorkflowStub
             throw new \RuntimeException('StoredWorkflow model must extend ' . StoredWorkflow::class);
         }
 
-        /** @var TStoredWorkflow<TWorkflowClass, null> $storedWorkflow */
+        /** @var StoredWorkflow<TWorkflowClass, null> $storedWorkflow */
         return new self($storedWorkflow);
     }
 
@@ -133,8 +132,8 @@ final class WorkflowStub
 
     /**
      * @template TWorkflowClass of Workflow
-     * @param TStoredWorkflow<TWorkflowClass, null> $storedWorkflow
-     * @return self<TStoredWorkflow<TWorkflowClass, null>, TWorkflowClass>
+     * @param StoredWorkflow<TWorkflowClass, null> $storedWorkflow
+     * @return self<StoredWorkflow<TWorkflowClass, null>, TWorkflowClass>
      */
     public static function fromStoredWorkflow(StoredWorkflow $storedWorkflow): self
     {

@@ -22,11 +22,9 @@ use Workflow\Middleware\WithoutOverlappingMiddleware;
 use Workflow\Middleware\WorkflowMiddleware;
 use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Y;
-use function PHPStan\dumpType;
 
 /**
  * @template TWorkflow of Workflow
- * @template TStoredWorkflow of StoredWorkflow<TWorkflow, null>
  * @template TReturn
  */
 abstract class Activity implements ShouldBeEncrypted, ShouldQueue
@@ -62,7 +60,7 @@ abstract class Activity implements ShouldBeEncrypted, ShouldQueue
     /**
      * @param int $index
      * @param string $now
-     * @param TStoredWorkflow $storedWorkflow
+     * @param StoredWorkflow<TWorkflow, null> $storedWorkflow
      * @param mixed ...$arguments
      */
     public function __construct(

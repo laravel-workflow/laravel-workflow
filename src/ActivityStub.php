@@ -7,7 +7,6 @@ namespace Workflow;
 use Generator;
 use Laravel\SerializableClosure\Exceptions\PhpVersionNotSupportedException;
 use Laravel\SerializableClosure\SerializableClosure;
-use Workflow\Models\StoredWorkflow;
 use function React\Promise\all;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
@@ -17,15 +16,14 @@ use Workflow\Serializers\Y;
 
 /**
  * @template TWorkflow of Workflow
- * @template TStoredWorkflow of StoredWorkflow<TWorkflow, null>
  * @template TReturn
- * @template TActivity of Activity<TWorkflow, TStoredWorkflow, TReturn>
+ * @template TActivity of Activity<TWorkflow, TReturn>
  */
 final class ActivityStub
 {
     /**
-     * @param iterable<PromiseInterface<TActivity<TWorkflow, TStoredWorkflow, TReturn>>> $promises
-     * @return PromiseInterface<TActivity<TWorkflow, TStoredWorkflow, TReturn>[]>
+     * @param iterable<PromiseInterface<TActivity<TWorkflow, TReturn>>> $promises
+     * @return PromiseInterface<TActivity<TWorkflow, TReturn>[]>
      */
     public static function all(iterable $promises): PromiseInterface
     {
@@ -45,9 +43,8 @@ final class ActivityStub
 
     /**
      * @template TMakeWorkflowClass of Workflow
-     * @template TMakeStoredWorkflow of StoredWorkflow<TWorkflow, null>
      * @template TMakeActivityReturn
-     * @template TMakeActivityClass of Activity<TMakeWorkflowClass, TMakeStoredWorkflow, TMakeActivityReturn>
+     * @template TMakeActivityClass of Activity<TMakeWorkflowClass, TMakeActivityReturn>
      * @param class-string<TMakeActivityClass> $activity
      * @param list<mixed> ...$arguments
      * @return PromiseInterface<TMakeActivityClass>

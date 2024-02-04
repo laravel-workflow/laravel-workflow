@@ -32,7 +32,7 @@ class StoredWorkflow extends Model
     ];
 
     /**
-     * @return WorkflowStub<StoredWorkflow<Workflow, null>, Workflow>
+     * @return WorkflowStub<Workflow>
      */
     public function toWorkflow()
     {

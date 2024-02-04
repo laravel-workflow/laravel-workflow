@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace Workflow;
 
-use http\Message;
 use Workflow\Models\StoredWorkflow;
 
 /**
- * @extends Activity<Workflow, StoredWorkflow<Workflow, null>, mixed>
+ * @extends Activity<Workflow, mixed>
  */
 class Exception extends Activity
 {
