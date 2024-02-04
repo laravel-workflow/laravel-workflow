@@ -40,7 +40,7 @@ final class ChildWorkflowStub
         if (WorkflowStub::faked()) {
             $mocks = WorkflowStub::mocks();
 
-            if (! $log && array_key_exists($workflow, $mocks)) {
+            if ($log === null && array_key_exists($workflow, $mocks)) {
                 $result = $mocks[$workflow];
 
                 $log = $context->storedWorkflow->logs()
@@ -55,7 +55,7 @@ final class ChildWorkflowStub
             }
         }
 
-        if ($log) {
+        if ($log !== null) {
             ++$context->index;
             WorkflowStub::setContext($context);
             return resolve(Y::unserialize($log->result));
@@ -66,7 +66,7 @@ final class ChildWorkflowStub
                 ->wherePivot('parent_index', $context->index)
                 ->first();
 
-            $childWorkflow = $storedChildWorkflow ? $storedChildWorkflow->toWorkflow() : WorkflowStub::make($workflow);
+            $childWorkflow = $storedChildWorkflow !== null ? $storedChildWorkflow->toWorkflow() : WorkflowStub::make($workflow);
 
             if ($childWorkflow->running() && ! $childWorkflow->created()) {
                 try {

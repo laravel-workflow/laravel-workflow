@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Commands;
 
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Testing\PendingCommand;
 use Tests\TestCase;
 
 final class ActivityMakeCommandTest extends TestCase
@@ -25,7 +26,10 @@ final class ActivityMakeCommandTest extends TestCase
         $this->assertFalse($filesystem->exists(self::FOLDER));
         $this->assertFalse($filesystem->exists($file));
 
-        $this->artisan('make:activity ' . self::ACTIVITY)->assertSuccessful();
+        if (($command = $this->artisan('make:activity ' . self::ACTIVITY)) instanceof PendingCommand) {
+            $command->assertSuccessful();
+        }
+
 
         $this->assertTrue($filesystem->exists($file));
 

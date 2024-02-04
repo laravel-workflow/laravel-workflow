@@ -62,11 +62,6 @@ final class Y implements SerializerInterface
         }
     }
 
-    /**
-     * @template T
-     * @param T $data
-     * @return (T is Throwable ? array{class: string, message: string, code: int|int, line: int, file: string, trace: mixed[]} : T)
-     */
     public static function serializeModels(mixed $data): mixed
     {
         if (is_array($data)) {

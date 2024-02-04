@@ -13,6 +13,7 @@ use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Y;
 use Workflow\States\WorkflowPendingStatus;
 use Workflow\WorkflowStub;
+use function PHPStan\dumpType;
 
 final class ActivityStubTest extends TestCase
 {
@@ -71,6 +72,7 @@ final class ActivityStubTest extends TestCase
         $this->expectException(Exception::class);
 
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
+        /** @var StoredWorkflow<TestWorkflow, null> $storedWorkflow */
         $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
         $storedWorkflow->update([
             'arguments' => Y::serialize([]),
@@ -86,9 +88,18 @@ final class ActivityStubTest extends TestCase
 
         ActivityStub::make(TestActivity::class)
             ->then(static function ($value) use (&$result) {
+                /**
+                 * phpstan correctly infers the "string" type here as the result of this activity
+                 * can only be a string. However, an exception is manually placed in the logs...
+                 *
+                 * this leads to an error below
+                 */
                 $result = $value;
             });
 
+        /**
+         * @phpstan-ignore-next-line
+         */
         $this->assertSame('test', $result['message']);
     }
 

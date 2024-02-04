@@ -32,7 +32,7 @@ trait Timers
             ->whereIndex(self::$context->index)
             ->first();
 
-        if ($log) {
+        if ($log !== null) {
             ++self::$context->index;
             return resolve(Y::unserialize($log->result));
         }

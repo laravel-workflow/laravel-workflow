@@ -9,6 +9,7 @@ use Exception;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use LimitIterator;
+use RuntimeException;
 use SplFileObject;
 use Workflow\Activity;
 use Workflow\Events\ActivityCompleted;
@@ -37,12 +38,16 @@ final class WorkflowMiddleware
 
         $uuid = (string) Str::uuid();
 
+        if (false === ($encodedArguments = json_encode($job->arguments))) {
+            throw new RuntimeException('Could not encode arguments.');
+        }
+
         ActivityStarted::dispatch(
             $job->storedWorkflow->id,
             $uuid,
             $job::class,
             $job->index,
-            json_encode($job->arguments),
+            $encodedArguments,
             now()
                 ->format('Y-m-d\TH:i:s.u\Z')
         );
@@ -51,12 +56,16 @@ final class WorkflowMiddleware
             $result = $next($job);
 
             try {
+                if (false === ($encodedResult = json_encode($result))) {
+                    throw new RuntimeException('Could not encode result.');
+                }
+
                 $job->storedWorkflow->toWorkflow()
                     ->next($job->index, Carbon::parse($job->now), $job::class, $result);
                 ActivityCompleted::dispatch(
                     $job->storedWorkflow->id,
                     $uuid,
-                    json_encode($result),
+                    $encodedResult,
                     now()
                         ->format('Y-m-d\TH:i:s.u\Z')
                 );
@@ -69,16 +78,19 @@ final class WorkflowMiddleware
             $file = new SplFileObject($throwable->getFile());
             $iterator = new LimitIterator($file, max(0, $throwable->getLine() - 4), 7);
 
-            ActivityFailed::dispatch($job->storedWorkflow->id, $uuid, json_encode([
-                'class' => get_class($throwable),
-                'message' => $throwable->getMessage(),
-                'code' => $throwable->getCode(),
-                'line' => $throwable->getLine(),
-                'file' => $throwable->getFile(),
-                'trace' => $throwable->getTrace(),
-                'snippet' => array_slice(iterator_to_array($iterator), 0, 7),
-            ]), now()
-                ->format('Y-m-d\TH:i:s.u\Z'));
+            if (false === ($encodedArguments = json_encode(json_encode([
+                    'class' => get_class($throwable),
+                    'message' => $throwable->getMessage(),
+                    'code' => $throwable->getCode(),
+                    'line' => $throwable->getLine(),
+                    'file' => $throwable->getFile(),
+                    'trace' => $throwable->getTrace(),
+                    'snippet' => array_slice(iterator_to_array($iterator), 0, 7),
+                ])))) {
+                throw new RuntimeException('Could not encode arguments.');
+            }
+
+            ActivityFailed::dispatch($job->storedWorkflow->id, $uuid, $encodedArguments, now()->format('Y-m-d\TH:i:s.u\Z'));
             throw $throwable;
         } finally {
             $this->active = false;

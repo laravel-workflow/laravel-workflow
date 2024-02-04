@@ -48,6 +48,9 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
      */
     public $arguments;
 
+    /** @var string  */
+    public $key = '';
+
     /**
      * @var Generator<int, mixed, mixed, mixed>
      */
@@ -244,9 +247,13 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
 
             $this->storedWorkflow->status->transitionTo(WorkflowCompletedStatus::class);
 
+            if (false === ($encodedReturn = json_encode($return))) {
+                throw new Exception('Could not encode return.');
+            }
+            
             WorkflowCompleted::dispatch(
                 $this->storedWorkflow->id,
-                json_encode($return),
+                $encodedReturn,
                 now()
                     ->format('Y-m-d\TH:i:s.u\Z')
             );

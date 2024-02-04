@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Workflow;
 
+use Carbon\Carbon;
 use Closure;
 use Generator;
 use Laravel\SerializableClosure\Exceptions\PhpVersionNotSupportedException;
@@ -23,8 +24,8 @@ use Workflow\Serializers\Y;
 final class ActivityStub
 {
     /**
-     * @param iterable<PromiseInterface<TActivity<TWorkflow, TReturn>>> $promises
-     * @return PromiseInterface<TActivity<TWorkflow, TReturn>[]>
+     * @param iterable<PromiseInterface<mixed>> $promises
+     * @return PromiseInterface<mixed[]>
      */
     public static function all(iterable $promises): PromiseInterface
     {
@@ -32,14 +33,14 @@ final class ActivityStub
     }
 
     /**
-     * @param callable $callback
+     * @param Closure $callback
      * @return PromiseInterface<mixed>
      * @throws PhpVersionNotSupportedException
      *
      * we can only be more specific with the callable when https://github.com/phpstan/phpstan/issues/8214
      * is implemented
      */
-    public static function async(callable $callback): PromiseInterface
+    public static function async(Closure $callback): PromiseInterface
     {
         return ChildWorkflowStub::make(AsyncWorkflow::class, new SerializableClosure($callback));
     }
@@ -50,7 +51,7 @@ final class ActivityStub
      * @template TMakeActivityClass of Activity<TMakeWorkflowClass, TMakeActivityReturn>
      * @param class-string<TMakeActivityClass> $activity
      * @param mixed ...$arguments
-     * @return PromiseInterface<TMakeActivityClass>
+     * @return PromiseInterface<TMakeActivityReturn>
      */
     public static function make($activity, ...$arguments): PromiseInterface
     {
@@ -63,7 +64,7 @@ final class ActivityStub
         if (WorkflowStub::faked()) {
             $mocks = WorkflowStub::mocks();
 
-            if (! $log && array_key_exists($activity, $mocks)) {
+            if ($log === null && array_key_exists($activity, $mocks)) {
                 $result = $mocks[$activity];
 
                 $log = $context->storedWorkflow->logs()
@@ -78,7 +79,7 @@ final class ActivityStub
             }
         }
 
-        if ($log) {
+        if ($log !== null) {
             ++$context->index;
             WorkflowStub::setContext($context);
             $result = Y::unserialize($log->result);
@@ -92,7 +93,7 @@ final class ActivityStub
             return resolve($result);
         }
 
-        $activity::dispatch($context->index, $context->now, $context->storedWorkflow, ...$arguments);
+        $activity::dispatch($context->index, Carbon::parse($context->now)->toDateTimeString(), $context->storedWorkflow, ...$arguments);
 
         ++$context->index;
         WorkflowStub::setContext($context);

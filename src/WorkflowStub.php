@@ -46,6 +46,9 @@ final class WorkflowStub
     use SideEffects;
     use Timers;
 
+    /**
+     * @var object{storedWorkflow: StoredWorkflow<Workflow, null>, index: int, now: \Carbon\Carbon, replaying: bool}|null
+     */
     private static ?object $context = null;
 
     /**
@@ -164,7 +167,10 @@ final class WorkflowStub
         return new self($storedWorkflow);
     }
 
-    public static function getContext(): stdClass
+    /**
+     * @return object{storedWorkflow: StoredWorkflow<Workflow, null>, index: int, now: \Carbon\Carbon, replaying: bool}|null
+     */
+    public static function getContext(): ?object
     {
         return self::$context;
     }
@@ -301,15 +307,18 @@ final class WorkflowStub
         $file = new SplFileObject($exception->getFile());
         $iterator = new LimitIterator($file, max(0, $exception->getLine() - 4), 7);
 
-        WorkflowFailed::dispatch($this->storedWorkflow->id, json_encode([
-            'class' => get_class($exception),
-            'message' => $exception->getMessage(),
-            'code' => $exception->getCode(),
-            'line' => $exception->getLine(),
-            'file' => $exception->getFile(),
-            'trace' => $exception->getTrace(),
-            'snippet' => array_slice(iterator_to_array($iterator), 0, 7),
-        ]), now()
+        if (false === ($encodedException = json_encode([
+                'class' => get_class($exception),
+                'message' => $exception->getMessage(),
+                'code' => $exception->getCode(),
+                'line' => $exception->getLine(),
+                'file' => $exception->getFile(),
+                'trace' => $exception->getTrace(),
+                'snippet' => array_slice(iterator_to_array($iterator), 0, 7),
+            ]))) {
+            throw new RuntimeException('Could not encode exception.');
+        }
+        WorkflowFailed::dispatch($this->storedWorkflow->id, $encodedException, now()
             ->format('Y-m-d\TH:i:s.u\Z'));
 
         $this->storedWorkflow->parents()
@@ -350,10 +359,14 @@ final class WorkflowStub
     private function dispatch(): void
     {
         if ($this->created()) {
+            if (false === ($encodedArguments = json_encode(Y::unserialize($this->storedWorkflow->arguments)))) {
+                throw new RuntimeException('Could not encode arguments.');
+            }
+
             WorkflowStarted::dispatch(
                 $this->storedWorkflow->id,
                 $this->storedWorkflow->class,
-                json_encode(Y::unserialize($this->storedWorkflow->arguments)),
+                $encodedArguments,
                 now()
                     ->format('Y-m-d\TH:i:s.u\Z')
             );

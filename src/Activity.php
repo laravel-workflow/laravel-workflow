@@ -44,7 +44,7 @@ abstract class Activity implements ShouldBeEncrypted, ShouldQueue
     /** @var int  */
     public $timeout = 0;
 
-    /** @var array<int, mixed> */
+    /** @var array<int|string, mixed> */
     public $arguments;
 
     /** @var string  */

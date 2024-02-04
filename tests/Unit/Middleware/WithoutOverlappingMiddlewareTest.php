@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Middleware;
 
 use Illuminate\Support\Facades\Cache;
+use Mockery;
 use Mockery\MockInterface;
 use Tests\Fixtures\TestActivity;
 use Tests\Fixtures\TestWorkflow;
@@ -28,16 +29,16 @@ final class WithoutOverlappingMiddlewareTest extends TestCase
 
     public function testAllowsOnlyOneWorkflowInstance(): void
     {
-        $workflow1 = $this->mock(TestWorkflow::class);
+        $workflow1 = Mockery::mock(TestWorkflow::class);
         $middleware1 = new WithoutOverlappingMiddleware(1, WithoutOverlappingMiddleware::WORKFLOW);
 
-        $workflow2 = $this->mock(TestWorkflow::class, static function (MockInterface $mock) {
+        $workflow2 = Mockery::mock(TestWorkflow::class, static function (MockInterface $mock) {
             $mock->shouldReceive('release')
                 ->once();
         });
         $middleware2 = new WithoutOverlappingMiddleware(1, WithoutOverlappingMiddleware::WORKFLOW);
 
-        $activity = $this->mock(TestActivity::class, static function (MockInterface $mock) {
+        $activity = Mockery::mock(TestActivity::class, static function (MockInterface $mock) {
             $mock->shouldReceive('release')
                 ->once();
         });
@@ -65,13 +66,13 @@ final class WithoutOverlappingMiddlewareTest extends TestCase
 
     public function testAllowsMultipleActivityInstances(): void
     {
-        $activity1 = $this->mock(TestActivity::class);
+        $activity1 = Mockery::mock(TestActivity::class);
         $middleware1 = new WithoutOverlappingMiddleware(1, WithoutOverlappingMiddleware::ACTIVITY);
 
-        $activity2 = $this->mock(TestActivity::class);
+        $activity2 = Mockery::mock(TestActivity::class);
         $middleware2 = new WithoutOverlappingMiddleware(1, WithoutOverlappingMiddleware::ACTIVITY);
 
-        $workflow1 = $this->mock(TestWorkflow::class, static function (MockInterface $mock) {
+        $workflow1 = Mockery::mock(TestWorkflow::class, static function (MockInterface $mock) {
             $mock->shouldReceive('release')
                 ->once();
         });

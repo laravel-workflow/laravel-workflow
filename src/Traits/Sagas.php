@@ -5,13 +5,16 @@ declare(strict_types=1);
 namespace Workflow\Traits;
 
 use Generator;
+use Closure;
+use React\Promise\PromiseInterface;
 use Throwable;
 use Workflow\ActivityStub;
+use function PHPStan\dumpType;
 
 trait Sagas
 {
     /**
-     * @var callable[]
+     * @var Closure[]
      */
     private array $compensations = [];
 
@@ -33,7 +36,10 @@ trait Sagas
         return $this;
     }
 
-    public function addCompensation(callable $compensation): self
+    /**
+     * @param Closure $compensation
+     */
+    public function addCompensation(Closure $compensation): self
     {
         $this->compensations[] = $compensation;
 
@@ -54,8 +60,11 @@ trait Sagas
             yield ActivityStub::all($compensations);
         } else {
             for (end($this->compensations); key($this->compensations) !== null; prev($this->compensations)) {
+                if (false === ($currentCompensation = current($this->compensations))) {
+                    continue;
+                }
                 try {
-                    yield current($this->compensations)();
+                    yield $currentCompensation();
                 } catch (Throwable $th) {
                     if (! $this->continueWithError) {
                         throw $th;
