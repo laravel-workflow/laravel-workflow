@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Workflow;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Spatie\ModelStates\Exceptions\TransitionNotFound;
 use Workflow\Middleware\WithoutOverlappingMiddleware;
 use Workflow\Models\StoredWorkflow;
 
@@ -26,8 +28,8 @@ final class Signal implements ShouldBeEncrypted, ShouldQueue
 
     public function __construct(
         public StoredWorkflow $storedWorkflow,
-        $connection = null,
-        $queue = null
+        ?string $connection = null,
+        ?string $queue = null
     ) {
         $connection = $connection ?? config('queue.default');
         $queue = $queue ?? config('queue.connections.' . $connection . '.queue', 'default');
@@ -35,6 +37,10 @@ final class Signal implements ShouldBeEncrypted, ShouldQueue
         $this->onQueue($queue);
     }
 
+    /**
+     * @return mixed[]
+     * @throws BindingResolutionException
+     */
     public function middleware()
     {
         return [
@@ -48,7 +54,7 @@ final class Signal implements ShouldBeEncrypted, ShouldQueue
 
         try {
             $workflow->resume();
-        } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
+        } catch (TransitionNotFound) {
             if ($workflow->running()) {
                 $this->release();
             }
