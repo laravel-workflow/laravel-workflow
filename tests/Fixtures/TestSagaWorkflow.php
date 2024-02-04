@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
+use Generator;
 use Workflow\ActivityStub;
 use Workflow\Workflow;
 
 class TestSagaWorkflow extends Workflow
 {
-    public function execute($shouldThrow = false)
+    public function execute(bool $shouldThrow = false): Generator
     {
         try {
             yield ActivityStub::make(TestActivity::class);

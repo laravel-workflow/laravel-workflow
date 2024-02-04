@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
+use Generator;
 use Illuminate\Contracts\Foundation\Application;
 use Workflow\ActivityStub;
 use Workflow\QueryMethod;
@@ -31,7 +32,7 @@ class TestBadConnectionWorkflow extends Workflow
         return $this->canceled;
     }
 
-    public function execute(Application $app, $shouldAssert = false)
+    public function execute(Application $app, bool $shouldAssert = false): Generator
     {
         assert($app->runningInConsole());
 

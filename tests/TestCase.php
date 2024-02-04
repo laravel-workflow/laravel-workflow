@@ -12,7 +12,10 @@ abstract class TestCase extends BaseTestCase
 {
     public const NUMBER_OF_WORKERS = 2;
 
-    private static $workers = [];
+    /**
+     * @var list<Process>
+     */
+    private static array $workers = [];
 
     public static function setUpBeforeClass(): void
     {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Fixtures;
 
 use Exception;
+use Generator;
 use Workflow\ActivityStub;
 use Workflow\Workflow;
 
@@ -14,7 +15,7 @@ class TestChildExceptionWorkflow extends Workflow
 
     public $queue = 'default';
 
-    public function execute($shouldThrow = false)
+    public function execute(bool $shouldThrow = false): Generator
     {
         if ($shouldThrow) {
             throw new Exception('failed');

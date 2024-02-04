@@ -8,18 +8,24 @@ use Exception;
 
 class StateMachine
 {
-    private $states = [];
+    /**
+     * @var string[]
+     */
+    private array $states = [];
 
-    private $transitions = [];
+    /**
+     * @var array<string, array{from: string, to: string}>
+     */
+    private array $transitions = [];
 
-    private $currentState;
+    private string $currentState;
 
-    public function addState($state)
+    public function addState(string $state) : void
     {
         $this->states[] = $state;
     }
 
-    public function addTransition($action, $fromState, $toState)
+    public function addTransition(string $action, string $fromState, string $toState): void
     {
         $this->transitions[$action] = [
             'from' => $fromState,
@@ -27,19 +33,19 @@ class StateMachine
         ];
     }
 
-    public function initialize()
+    public function initialize(): void
     {
         if (count($this->states) > 0) {
             $this->currentState = $this->states[0];
         }
     }
 
-    public function getCurrentState()
+    public function getCurrentState(): string
     {
         return $this->currentState;
     }
 
-    public function apply($action)
+    public function apply(string $action): void
     {
         if (isset($this->transitions[$action]) && $this->transitions[$action]['from'] === $this->currentState) {
             $this->currentState = $this->transitions[$action]['to'];

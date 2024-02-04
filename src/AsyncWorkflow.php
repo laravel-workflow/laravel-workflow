@@ -26,11 +26,11 @@ final class AsyncWorkflow extends Workflow
 
     /**
      * @param SerializableClosure $callback
-     * @return TReturn|Generator<int, mixed, void, TReturn>
+     * @return Generator<int, mixed, void, TReturn>
      * @throws ReflectionException
      * @throws PhpVersionNotSupportedException
      */
-    public function execute($callback)
+    public function execute($callback): Generator
     {
         $this->container = App::make(Container::class);
         $callable = $callback->getClosure();

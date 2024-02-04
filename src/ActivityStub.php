@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Workflow;
 
+use Closure;
 use Generator;
 use Laravel\SerializableClosure\Exceptions\PhpVersionNotSupportedException;
 use Laravel\SerializableClosure\SerializableClosure;
@@ -31,10 +32,12 @@ final class ActivityStub
     }
 
     /**
-     * @template TAsyncReturn
-     * @param callable():(TAsyncReturn|Generator<int, mixed, void, TAsyncReturn>) $callback
-     * @return PromiseInterface<TAsyncReturn>
+     * @param callable $callback
+     * @return PromiseInterface<mixed>
      * @throws PhpVersionNotSupportedException
+     *
+     * we can only be more specific with the callable when https://github.com/phpstan/phpstan/issues/8214
+     * is implemented
      */
     public static function async(callable $callback): PromiseInterface
     {
@@ -46,7 +49,7 @@ final class ActivityStub
      * @template TMakeActivityReturn
      * @template TMakeActivityClass of Activity<TMakeWorkflowClass, TMakeActivityReturn>
      * @param class-string<TMakeActivityClass> $activity
-     * @param list<mixed> ...$arguments
+     * @param mixed ...$arguments
      * @return PromiseInterface<TMakeActivityClass>
      */
     public static function make($activity, ...$arguments): PromiseInterface

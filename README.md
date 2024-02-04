@@ -34,10 +34,11 @@ There's also a [sample application](https://github.com/laravel-workflow/sample-a
 ```php
 use Workflow\ActivityStub;
 use Workflow\Workflow;
+use Generator
 
 class MyWorkflow extends Workflow
 {
-    public function execute($name)
+    public function execute($name): Generator
     {
         $result = yield ActivityStub::make(MyActivity::class, $name);
         return $result;
@@ -48,10 +49,11 @@ class MyWorkflow extends Workflow
 **2. Create an activity.**
 ```php
 use Workflow\Activity;
+use Generator;
 
 class MyActivity extends Activity
 {
-    public function execute($name)
+    public function execute($name): Generator
     {
         return "Hello, {$name}!";
     }

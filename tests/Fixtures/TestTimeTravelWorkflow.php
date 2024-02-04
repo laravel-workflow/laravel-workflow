@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
+use Generator;
 use Workflow\ActivityStub;
 use Workflow\QueryMethod;
 use Workflow\SignalMethod;
@@ -26,7 +27,7 @@ class TestTimeTravelWorkflow extends Workflow
         return $this->canceled;
     }
 
-    public function execute()
+    public function execute(): Generator
     {
         $otherResult = yield ActivityStub::make(TestOtherActivity::class, 'other');
 

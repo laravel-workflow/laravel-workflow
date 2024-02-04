@@ -18,6 +18,10 @@ final class EncodeTest extends TestCase
         $this->assertSame($bytes, $decoded);
     }
 
+    /**
+     * @return array<string, string[]>
+     * @throws \Random\RandomException
+     */
     public function dataProvider(): array
     {
         return [

@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Workflow\Middleware;
 
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use LimitIterator;
 use SplFileObject;
+use Workflow\Activity;
 use Workflow\Events\ActivityCompleted;
 use Workflow\Events\ActivityFailed;
 use Workflow\Events\ActivityStarted;
@@ -20,7 +22,7 @@ final class WorkflowMiddleware
     private bool $active = true;
 
     /**
-     * @param Workflow $job
+     * @param Activity<Workflow, mixed> $job
      * @param callable $next
      * @return void
      * @throws \Throwable
@@ -50,7 +52,7 @@ final class WorkflowMiddleware
 
             try {
                 $job->storedWorkflow->toWorkflow()
-                    ->next($job->index, $job->now, $job::class, $result);
+                    ->next($job->index, Carbon::parse($job->now), $job::class, $result);
                 ActivityCompleted::dispatch(
                     $job->storedWorkflow->id,
                     $uuid,

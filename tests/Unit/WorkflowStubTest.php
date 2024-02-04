@@ -32,6 +32,7 @@ final class WorkflowStubTest extends TestCase
             'status' => WorkflowPendingStatus::$name,
         ]);
 
+        /** @var WorkflowStub<TestWorkflow> $workflow */
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
         $workflow->start();
@@ -83,6 +84,7 @@ final class WorkflowStubTest extends TestCase
 
     public function testAwait(): void
     {
+        /** @var WorkflowStub<TestWorkflow> $workflow */
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $workflow->start();
         $workflow->cancel();
@@ -122,6 +124,7 @@ final class WorkflowStubTest extends TestCase
 
     public function testAwaitWithTimeout(): void
     {
+        /** @var WorkflowStub<TestWorkflow> $workflow */
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $workflow->start();
         $workflow->cancel();
@@ -161,6 +164,7 @@ final class WorkflowStubTest extends TestCase
 
     public function testAwaitWithTimeoutTimedout(): void
     {
+        /** @var WorkflowStub<TestWorkflow> $workflow */
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $workflow->start();
         $workflow->cancel();
@@ -201,6 +205,7 @@ final class WorkflowStubTest extends TestCase
     {
         Carbon::setTestNow('2022-01-01');
 
+        /** @var WorkflowStub<TestWorkflow> $workflow */
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $otherWorkflow = WorkflowStub::load(WorkflowStub::make(TestBadConnectionWorkflow::class)->id());
 

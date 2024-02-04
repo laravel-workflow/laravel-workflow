@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
+use Generator;
 use Workflow\Models\StoredWorkflow;
 use Workflow\SignalMethod;
 use Workflow\Workflow;
@@ -15,7 +16,7 @@ class TestStateMachineWorkflow extends Workflow
 
     public $queue = 'default';
 
-    private $stateMachine;
+    private StateMachine $stateMachine;
 
     public function __construct(
         public StoredWorkflow $storedWorkflow,
@@ -38,39 +39,39 @@ class TestStateMachineWorkflow extends Workflow
     }
 
     #[SignalMethod]
-    public function submit()
+    public function submit(): void
     {
         $this->stateMachine->apply('submit');
     }
 
     #[SignalMethod]
-    public function approve()
+    public function approve(): void
     {
         $this->stateMachine->apply('approve');
     }
 
     #[SignalMethod]
-    public function deny()
+    public function deny(): void
     {
         $this->stateMachine->apply('deny');
     }
 
-    public function isSubmitted()
+    public function isSubmitted(): bool
     {
         return $this->stateMachine->getCurrentState() === 'submitted';
     }
 
-    public function isApproved()
+    public function isApproved(): bool
     {
         return $this->stateMachine->getCurrentState() === 'approved';
     }
 
-    public function isDenied()
+    public function isDenied(): bool
     {
         return $this->stateMachine->getCurrentState() === 'denied';
     }
 
-    public function execute()
+    public function execute(): Generator
     {
         yield WorkflowStub::await(fn () => $this->isSubmitted());
 
