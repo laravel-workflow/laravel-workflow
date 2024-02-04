@@ -26,6 +26,11 @@ final class Signal implements ShouldBeEncrypted, ShouldQueue
 
     public int $maxExceptions = 0;
 
+    /**
+     * @param StoredWorkflow<Workflow, null> $storedWorkflow
+     * @param string|null $connection
+     * @param string|null $queue
+     */
     public function __construct(
         public StoredWorkflow $storedWorkflow,
         ?string $connection = null,
