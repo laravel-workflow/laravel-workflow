@@ -6,6 +6,7 @@ namespace Workflow\Traits;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
+use function PHPStan\dumpType;
 
 /**
  * @method static void mock(string $class, mixed $result)
@@ -103,7 +104,9 @@ trait Fakes
         });
 
         static::macro('dispatched', static function (string $workflowOrActivity, callable|null $callback = null): Collection {
+            /** @var Collection<string, mixed[]> $dispatched */
             $dispatched = App::make(self::$DISPATCHED_LIST);
+
             if (! isset($dispatched[$workflowOrActivity])) {
                 return collect();
             }

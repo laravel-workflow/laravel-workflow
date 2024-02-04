@@ -4,16 +4,25 @@ declare(strict_types=1);
 
 namespace Workflow;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\QueryException;
+use Illuminate\Foundation\Bus\PendingDispatch;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Traits\Macroable;
 use LimitIterator;
 use ReflectionClass;
+use ReflectionException;
+use RuntimeException;
+use Spatie\ModelStates\Exceptions\TransitionNotFound;
 use SplFileObject;
+use stdClass;
+use Throwable;
 use Workflow\Events\WorkflowFailed;
 use Workflow\Events\WorkflowStarted;
 use Workflow\Models\StoredWorkflow;
+use Workflow\Models\StoredWorkflowException;
+use Workflow\Models\StoredWorkflowLog;
 use Workflow\Serializers\Y;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowCreatedStatus;
@@ -37,10 +46,10 @@ final class WorkflowStub
     use SideEffects;
     use Timers;
 
-    private static ?\stdClass $context = null;
+    private static ?object $context = null;
 
     /**
-     * @param StoredWorkflow $storedWorkflow
+     * @param StoredWorkflow<TWorkflow, null> $storedWorkflow
      */
     private function __construct(
         protected $storedWorkflow
@@ -53,6 +62,12 @@ final class WorkflowStub
         ]);
     }
 
+    /**
+     * @param string $method
+     * @param mixed[] $arguments
+     * @return PendingDispatch|mixed|void
+     * @throws ReflectionException
+     */
     public function __call($method, $arguments)
     {
         if (collect((new ReflectionClass($this->storedWorkflow->class))->getMethods())
@@ -77,21 +92,23 @@ final class WorkflowStub
             return Signal::dispatch($this->storedWorkflow, self::connection(), self::queue());
         }
 
-        if (collect((new ReflectionClass($this->storedWorkflow->class))->getMethods())
+        if (!collect((new ReflectionClass($this->storedWorkflow->class))->getMethods())
             ->filter(static fn ($method): bool => collect($method->getAttributes())
                 ->contains(static fn ($attribute): bool => $attribute->getName() === QueryMethod::class))
             ->map(static fn ($method) => $method->getName())
             ->contains($method)
         ) {
-            return (new $this->storedWorkflow->class(
-                $this->storedWorkflow,
-                ...Y::unserialize($this->storedWorkflow->arguments),
-            ))
-                ->query($method);
+            return;
         }
+
+        return (new $this->storedWorkflow->class(
+            $this->storedWorkflow,
+            ...Y::unserialize($this->storedWorkflow->arguments),
+        ))
+            ->query($method);
     }
 
-    public static function connection()
+    public static function connection(): ?string
     {
         return Arr::get(
             (new ReflectionClass(self::$context->storedWorkflow->class))->getDefaultProperties(),
@@ -99,7 +116,7 @@ final class WorkflowStub
         );
     }
 
-    public static function queue()
+    public static function queue(): ?string
     {
         return Arr::get((new ReflectionClass(self::$context->storedWorkflow->class))->getDefaultProperties(), 'queue');
     }
@@ -107,7 +124,7 @@ final class WorkflowStub
     /**
      * @template TWorkflowClass of Workflow
      * @param class-string<TWorkflowClass> $class
-     * @return self<StoredWorkflow<TWorkflowClass>, TWorkflowClass>
+     * @return self<TWorkflowClass>
      */
     public static function make($class): self
     {
@@ -116,17 +133,24 @@ final class WorkflowStub
         ]);
 
         if (!$storedWorkflow instanceof StoredWorkflow) {
-            throw new \RuntimeException('StoredWorkflow model must extend ' . StoredWorkflow::class);
+            throw new RuntimeException('StoredWorkflow model must extend ' . StoredWorkflow::class);
         }
 
         /** @var StoredWorkflow<TWorkflowClass, null> $storedWorkflow */
         return new self($storedWorkflow);
     }
 
+    /**
+     * @param int $id
+     * @return self<Workflow>
+     */
     public static function load($id)
     {
+        /** @var StoredWorkflow<Workflow, null> $storedWorkflow */
+        $storedWorkflow = config('workflows.stored_workflow_model', StoredWorkflow::class)::findOrFail($id);
+
         return self::fromStoredWorkflow(
-            config('workflows.stored_workflow_model', StoredWorkflow::class)::findOrFail($id)
+            $storedWorkflow
         );
     }
 
@@ -140,37 +164,47 @@ final class WorkflowStub
         return new self($storedWorkflow);
     }
 
-    public static function getContext(): \stdClass
+    public static function getContext(): stdClass
     {
         return self::$context;
     }
 
+    /**
+     * @param array{storedWorkflow: StoredWorkflow<Workflow, null>, index: int, now: \Carbon\Carbon, replaying: bool}|object{storedWorkflow: StoredWorkflow<Workflow, null>, index: int, now: \Carbon\Carbon, replaying: bool} $context
+     * @return void
+     */
     public static function setContext($context): void
     {
         self::$context = (object) $context;
     }
 
-    public static function now()
+    public static function now() : \Carbon\Carbon
     {
         return self::getContext()->now;
     }
 
-    public function id()
+    public function id(): int
     {
         return $this->storedWorkflow->id;
     }
 
-    public function logs()
+    /**
+     * @return Collection<int, StoredWorkflowLog>
+     */
+    public function logs(): Collection
     {
         return $this->storedWorkflow->logs;
     }
 
-    public function exceptions()
+    /**
+     * @return Collection<int, StoredWorkflowException>
+     */
+    public function exceptions(): Collection
     {
         return $this->storedWorkflow->exceptions;
     }
 
-    public function output()
+    public function output(): mixed
     {
         if ($this->storedWorkflow->fresh()->output === null) {
             return null;
@@ -218,6 +252,10 @@ final class WorkflowStub
             ->dispatch();
     }
 
+    /**
+     * @param mixed ...$arguments
+     * @return void
+     */
     public function start(...$arguments): void
     {
         $this->storedWorkflow->arguments = Y::serialize($arguments);
@@ -225,7 +263,14 @@ final class WorkflowStub
         $this->dispatch();
     }
 
-    public function startAsChild(StoredWorkflow $parentWorkflow, int $index, $now, ...$arguments): void
+    /**
+     * @param StoredWorkflow<TWorkflow, null> $parentWorkflow
+     * @param int $index
+     * @param \Carbon\Carbon $now
+     * @param mixed ...$arguments
+     * @return void
+     */
+    public function startAsChild(StoredWorkflow $parentWorkflow, int $index, \Carbon\Carbon $now, ...$arguments): void
     {
         $this->storedWorkflow->parents()
             ->detach();
@@ -239,7 +284,7 @@ final class WorkflowStub
         $this->start(...$arguments);
     }
 
-    public function fail($exception): void
+    public function fail(Throwable $exception): void
     {
         try {
             $this->storedWorkflow->exceptions()
@@ -272,13 +317,20 @@ final class WorkflowStub
                 try {
                     $parentWorkflow->toWorkflow()
                         ->fail($exception);
-                } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
+                } catch (TransitionNotFound) {
                     return;
                 }
             });
     }
 
-    public function next($index, $now, $class, $result): void
+    /**
+     * @param int $index
+     * @param \Carbon\Carbon $now
+     * @param class-string<Workflow|Activity<Workflow, mixed>> $class
+     * @param mixed $result
+     * @return void
+     */
+    public function next(int $index, \Carbon\Carbon $now, string $class, mixed $result): void
     {
         try {
             $this->storedWorkflow->logs()

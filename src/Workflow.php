@@ -6,8 +6,10 @@ namespace Workflow;
 
 use BadMethodCallException;
 use Exception;
+use Generator;
 use Illuminate\Bus\Queueable;
 use Illuminate\Container\Container;
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -17,7 +19,7 @@ use Illuminate\Routing\RouteDependencyResolverTrait;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\App;
 use React\Promise\PromiseInterface;
-use RuntimeException;
+use Spatie\ModelStates\Exceptions\TransitionNotFound;
 use Throwable;
 use Workflow\Events\WorkflowCompleted;
 use Workflow\Middleware\WithoutOverlappingMiddleware;
@@ -27,7 +29,6 @@ use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowRunningStatus;
 use Workflow\States\WorkflowWaitingStatus;
 use Workflow\Traits\Sagas;
-use function PHPStan\dumpType;
 
 class Workflow implements ShouldBeEncrypted, ShouldQueue
 {
@@ -42,12 +43,21 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
 
     public int $maxExceptions = 0;
 
+    /**
+     * @var mixed[]
+     */
     public $arguments;
 
+    /**
+     * @var Generator<int, mixed, mixed, mixed>
+     */
     public $coroutine;
 
     public int $index = 0;
 
+    /**
+     * @var \Carbon\Carbon
+     */
     public $now;
 
     public bool $replaying = false;
@@ -59,6 +69,10 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
      */
     private Container $container;
 
+    /**
+     * @param StoredWorkflow<self, null> $storedWorkflow
+     * @param mixed ...$arguments
+     */
     public function __construct(
         public StoredWorkflow $storedWorkflow,
         ...$arguments
@@ -72,13 +86,22 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
         $this->afterCommit = true;
     }
 
-    public function query($method)
+    /**
+     * @param string $method
+     * @return mixed
+     * @throws Exception
+     */
+    public function query(string $method)
     {
         $this->replaying = true;
         $this->handle();
         return $this->{$method}();
     }
 
+    /**
+     * @return mixed[]
+     * @throws BindingResolutionException
+     */
     public function middleware()
     {
         $parentWorkflow = $this->storedWorkflow->parents()
@@ -99,7 +122,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
         try {
             $this->storedWorkflow->toWorkflow()
                 ->fail($throwable);
-        } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
+        } catch (TransitionNotFound) {
             return;
         }
     }
@@ -116,7 +139,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
             if (! $this->replaying) {
                 $this->storedWorkflow->status->transitionTo(WorkflowRunningStatus::class);
             }
-        } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
+        } catch (TransitionNotFound) {
             if ($this->storedWorkflow->toWorkflow()->running()) {
                 $this->release();
             }

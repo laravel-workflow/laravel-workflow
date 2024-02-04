@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace Workflow\Traits;
 
+use Generator;
 use Throwable;
 use Workflow\ActivityStub;
 
 trait Sagas
 {
+    /**
+     * @var callable[]
+     */
     private array $compensations = [];
 
     private bool $parallelCompensation = false;
@@ -36,7 +40,11 @@ trait Sagas
         return $this;
     }
 
-    public function compensate()
+    /**
+     * @return Generator<int, mixed, mixed, void>
+     * @throws Throwable
+     */
+    public function compensate(): Generator
     {
         if ($this->parallelCompensation) {
             $compensations = [];

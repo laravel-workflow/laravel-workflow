@@ -11,7 +11,12 @@ use Workflow\Serializers\Y;
 
 trait SideEffects
 {
-    public static function sideEffect($callable): PromiseInterface
+    /**
+     * @template T
+     * @param callable(): T $callable
+     * @return PromiseInterface<T>
+     */
+    public static function sideEffect(callable $callable): PromiseInterface
     {
         $log = self::$context->storedWorkflow->logs()
             ->whereIndex(self::$context->index)

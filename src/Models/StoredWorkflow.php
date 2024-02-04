@@ -36,8 +36,8 @@ class StoredWorkflow extends Model
      */
     public function toWorkflow()
     {
-        /** @var self<TWorkflow, null> $this */
-        return WorkflowStub::fromStoredWorkflow($this); // @phpstan-ignore-line
+        // @phpstan-ignore-next-line
+        return WorkflowStub::fromStoredWorkflow($this);
     }
 
     /**
