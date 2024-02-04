@@ -7,6 +7,7 @@ namespace Tests\Unit\Traits;
 use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
 use Workflow\Models\StoredWorkflow;
+use Workflow\Models\StoredWorkflowLog;
 use Workflow\Serializers\Y;
 use Workflow\Signal;
 use Workflow\States\WorkflowPendingStatus;
@@ -56,7 +57,10 @@ final class AwaitWithTimeoutsTest extends TestCase
             'index' => 0,
             'class' => Signal::class,
         ]);
-        $this->assertTrue(Y::unserialize($workflow->logs()->firstWhere('index', 0)->result));
+        $firstLog = $workflow->logs()->firstWhere('index', 0);
+        $this->assertInstanceOf(StoredWorkflowLog::class, $firstLog);
+        $this->assertNotNull($firstLog->result);
+        $this->assertTrue(Y::unserialize($firstLog->result));
     }
 
     public function testLoadsStoredResult(): void
@@ -83,7 +87,10 @@ final class AwaitWithTimeoutsTest extends TestCase
             'index' => 0,
             'class' => Signal::class,
         ]);
-        $this->assertTrue(Y::unserialize($workflow->logs()->firstWhere('index', 0)->result));
+        $firstLog = $workflow->logs()->firstWhere('index', 0);
+        $this->assertInstanceOf(StoredWorkflowLog::class, $firstLog);
+        $this->assertNotNull($firstLog->result);
+        $this->assertTrue(Y::unserialize($firstLog->result));
     }
 
     public function testResolvesConflictingResult(): void
@@ -112,6 +119,9 @@ final class AwaitWithTimeoutsTest extends TestCase
             'index' => 0,
             'class' => Signal::class,
         ]);
-        $this->assertFalse(Y::unserialize($workflow->logs()->firstWhere('index', 0)->result));
+        $firstLog = $workflow->logs()->firstWhere('index', 0);
+        $this->assertInstanceOf(StoredWorkflowLog::class, $firstLog);
+        $this->assertNotNull($firstLog->result);
+        $this->assertFalse(Y::unserialize($firstLog->result));
     }
 }

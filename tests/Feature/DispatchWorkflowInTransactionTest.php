@@ -9,6 +9,7 @@ use Tests\Fixtures\TestSimpleWorkflow;
 use Tests\TestCase;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\WorkflowStub;
+use function PHPStan\dumpType;
 
 final class DispatchWorkflowInTransactionTest extends TestCase
 {
@@ -37,6 +38,7 @@ final class DispatchWorkflowInTransactionTest extends TestCase
             sleep(3);
         });
 
+        $this->assertNotNull($workflow);
         /**
          * the workflow stays in the pending state as the transaction was not committed
          * when the worker was told to process the workflow

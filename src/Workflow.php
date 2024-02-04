@@ -24,6 +24,8 @@ use Throwable;
 use Workflow\Events\WorkflowCompleted;
 use Workflow\Middleware\WithoutOverlappingMiddleware;
 use Workflow\Models\StoredWorkflow;
+use Workflow\Models\StoredWorkflowLog;
+use Workflow\Models\StoredWorkflowSignal;
 use Workflow\Serializers\Y;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowRunningStatus;
@@ -158,11 +160,14 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
 
         $this->storedWorkflow
             ->signals()
-            ->when($log, static function ($query, $log): void {
+            ->when($log, static function ($query, StoredWorkflowLog $log): void {
+                if ($log->created_at === null) {
+                    throw new \RuntimeException("The Log must have a created_at timestamp.");
+                }
                 $query->where('created_at', '<=', $log->created_at->format('Y-m-d H:i:s.u'));
             })
-            ->each(function ($signal): void {
-                $this->{$signal->method}(...Y::unserialize($signal->arguments));
+            ->each(function (StoredWorkflowSignal $signal): void {
+                $this->{$signal->method}(...($signal->arguments !== null ? Y::unserialize($signal->arguments) : []));
             });
 
         if ($parentWorkflow !== null) {
@@ -185,17 +190,28 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
         ));
 
         while ($this->coroutine->valid()) {
-            $this->index = WorkflowStub::getContext()->index;
+            if (null === ($context = WorkflowStub::getContext())) {
+                throw new \RuntimeException('The context must be set.');
+            }
+
+            $this->index = $context->index;
 
             $nextLog = $this->storedWorkflow->logs()
                 ->whereIndex($this->index)
                 ->first();
 
             if ($log !== null) {
+                if ($log->created_at === null) {
+                    throw new \RuntimeException("The Log must have a created_at timestamp.");
+                }
+
                 $this->storedWorkflow
                     ->signals()
                     ->where('created_at', '>', $log->created_at->format('Y-m-d H:i:s.u'))
                     ->when($nextLog, static function ($query, $nextLog): void {
+                        if ($nextLog->created_at === null) {
+                            throw new \RuntimeException("The Log must have a created_at timestamp.");
+                        }
                         $query->where('created_at', '<=', $nextLog->created_at->format('Y-m-d H:i:s.u'));
                     })
                     ->each(function ($signal): void {
@@ -250,7 +266,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
             if (false === ($encodedReturn = json_encode($return))) {
                 throw new Exception('Could not encode return.');
             }
-            
+
             WorkflowCompleted::dispatch(
                 $this->storedWorkflow->id,
                 $encodedReturn,

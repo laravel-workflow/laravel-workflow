@@ -63,7 +63,7 @@ class WorkflowStubDynamicCallMethodExtension implements MethodsClassReflectionEx
 
         // Generic type is not specified
         if ($workflowType === null) {
-            if (! $classReflection->isGeneric() && $classReflection->getParentClass()?->isGeneric()) {
+            if (! $classReflection->isGeneric() && ($classReflection->getParentClass()?->isGeneric() ?? false)) {
                 $workflowType = $classReflection->getParentClass()->getActiveTemplateTypeMap()->getType('TWorkflow');
             }
         }

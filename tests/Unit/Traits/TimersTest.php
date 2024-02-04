@@ -7,6 +7,7 @@ namespace Tests\Unit\Traits;
 use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
 use Workflow\Models\StoredWorkflow;
+use Workflow\Models\StoredWorkflowLog;
 use Workflow\Serializers\Y;
 use Workflow\Signal;
 use Workflow\States\WorkflowPendingStatus;
@@ -104,7 +105,10 @@ final class TimersTest extends TestCase
             'index' => 0,
             'class' => Signal::class,
         ]);
-        $this->assertSame(true, Y::unserialize($workflow->logs()->firstWhere('index', 0)->result));
+        $firstLog = $workflow->logs()->firstWhere('index', 0);
+        $this->assertInstanceOf(StoredWorkflowLog::class, $firstLog);
+        $this->assertNotNull($firstLog->result);
+        $this->assertSame(true, Y::unserialize($firstLog->result));
     }
 
     public function testLoadsStoredResult(): void
@@ -136,6 +140,9 @@ final class TimersTest extends TestCase
             'index' => 0,
             'class' => Signal::class,
         ]);
-        $this->assertSame(true, Y::unserialize($workflow->logs()->firstWhere('index', 0)->result));
+        $firstLog = $workflow->logs()->firstWhere('index', 0);
+        $this->assertInstanceOf(StoredWorkflowLog::class, $firstLog);
+        $this->assertNotNull($firstLog->result);
+        $this->assertSame(true, Y::unserialize($firstLog->result));
     }
 }

@@ -32,6 +32,9 @@ final class ChildWorkflowStub
     public static function make($workflow, ...$arguments): PromiseInterface
     {
         $context = WorkflowStub::getContext();
+        if ($context === null) {
+            throw new \RuntimeException('ActivityStub::make() must be called within a workflow');
+        }
 
         $log = $context->storedWorkflow->logs()
             ->whereIndex($context->index)
@@ -58,7 +61,7 @@ final class ChildWorkflowStub
         if ($log !== null) {
             ++$context->index;
             WorkflowStub::setContext($context);
-            return resolve(Y::unserialize($log->result));
+            return resolve($log->result !== null ?  Y::unserialize($log->result) : null);
         }
 
         if (! $context->replaying) {

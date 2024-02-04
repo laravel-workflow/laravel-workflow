@@ -47,7 +47,7 @@ final class WorkflowStub
     use Timers;
 
     /**
-     * @var object{storedWorkflow: StoredWorkflow<Workflow, null>, index: int, now: \Carbon\Carbon, replaying: bool}|null
+     * @var (stdClass&object{storedWorkflow: StoredWorkflow<Workflow, null>, index: int, now: \Carbon\Carbon, replaying: bool})|null
      */
     private static ?object $context = null;
 
@@ -106,21 +106,35 @@ final class WorkflowStub
 
         return (new $this->storedWorkflow->class(
             $this->storedWorkflow,
-            ...Y::unserialize($this->storedWorkflow->arguments),
+            ...($this->storedWorkflow->arguments !== null ? Y::unserialize($this->storedWorkflow->arguments) : []),
         ))
             ->query($method);
     }
 
+    /**
+     * @throws ReflectionException
+     */
     public static function connection(): ?string
     {
+        if (self::$context === null) {
+            throw new RuntimeException('WorkflowStub::connection() must be called within a workflow');
+        }
+
         return Arr::get(
             (new ReflectionClass(self::$context->storedWorkflow->class))->getDefaultProperties(),
             'connection'
         );
     }
 
+    /**
+     * @throws ReflectionException
+     */
     public static function queue(): ?string
     {
+        if (self::$context === null) {
+            throw new RuntimeException('WorkflowStub::queue() must be called within a workflow');
+        }
+
         return Arr::get((new ReflectionClass(self::$context->storedWorkflow->class))->getDefaultProperties(), 'queue');
     }
 
@@ -168,7 +182,7 @@ final class WorkflowStub
     }
 
     /**
-     * @return object{storedWorkflow: StoredWorkflow<Workflow, null>, index: int, now: \Carbon\Carbon, replaying: bool}|null
+     * @return (stdClass&object{storedWorkflow: StoredWorkflow<Workflow, null>, index: int, now: \Carbon\Carbon, replaying: bool})|null
      */
     public static function getContext(): ?object
     {
@@ -176,7 +190,7 @@ final class WorkflowStub
     }
 
     /**
-     * @param array{storedWorkflow: StoredWorkflow<Workflow, null>, index: int, now: \Carbon\Carbon, replaying: bool}|object{storedWorkflow: StoredWorkflow<Workflow, null>, index: int, now: \Carbon\Carbon, replaying: bool} $context
+     * @param array{storedWorkflow: StoredWorkflow<Workflow, null>, index: int, now: \Carbon\Carbon, replaying: bool}|(stdClass&object{storedWorkflow: StoredWorkflow<Workflow, null>, index: int, now: \Carbon\Carbon, replaying: bool}) $context
      * @return void
      */
     public static function setContext($context): void
@@ -186,6 +200,9 @@ final class WorkflowStub
 
     public static function now() : \Carbon\Carbon
     {
+        if (self::getContext() === null) {
+            throw new RuntimeException('WorkflowStub::now() must be called within a workflow');
+        }
         return self::getContext()->now;
     }
 
@@ -212,7 +229,7 @@ final class WorkflowStub
 
     public function output(): mixed
     {
-        if ($this->storedWorkflow->fresh()->output === null) {
+        if ($this->storedWorkflow->fresh()?->output === null) {
             return null;
         }
 
@@ -241,8 +258,12 @@ final class WorkflowStub
 
     public function status(): string|bool
     {
-        return $this->storedWorkflow->fresh()
-            ->status::class;
+        $status = $this->storedWorkflow->fresh()?->status::class;
+        if ($status === null) {
+            throw new RuntimeException('Could not determine workflow status.');
+        }
+
+        return $status;
     }
 
     public function fresh(): static
@@ -359,7 +380,7 @@ final class WorkflowStub
     private function dispatch(): void
     {
         if ($this->created()) {
-            if (false === ($encodedArguments = json_encode(Y::unserialize($this->storedWorkflow->arguments)))) {
+            if (false === ($encodedArguments = json_encode($this->storedWorkflow->arguments !== null ? Y::unserialize($this->storedWorkflow->arguments) : null))) {
                 throw new RuntimeException('Could not encode arguments.');
             }
 
@@ -377,12 +398,12 @@ final class WorkflowStub
         if (self::faked()) {
             $this->storedWorkflow->class::dispatchSync(
                 $this->storedWorkflow,
-                ...Y::unserialize($this->storedWorkflow->arguments)
+                ...($this->storedWorkflow->arguments !== null ? Y::unserialize($this->storedWorkflow->arguments) : [])
             );
         } else {
             $this->storedWorkflow->class::dispatch(
                 $this->storedWorkflow,
-                ...Y::unserialize($this->storedWorkflow->arguments)
+                ...($this->storedWorkflow->arguments !== null ? Y::unserialize($this->storedWorkflow->arguments) : [])
             );
         }
     }

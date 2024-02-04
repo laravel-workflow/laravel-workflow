@@ -72,7 +72,7 @@ class WithoutOverlappingMiddleware
 
         if ($locked) {
             Queue::before(
-                fn (JobProcessing $event) => $this->active = $job->job->getJobId() === $event->job->getJobId()
+                fn (JobProcessing $event) => $this->active = $job->job?->getJobId() === $event->job->getJobId()
             );
             Queue::stopping(fn () => $this->active ? $this->unlock($job) : null);
             try {

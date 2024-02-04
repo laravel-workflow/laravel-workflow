@@ -9,6 +9,7 @@ use Closure;
 use Generator;
 use Laravel\SerializableClosure\Exceptions\PhpVersionNotSupportedException;
 use Laravel\SerializableClosure\SerializableClosure;
+use function PHPStan\dumpType;
 use function React\Promise\all;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
@@ -56,6 +57,9 @@ final class ActivityStub
     public static function make($activity, ...$arguments): PromiseInterface
     {
         $context = WorkflowStub::getContext();
+        if ($context === null) {
+            throw new \RuntimeException('ActivityStub::make() must be called within a workflow');
+        }
 
         $log = $context->storedWorkflow->logs()
             ->whereIndex($context->index)
@@ -82,7 +86,7 @@ final class ActivityStub
         if ($log !== null) {
             ++$context->index;
             WorkflowStub::setContext($context);
-            $result = Y::unserialize($log->result);
+            $result = $log->result !== null ? Y::unserialize($log->result) : $log->result;
             if (
                 is_array($result) &&
                 array_key_exists('class', $result) &&
