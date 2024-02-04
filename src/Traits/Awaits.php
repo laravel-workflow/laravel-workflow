@@ -13,7 +13,11 @@ use Workflow\Signal;
 
 trait Awaits
 {
-    public static function await($condition): PromiseInterface
+    /**
+     * @param callable():bool $condition
+     * @return PromiseInterface<bool>
+     */
+    public static function await(callable $condition): PromiseInterface
     {
         $log = self::$context->storedWorkflow->logs()
             ->whereIndex(self::$context->index)
