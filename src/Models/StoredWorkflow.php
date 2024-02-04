@@ -32,12 +32,13 @@ class StoredWorkflow extends Model
     ];
 
     /**
-     * @return WorkflowStub<Workflow>
+     * @return WorkflowStub<TWorkflow>
      */
     public function toWorkflow()
     {
-        /** @var StoredWorkflow<TWorkflow, null> $this */
-        return WorkflowStub::fromStoredWorkflow($this);
+        /** @var self<TWorkflow, null> $this */
+        // @TODO: this seems correct, but phpstan complains. Check if this is a phpstan bug.
+        return WorkflowStub::fromStoredWorkflow($this); // @phpstan-ignore-line
     }
 
     /**

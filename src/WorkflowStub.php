@@ -133,7 +133,7 @@ final class WorkflowStub
     /**
      * @template TWorkflowClass of Workflow
      * @param StoredWorkflow<TWorkflowClass, null> $storedWorkflow
-     * @return self<StoredWorkflow<TWorkflowClass, null>, TWorkflowClass>
+     * @return self<TWorkflowClass>
      */
     public static function fromStoredWorkflow(StoredWorkflow $storedWorkflow): self
     {
