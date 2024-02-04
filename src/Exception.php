@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Workflow;
 
+use Throwable;
 use Workflow\Models\StoredWorkflow;
 
 /**
@@ -15,7 +16,7 @@ class Exception extends Activity
      * @param int $index
      * @param string $now
      * @param StoredWorkflow<Workflow, null> $storedWorkflow
-     * @param array{class: string, message: string, code: int|string, line: int, file: string, trace: mixed[], snippet: string[]} $exception
+     * @param Throwable|array{class: string, message: string, code: int|string, line: int, file: string, trace: mixed[], snippet: string[]} $exception
      *
      * @TODO: check if this class really must extend the Activity class. This makes typing more difficult.
      *
@@ -24,7 +25,7 @@ class Exception extends Activity
         public int $index,
         public string $now,
         public StoredWorkflow $storedWorkflow, // @phpstan-ignore-line
-        public array $exception,
+        public Throwable | array $exception,
     ) {
         parent::__construct($index, $now, $storedWorkflow);
     }

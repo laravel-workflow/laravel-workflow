@@ -12,7 +12,7 @@ final class Y implements SerializerInterface
 {
     use SerializesAndRestoresModelIdentifiers;
 
-    private static $instance = null;
+    private static self $instance;
 
     private function __construct()
     {
@@ -20,10 +20,7 @@ final class Y implements SerializerInterface
 
     public static function getInstance(): self
     {
-        if (self::$instance === null) {
-            self::$instance = new self();
-        }
-        return self::$instance;
+        return self::$instance ??= new self();
     }
 
     public static function encode(string $data): string
@@ -55,7 +52,7 @@ final class Y implements SerializerInterface
         return $output;
     }
 
-    public static function serializable($data): bool
+    public static function serializable(mixed $data): bool
     {
         try {
             serialize($data);
@@ -65,7 +62,12 @@ final class Y implements SerializerInterface
         }
     }
 
-    public static function serializeModels($data)
+    /**
+     * @template T
+     * @param T $data
+     * @return (T is Throwable ? array{class: string, message: string, code: int|int, line: int, file: string, trace: mixed[]} : T)
+     */
+    public static function serializeModels(mixed $data): mixed
     {
         if (is_array($data)) {
             $self = self::getInstance();
@@ -87,7 +89,7 @@ final class Y implements SerializerInterface
         return $data;
     }
 
-    public static function unserializeModels($data)
+    public static function unserializeModels(mixed $data): mixed
     {
         if (is_array($data)) {
             $self = self::getInstance();
@@ -98,14 +100,14 @@ final class Y implements SerializerInterface
         return $data;
     }
 
-    public static function serialize($data): string
+    public static function serialize(mixed $data): string
     {
         SerializableClosure::setSecretKey(config('app.key'));
         $data = self::serializeModels($data);
         return self::encode(serialize(new SerializableClosure(static fn () => $data)));
     }
 
-    public static function unserialize(string $data)
+    public static function unserialize(string $data): mixed
     {
         SerializableClosure::setSecretKey(config('app.key'));
         $unserialized = unserialize(self::decode($data));
