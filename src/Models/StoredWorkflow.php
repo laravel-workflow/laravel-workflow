@@ -11,12 +11,13 @@ use Spatie\ModelStates\HasStates;
 use Workflow\States\WorkflowStatus;
 use Workflow\Workflow;
 use Workflow\WorkflowStub;
+use function PHPStan\dumpType;
 
 /**
  * @template TWorkflow of Workflow
- * @template TParentStoredWorkflow of ?self
+ * @template TParentStoredWorkflow of ?true
  * @property class-string<TWorkflow> $class
- * @property (TParentStoredWorkflow is self ? object{parent_index: int, parent_now: Carbon} : null) $parents_pivot
+ * @property (TParentStoredWorkflow is true ? object{parent_index: int, parent_now: Carbon} : null) $parents_pivot
  */
 class StoredWorkflow extends Model
 {
@@ -36,7 +37,6 @@ class StoredWorkflow extends Model
      */
     public function toWorkflow()
     {
-        // @phpstan-ignore-next-line
         return WorkflowStub::fromStoredWorkflow($this);
     }
 
@@ -73,7 +73,7 @@ class StoredWorkflow extends Model
     }
 
     /**
-     * @return BelongsToMany<StoredWorkflow<Workflow, self>>
+     * @return BelongsToMany<StoredWorkflow<Workflow, true>>
      */
     public function parents(): BelongsToMany
     {
