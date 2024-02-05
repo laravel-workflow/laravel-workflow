@@ -11,6 +11,7 @@ use Tests\Fixtures\TestOtherActivity;
 use Tests\Fixtures\TestParentWorkflow;
 use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
+use Tests\TestCaseRequiringDatabase;
 use Workflow\Exception;
 use Workflow\Exceptions\Transformer;
 use Workflow\Models\StoredWorkflow;
@@ -19,7 +20,7 @@ use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowPendingStatus;
 use Workflow\WorkflowStub;
 
-final class WorkflowTest extends TestCase
+final class WorkflowTest extends TestCaseRequiringDatabase
 {
     public function testException(): void
     {

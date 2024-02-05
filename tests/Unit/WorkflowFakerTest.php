@@ -11,9 +11,10 @@ use Tests\Fixtures\TestOtherActivity;
 use Tests\Fixtures\TestParentWorkflow;
 use Tests\Fixtures\TestTimeTravelWorkflow;
 use Tests\TestCase;
+use Tests\TestCaseRequiringDatabase;
 use Workflow\WorkflowStub;
 
-final class WorkflowFakerTest extends TestCase
+final class WorkflowFakerTest extends TestCaseRequiringDatabase
 {
     public function testTimeTravelWorkflow(): void
     {

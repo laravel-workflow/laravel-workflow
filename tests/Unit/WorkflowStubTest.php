@@ -10,6 +10,7 @@ use Tests\Fixtures\TestAwaitWorkflow;
 use Tests\Fixtures\TestBadConnectionWorkflow;
 use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
+use Tests\TestCaseRequiringDatabase;
 use Workflow\Models\StoredWorkflow;
 use Workflow\Models\StoredWorkflowLog;
 use Workflow\Serializers\Y;
@@ -18,7 +19,7 @@ use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowPendingStatus;
 use Workflow\WorkflowStub;
 
-final class WorkflowStubTest extends TestCase
+final class WorkflowStubTest extends TestCaseRequiringDatabase
 {
     public function testMake(): void
     {

@@ -6,10 +6,11 @@ namespace Tests\Unit;
 
 use Laravel\SerializableClosure\SerializableClosure;
 use Tests\TestCase;
+use Tests\TestCaseRequiringDatabase;
 use Workflow\AsyncWorkflow;
 use Workflow\WorkflowStub;
 
-final class AsyncWorkflowTest extends TestCase
+final class AsyncWorkflowTest extends TestCaseRequiringDatabase
 {
     public function testWorkflow(): void
     {

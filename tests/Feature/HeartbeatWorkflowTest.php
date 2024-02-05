@@ -6,10 +6,11 @@ namespace Tests\Feature;
 
 use Tests\Fixtures\TestHeartbeatWorkflow;
 use Tests\TestCase;
+use Tests\TestCaseRequiringWorkers;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\WorkflowStub;
 
-final class HeartbeatWorkflowTest extends TestCase
+final class HeartbeatWorkflowTest extends TestCaseRequiringWorkers
 {
     public function testHeartbeat(): void
     {

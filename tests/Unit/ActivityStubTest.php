@@ -8,6 +8,7 @@ use Exception;
 use Tests\Fixtures\TestActivity;
 use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
+use Tests\TestCaseRequiringDatabase;
 use Workflow\ActivityStub;
 use Workflow\Models\StoredWorkflow;
 use Workflow\Models\StoredWorkflowLog;
@@ -15,7 +16,7 @@ use Workflow\Serializers\Y;
 use Workflow\States\WorkflowPendingStatus;
 use Workflow\WorkflowStub;
 
-final class ActivityStubTest extends TestCase
+final class ActivityStubTest extends TestCaseRequiringDatabase
 {
     public function testStoresResult(): void
     {

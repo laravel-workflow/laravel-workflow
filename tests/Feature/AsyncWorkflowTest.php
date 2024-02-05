@@ -6,11 +6,12 @@ namespace Tests\Feature;
 
 use Tests\Fixtures\TestAsyncWorkflow;
 use Tests\TestCase;
+use Tests\TestCaseRequiringWorkers;
 use Workflow\AsyncWorkflow;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\WorkflowStub;
 
-final class AsyncWorkflowTest extends TestCase
+final class AsyncWorkflowTest extends TestCaseRequiringWorkers
 {
     public function testAsyncWorkflow(): void
     {

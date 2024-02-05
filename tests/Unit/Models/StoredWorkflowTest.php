@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Tests\Unit\Models;
 
 use Tests\TestCase;
+use Tests\TestCaseRequiringDatabase;
 use Workflow\Models\StoredWorkflow;
 
-final class StoredWorkflowTest extends TestCase
+final class StoredWorkflowTest extends TestCaseRequiringDatabase
 {
     public function testModel(): void
     {

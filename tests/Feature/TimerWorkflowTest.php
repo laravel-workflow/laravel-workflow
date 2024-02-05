@@ -6,10 +6,11 @@ namespace Tests\Feature;
 
 use Tests\Fixtures\TestTimerWorkflow;
 use Tests\TestCase;
+use Tests\TestCaseRequiringWorkers;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\WorkflowStub;
 
-final class TimerWorkflowTest extends TestCase
+final class TimerWorkflowTest extends TestCaseRequiringWorkers
 {
     public function testTimerWorkflow(): void
     {

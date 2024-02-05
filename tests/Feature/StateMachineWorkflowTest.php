@@ -6,11 +6,12 @@ namespace Tests\Feature;
 
 use Tests\Fixtures\TestStateMachineWorkflow;
 use Tests\TestCase;
+use Tests\TestCaseRequiringWorkers;
 use Workflow\Signal;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\WorkflowStub;
 
-final class StateMachineWorkflowTest extends TestCase
+final class StateMachineWorkflowTest extends TestCaseRequiringWorkers
 {
     public function testApproved(): void
     {

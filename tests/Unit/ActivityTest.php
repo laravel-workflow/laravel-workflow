@@ -11,13 +11,14 @@ use Tests\Fixtures\TestInvalidActivity;
 use Tests\Fixtures\TestOtherActivity;
 use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
+use Tests\TestCaseRequiringDatabase;
 use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Y;
 use Workflow\States\WorkflowCreatedStatus;
 use Workflow\States\WorkflowFailedStatus;
 use Workflow\WorkflowStub;
 
-final class ActivityTest extends TestCase
+final class ActivityTest extends TestCaseRequiringDatabase
 {
     public function testActivity(): void
     {

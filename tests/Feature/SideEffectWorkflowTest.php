@@ -8,10 +8,11 @@ use Tests\Fixtures\TestActivity;
 use Tests\Fixtures\TestOtherActivity;
 use Tests\Fixtures\TestSideEffectWorkflow;
 use Tests\TestCase;
+use Tests\TestCaseRequiringWorkers;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\WorkflowStub;
 
-final class SideEffectWorkflowTest extends TestCase
+final class SideEffectWorkflowTest extends TestCaseRequiringWorkers
 {
     public function testCompleted(): void
     {

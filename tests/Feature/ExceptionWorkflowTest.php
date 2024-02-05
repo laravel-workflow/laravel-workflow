@@ -6,11 +6,12 @@ namespace Tests\Feature;
 
 use Tests\Fixtures\TestExceptionWorkflow;
 use Tests\TestCase;
+use Tests\TestCaseRequiringWorkers;
 use Workflow\Serializers\Y;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\WorkflowStub;
 
-final class ExceptionWorkflowTest extends TestCase
+final class ExceptionWorkflowTest extends TestCaseRequiringWorkers
 {
     public function testRetry(): void
     {

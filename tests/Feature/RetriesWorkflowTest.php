@@ -6,9 +6,10 @@ namespace Tests\Feature;
 
 use Tests\Fixtures\TestRetriesWorkflow;
 use Tests\TestCase;
+use Tests\TestCaseRequiringWorkers;
 use Workflow\WorkflowStub;
 
-final class RetriesWorkflowTest extends TestCase
+final class RetriesWorkflowTest extends TestCaseRequiringWorkers
 {
     public function testRetries(): void
     {

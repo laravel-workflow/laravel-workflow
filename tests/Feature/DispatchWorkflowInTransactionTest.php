@@ -7,10 +7,11 @@ namespace Tests\Feature;
 use Illuminate\Support\Facades\DB;
 use Tests\Fixtures\TestSimpleWorkflow;
 use Tests\TestCase;
+use Tests\TestCaseRequiringWorkers;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\WorkflowStub;
 
-final class DispatchWorkflowInTransactionTest extends TestCase
+final class DispatchWorkflowInTransactionTest extends TestCaseRequiringWorkers
 {
     public function testRaceCondition(): void
     {

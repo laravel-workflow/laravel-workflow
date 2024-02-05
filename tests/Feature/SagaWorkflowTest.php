@@ -8,12 +8,13 @@ use Tests\Fixtures\TestActivity;
 use Tests\Fixtures\TestSagaWorkflow;
 use Tests\Fixtures\TestUndoActivity;
 use Tests\TestCase;
+use Tests\TestCaseRequiringWorkers;
 use Workflow\Exception;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowFailedStatus;
 use Workflow\WorkflowStub;
 
-final class SagaWorkflowTest extends TestCase
+final class SagaWorkflowTest extends TestCaseRequiringWorkers
 {
     public function testCompleted(): void
     {

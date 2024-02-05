@@ -8,11 +8,12 @@ use Tests\Fixtures\TestActivity;
 use Tests\Fixtures\TestOtherActivity;
 use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
+use Tests\TestCaseRequiringWorkers;
 use Workflow\Signal;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\WorkflowStub;
 
-final class WorkflowTest extends TestCase
+final class WorkflowTest extends TestCaseRequiringWorkers
 {
     public function testCompleted(): void
     {

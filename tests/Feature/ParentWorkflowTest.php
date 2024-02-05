@@ -13,12 +13,13 @@ use Tests\Fixtures\TestParentExceptionWorkflow;
 use Tests\Fixtures\TestParentTimerWorkflow;
 use Tests\Fixtures\TestParentWorkflow;
 use Tests\TestCase;
+use Tests\TestCaseRequiringWorkers;
 use Workflow\AsyncWorkflow;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowFailedStatus;
 use Workflow\WorkflowStub;
 
-final class ParentWorkflowTest extends TestCase
+final class ParentWorkflowTest extends TestCaseRequiringWorkers
 {
     public function testCompleted(): void
     {

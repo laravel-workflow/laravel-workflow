@@ -12,6 +12,7 @@ use Mockery\MockInterface;
 use Tests\Fixtures\TestActivity;
 use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
+use Tests\TestCaseRequiringDatabase;
 use Workflow\Events\ActivityCompleted;
 use Workflow\Events\ActivityFailed;
 use Workflow\Events\ActivityStarted;
@@ -22,7 +23,7 @@ use Workflow\States\WorkflowRunningStatus;
 use Workflow\States\WorkflowWaitingStatus;
 use Workflow\WorkflowStub;
 
-final class WorkflowMiddlewareTest extends TestCase
+final class WorkflowMiddlewareTest extends TestCaseRequiringDatabase
 {
     public function testMiddleware(): void
     {
