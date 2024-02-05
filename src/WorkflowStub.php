@@ -9,6 +9,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Bus\PendingDispatch;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 use Illuminate\Support\Traits\Macroable;
 use LimitIterator;
 use ReflectionClass;
@@ -19,6 +20,7 @@ use stdClass;
 use Throwable;
 use Workflow\Events\WorkflowFailed;
 use Workflow\Events\WorkflowStarted;
+use Workflow\Exceptions\Transformer;
 use Workflow\Models\StoredWorkflow;
 use Workflow\Models\StoredWorkflowException;
 use Workflow\Models\StoredWorkflowLog;
@@ -302,7 +304,10 @@ final class WorkflowStub
             $this->storedWorkflow->exceptions()
                 ->create([
                     'class' => $this->storedWorkflow->class,
-                    'exception' => Y::serialize($exception),
+                    'exception' => Y::serialize(
+                        app(Transformer::class)
+                             ->transform($exception)
+                    ),
                 ]);
         } catch (QueryException) {
             // already logged
@@ -310,18 +315,10 @@ final class WorkflowStub
 
         $this->storedWorkflow->status->transitionTo(WorkflowFailedStatus::class);
 
-        $file = new SplFileObject($exception->getFile());
-        $iterator = new LimitIterator($file, max(0, $exception->getLine() - 4), 7);
-
-        $encodedException = json_encode([
-            'class' => get_class($exception),
-            'message' => $exception->getMessage(),
-            'code' => $exception->getCode(),
-            'line' => $exception->getLine(),
-            'file' => $exception->getFile(),
-            'trace' => $exception->getTrace(),
-            'snippet' => array_slice(iterator_to_array($iterator), 0, 7),
-        ]);
+        $encodedException = json_encode(
+            app(Transformer::class)
+                ->transform($exception)
+        );
         if ($encodedException === false) {
             throw new RuntimeException('Could not encode exception.');
         }
