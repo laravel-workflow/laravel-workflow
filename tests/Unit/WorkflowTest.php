@@ -12,6 +12,7 @@ use Tests\Fixtures\TestParentWorkflow;
 use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
 use Workflow\Exception;
+use Workflow\Exceptions\Transformer;
 use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Y;
 use Workflow\States\WorkflowCompletedStatus;
@@ -22,7 +23,9 @@ final class WorkflowTest extends TestCase
 {
     public function testException(): void
     {
-        $exception = new \Exception('test');
+        $exception = app(Transformer::class)
+            ->withoutArgs()
+            ->transform(new \Exception('test'));
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $activity = new Exception(0, now()->toDateTimeString(), StoredWorkflow::findOrFail(
             $workflow->id()
@@ -35,7 +38,9 @@ final class WorkflowTest extends TestCase
 
     public function testExceptionAlreadyLogged(): void
     {
-        $exception = new \Exception('test');
+        $exception = app(Transformer::class)
+            ->withoutArgs()
+            ->transform(new \Exception('test'));
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
         $activity = new Exception(0, now()->toDateTimeString(), StoredWorkflow::findOrFail(

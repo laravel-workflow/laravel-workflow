@@ -8,13 +8,13 @@ use Throwable;
 use Workflow\Models\StoredWorkflow;
 
 /**
- * @extends Activity<Workflow, mixed>
+ * @extends Activity<Workflow, array{class: string, message: string, code: int|string, line: int, file: string, trace: mixed[], snippet: string[]}>
  */
 class Exception extends Activity
 {
     /**
      * @param StoredWorkflow<Workflow, null> $storedWorkflow
-     * @param Throwable|array{class: string, message: string, code: int|string, line: int, file: string, trace: mixed[], snippet: string[]} $exception
+     * @param array{class: string, message: string, code: int|string, line: int, file: string, trace: mixed[], snippet: string[]} $exception
      *
      * @TODO: check if this class really must extend the Activity class. This makes typing more difficult.
      */
@@ -22,7 +22,7 @@ class Exception extends Activity
         public int $index,
         public string $now,
         public StoredWorkflow $storedWorkflow, // @phpstan-ignore-line
-        public Throwable | array $exception,
+        public array $exception,
     ) {
         parent::__construct($index, $now, $storedWorkflow);
     }

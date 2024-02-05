@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Cache;
 use LimitIterator;
 use SplFileObject;
 use Throwable;
+use Workflow\Exceptions\Transformer;
 use Workflow\Middleware\WithoutOverlappingMiddleware;
 use Workflow\Middleware\WorkflowMiddleware;
 use Workflow\Models\StoredWorkflow;
@@ -149,26 +150,11 @@ abstract class Activity implements ShouldBeEncrypted, ShouldQueue
     {
         $workflow = $this->storedWorkflow->toWorkflow();
 
-        $file = new SplFileObject($throwable->getFile());
-        $iterator = new LimitIterator($file, max(0, $throwable->getLine() - 4), 7);
-
-        $throwable = [
-            'class' => get_class($throwable),
-            'message' => $throwable->getMessage(),
-            'code' => $throwable->getCode(),
-            'line' => $throwable->getLine(),
-            'file' => $throwable->getFile(),
-            'trace' => collect($throwable->getTrace())
-                ->filter(static fn ($trace) => Y::serializable($trace))
-                ->toArray(),
-            'snippet' => array_slice(iterator_to_array($iterator), 0, 7),
-        ];
-
         Exception::dispatch(
             $this->index,
             $this->now,
             $this->storedWorkflow,
-            $throwable,
+            app(Transformer::class)->transform($throwable),
         )->onConnection($workflow->connection())
             ->onQueue($workflow->queue());
     }
