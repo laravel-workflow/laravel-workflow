@@ -17,8 +17,16 @@
         "rector": "vendor/bin/rector",
         "ecs": "vendor/bin/ecs check --fix",
         "stan": "vendor/bin/phpstan analyse src tests",
-        "feature": "phpunit --testdox --testsuite feature",
-        "unit": "phpunit --testdox --testsuite unit",
+        "feature": [
+            "@putenv QUEUE_CONNECTION=redis",
+            "@putenv CACHE_DRIVER=redis",
+            "phpunit --testdox --testsuite feature"
+        ],
+        "unit": [
+            "@putenv QUEUE_CONNECTION=sync",
+            "@putenv CACHE_DRIVER=array",
+            "phpunit --testdox --testsuite unit"
+        ],
         "test": "phpunit --testdox"
     },
     "authors": [
