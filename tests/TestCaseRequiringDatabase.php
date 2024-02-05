@@ -14,6 +14,7 @@ abstract class TestCaseRequiringDatabase extends TestCase
             '--path' => dirname(__DIR__) . '/src/migrations',
             '--realpath' => true,
         ]);
+        $this->artisan('schema:dump');
 
         $this->loadLaravelMigrations();
     }
