@@ -254,7 +254,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
             try {
                 $return = $this->coroutine->getReturn();
             } catch (Throwable $th) {
-                throw new Exception('Workflow failed.');
+                throw new Exception('Workflow failed.', 0, $th);
             }
 
             $this->storedWorkflow->output = Y::serialize($return);
