@@ -105,7 +105,8 @@ final class TimersTest extends TestCase
             'index' => 0,
             'class' => Signal::class,
         ]);
-        $firstLog = $workflow->logs()->firstWhere('index', 0);
+        $firstLog = $workflow->logs()
+            ->firstWhere('index', 0);
         $this->assertInstanceOf(StoredWorkflowLog::class, $firstLog);
         $this->assertNotNull($firstLog->result);
         $this->assertSame(true, Y::unserialize($firstLog->result));
@@ -140,7 +141,8 @@ final class TimersTest extends TestCase
             'index' => 0,
             'class' => Signal::class,
         ]);
-        $firstLog = $workflow->logs()->firstWhere('index', 0);
+        $firstLog = $workflow->logs()
+            ->firstWhere('index', 0);
         $this->assertInstanceOf(StoredWorkflowLog::class, $firstLog);
         $this->assertNotNull($firstLog->result);
         $this->assertSame(true, Y::unserialize($firstLog->result));

@@ -22,7 +22,9 @@ final class ActivityTest extends TestCase
     public function testActivity(): void
     {
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
-        $activity = new TestOtherActivity(0, now()->toDateTimeString(), StoredWorkflow::findOrFail($workflow->id()), 'other');
+        $activity = new TestOtherActivity(0, now()->toDateTimeString(), StoredWorkflow::findOrFail(
+            $workflow->id()
+        ), 'other');
         $activity->timeout = 1;
         $activity->heartbeat();
 
@@ -87,7 +89,9 @@ final class ActivityTest extends TestCase
             'class' => TestOtherActivity::class,
             'result' => Y::serialize('other'),
         ]);
-        $activity = new TestOtherActivity(0, now()->toDateTimeString(), StoredWorkflow::findOrFail($workflow->id()), 'other');
+        $activity = new TestOtherActivity(0, now()->toDateTimeString(), StoredWorkflow::findOrFail(
+            $workflow->id()
+        ), 'other');
         $activity->timeout = 1;
         $activity->heartbeat();
 

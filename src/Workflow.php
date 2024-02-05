@@ -9,7 +9,6 @@ use Exception;
 use Generator;
 use Illuminate\Bus\Queueable;
 use Illuminate\Container\Container;
-use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -50,7 +49,9 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
      */
     public $arguments;
 
-    /** @var string  */
+    /**
+     * @var string
+     */
     public $key = '';
 
     /**
@@ -70,9 +71,8 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
     /**
      * The container property is needed in the @see RouteDependencyResolverTrait
      * which in turn is used to dynamically resolve the "execute" method parameters.
-     * @phpstan-ignore-next-line
      */
-    private Container $container;
+    private Container $container; //@phpstan-ignore-line
 
     /**
      * @param StoredWorkflow<self, null> $storedWorkflow
@@ -92,9 +92,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
     }
 
     /**
-     * @param string $method
      * @return mixed
-     * @throws Exception
      */
     public function query(string $method)
     {
@@ -105,7 +103,6 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
 
     /**
      * @return mixed[]
-     * @throws BindingResolutionException
      */
     public function middleware()
     {
@@ -162,7 +159,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
             ->signals()
             ->when($log, static function ($query, StoredWorkflowLog $log): void {
                 if ($log->created_at === null) {
-                    throw new \RuntimeException("The Log must have a created_at timestamp.");
+                    throw new \RuntimeException('The Log must have a created_at timestamp.');
                 }
                 $query->where('created_at', '<=', $log->created_at->format('Y-m-d H:i:s.u'));
             })
@@ -190,7 +187,8 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
         ));
 
         while ($this->coroutine->valid()) {
-            if (null === ($context = WorkflowStub::getContext())) {
+            $context = WorkflowStub::getContext();
+            if ($context === null) {
                 throw new \RuntimeException('The context must be set.');
             }
 
@@ -202,7 +200,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
 
             if ($log !== null) {
                 if ($log->created_at === null) {
-                    throw new \RuntimeException("The Log must have a created_at timestamp.");
+                    throw new \RuntimeException('The Log must have a created_at timestamp.');
                 }
 
                 $this->storedWorkflow
@@ -210,7 +208,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
                     ->where('created_at', '>', $log->created_at->format('Y-m-d H:i:s.u'))
                     ->when($nextLog, static function ($query, $nextLog): void {
                         if ($nextLog->created_at === null) {
-                            throw new \RuntimeException("The Log must have a created_at timestamp.");
+                            throw new \RuntimeException('The Log must have a created_at timestamp.');
                         }
                         $query->where('created_at', '<=', $nextLog->created_at->format('Y-m-d H:i:s.u'));
                     })
@@ -263,7 +261,8 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
 
             $this->storedWorkflow->status->transitionTo(WorkflowCompletedStatus::class);
 
-            if (false === ($encodedReturn = json_encode($return))) {
+            $encodedReturn = json_encode($return);
+            if ($encodedReturn === false) {
                 throw new Exception('Could not encode return.');
             }
 
@@ -276,7 +275,12 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
 
             if ($parentWorkflow !== null) {
                 $parentWorkflow->toWorkflow()
-                    ->next($parentWorkflow->parents_pivot->parent_index, $this->now, $this->storedWorkflow->class, $return);
+                    ->next(
+                        $parentWorkflow->parents_pivot->parent_index,
+                        $this->now,
+                        $this->storedWorkflow->class,
+                        $return
+                    );
             }
         }
     }

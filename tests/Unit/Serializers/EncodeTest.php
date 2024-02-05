@@ -20,7 +20,6 @@ final class EncodeTest extends TestCase
 
     /**
      * @return array<string, string[]>
-     * @throws \Random\RandomException
      */
     public function dataProvider(): array
     {

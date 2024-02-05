@@ -8,7 +8,6 @@ use Carbon\CarbonInterval;
 use Illuminate\Database\QueryException;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
-use function PHPStan\dumpType;
 use function React\Promise\resolve;
 use Workflow\Serializers\Y;
 use Workflow\Signal;

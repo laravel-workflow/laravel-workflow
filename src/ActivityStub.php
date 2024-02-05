@@ -6,10 +6,7 @@ namespace Workflow;
 
 use Carbon\Carbon;
 use Closure;
-use Generator;
-use Laravel\SerializableClosure\Exceptions\PhpVersionNotSupportedException;
 use Laravel\SerializableClosure\SerializableClosure;
-use function PHPStan\dumpType;
 use function React\Promise\all;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
@@ -34,12 +31,7 @@ final class ActivityStub
     }
 
     /**
-     * @param Closure $callback
      * @return PromiseInterface<mixed>
-     * @throws PhpVersionNotSupportedException
-     *
-     * we can only be more specific with the callable when https://github.com/phpstan/phpstan/issues/8214
-     * is implemented
      */
     public static function async(Closure $callback): PromiseInterface
     {
@@ -97,7 +89,12 @@ final class ActivityStub
             return resolve($result);
         }
 
-        $activity::dispatch($context->index, Carbon::parse($context->now)->toDateTimeString(), $context->storedWorkflow, ...$arguments);
+        $activity::dispatch(
+            $context->index,
+            Carbon::parse($context->now)->toDateTimeString(),
+            $context->storedWorkflow,
+            ...$arguments
+        );
 
         ++$context->index;
         WorkflowStub::setContext($context);

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Workflow;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -28,8 +27,6 @@ final class Signal implements ShouldBeEncrypted, ShouldQueue
 
     /**
      * @param StoredWorkflow<Workflow, null> $storedWorkflow
-     * @param string|null $connection
-     * @param string|null $queue
      */
     public function __construct(
         public StoredWorkflow $storedWorkflow,
@@ -44,7 +41,6 @@ final class Signal implements ShouldBeEncrypted, ShouldQueue
 
     /**
      * @return mixed[]
-     * @throws BindingResolutionException
      */
     public function middleware()
     {

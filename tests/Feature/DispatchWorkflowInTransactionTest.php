@@ -9,7 +9,6 @@ use Tests\Fixtures\TestSimpleWorkflow;
 use Tests\TestCase;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\WorkflowStub;
-use function PHPStan\dumpType;
 
 final class DispatchWorkflowInTransactionTest extends TestCase
 {

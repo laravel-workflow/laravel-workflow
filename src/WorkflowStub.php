@@ -12,7 +12,6 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Traits\Macroable;
 use LimitIterator;
 use ReflectionClass;
-use ReflectionException;
 use RuntimeException;
 use Spatie\ModelStates\Exceptions\TransitionNotFound;
 use SplFileObject;
@@ -69,7 +68,6 @@ final class WorkflowStub
      * @param string $method
      * @param mixed[] $arguments
      * @return PendingDispatch|mixed|void
-     * @throws ReflectionException
      */
     public function __call($method, $arguments)
     {
@@ -95,7 +93,7 @@ final class WorkflowStub
             return Signal::dispatch($this->storedWorkflow, self::connection(), self::queue());
         }
 
-        if (!collect((new ReflectionClass($this->storedWorkflow->class))->getMethods())
+        if (! collect((new ReflectionClass($this->storedWorkflow->class))->getMethods())
             ->filter(static fn ($method): bool => collect($method->getAttributes())
                 ->contains(static fn ($attribute): bool => $attribute->getName() === QueryMethod::class))
             ->map(static fn ($method) => $method->getName())
@@ -111,9 +109,6 @@ final class WorkflowStub
             ->query($method);
     }
 
-    /**
-     * @throws ReflectionException
-     */
     public static function connection(): ?string
     {
         if (self::$context === null) {
@@ -126,9 +121,6 @@ final class WorkflowStub
         );
     }
 
-    /**
-     * @throws ReflectionException
-     */
     public static function queue(): ?string
     {
         if (self::$context === null) {
@@ -149,7 +141,7 @@ final class WorkflowStub
             'class' => $class,
         ]);
 
-        if (!$storedWorkflow instanceof StoredWorkflow) {
+        if (! $storedWorkflow instanceof StoredWorkflow) {
             throw new RuntimeException('StoredWorkflow model must extend ' . StoredWorkflow::class);
         }
 
@@ -166,9 +158,7 @@ final class WorkflowStub
         /** @var StoredWorkflow<Workflow, null> $storedWorkflow */
         $storedWorkflow = config('workflows.stored_workflow_model', StoredWorkflow::class)::findOrFail($id);
 
-        return self::fromStoredWorkflow(
-            $storedWorkflow
-        );
+        return self::fromStoredWorkflow($storedWorkflow);
     }
 
     /**
@@ -191,14 +181,13 @@ final class WorkflowStub
 
     /**
      * @param array{storedWorkflow: StoredWorkflow<Workflow, null>, index: int, now: \Carbon\Carbon, replaying: bool}|(stdClass&object{storedWorkflow: StoredWorkflow<Workflow, null>, index: int, now: \Carbon\Carbon, replaying: bool}) $context
-     * @return void
      */
     public static function setContext($context): void
     {
         self::$context = (object) $context;
     }
 
-    public static function now() : \Carbon\Carbon
+    public static function now(): \Carbon\Carbon
     {
         if (self::getContext() === null) {
             throw new RuntimeException('WorkflowStub::now() must be called within a workflow');
@@ -281,7 +270,6 @@ final class WorkflowStub
 
     /**
      * @param mixed ...$arguments
-     * @return void
      */
     public function start(...$arguments): void
     {
@@ -292,10 +280,7 @@ final class WorkflowStub
 
     /**
      * @param StoredWorkflow<TWorkflow, null> $parentWorkflow
-     * @param int $index
-     * @param \Carbon\Carbon $now
      * @param mixed ...$arguments
-     * @return void
      */
     public function startAsChild(StoredWorkflow $parentWorkflow, int $index, \Carbon\Carbon $now, ...$arguments): void
     {
@@ -328,19 +313,19 @@ final class WorkflowStub
         $file = new SplFileObject($exception->getFile());
         $iterator = new LimitIterator($file, max(0, $exception->getLine() - 4), 7);
 
-        if (false === ($encodedException = json_encode([
-                'class' => get_class($exception),
-                'message' => $exception->getMessage(),
-                'code' => $exception->getCode(),
-                'line' => $exception->getLine(),
-                'file' => $exception->getFile(),
-                'trace' => $exception->getTrace(),
-                'snippet' => array_slice(iterator_to_array($iterator), 0, 7),
-            ]))) {
+        $encodedException = json_encode([
+            'class' => get_class($exception),
+            'message' => $exception->getMessage(),
+            'code' => $exception->getCode(),
+            'line' => $exception->getLine(),
+            'file' => $exception->getFile(),
+            'trace' => $exception->getTrace(),
+            'snippet' => array_slice(iterator_to_array($iterator), 0, 7),
+        ]);
+        if ($encodedException === false) {
             throw new RuntimeException('Could not encode exception.');
         }
-        WorkflowFailed::dispatch($this->storedWorkflow->id, $encodedException, now()
-            ->format('Y-m-d\TH:i:s.u\Z'));
+        WorkflowFailed::dispatch($this->storedWorkflow->id, $encodedException, now() ->format('Y-m-d\TH:i:s.u\Z'));
 
         $this->storedWorkflow->parents()
             ->each(static function ($parentWorkflow) use ($exception) {
@@ -354,11 +339,7 @@ final class WorkflowStub
     }
 
     /**
-     * @param int $index
-     * @param \Carbon\Carbon $now
      * @param class-string<Workflow|Activity<Workflow, mixed>> $class
-     * @param mixed $result
-     * @return void
      */
     public function next(int $index, \Carbon\Carbon $now, string $class, mixed $result): void
     {
@@ -380,7 +361,10 @@ final class WorkflowStub
     private function dispatch(): void
     {
         if ($this->created()) {
-            if (false === ($encodedArguments = json_encode($this->storedWorkflow->arguments !== null ? Y::unserialize($this->storedWorkflow->arguments) : null))) {
+            $encodedArguments = json_encode(
+                $this->storedWorkflow->arguments !== null ? Y::unserialize($this->storedWorkflow->arguments) : null
+            );
+            if ($encodedArguments === false) {
                 throw new RuntimeException('Could not encode arguments.');
             }
 

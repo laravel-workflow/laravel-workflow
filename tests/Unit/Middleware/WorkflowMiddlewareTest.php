@@ -21,7 +21,6 @@ use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowRunningStatus;
 use Workflow\States\WorkflowWaitingStatus;
 use Workflow\WorkflowStub;
-use function PHPStan\dumpType;
 
 final class WorkflowMiddlewareTest extends TestCase
 {

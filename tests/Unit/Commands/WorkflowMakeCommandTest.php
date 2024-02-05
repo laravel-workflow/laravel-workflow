@@ -26,7 +26,9 @@ final class WorkflowMakeCommandTest extends TestCase
         $this->assertFalse($filesystem->exists(self::FOLDER));
         $this->assertFalse($filesystem->exists($file));
 
-        Artisan::call('make:activity', ['name' => self::WORKFLOW]);
+        Artisan::call('make:activity', [
+            'name' => self::WORKFLOW,
+        ]);
 
         $this->assertTrue($filesystem->exists($file));
 

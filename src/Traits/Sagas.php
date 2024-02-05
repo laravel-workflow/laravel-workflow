@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace Workflow\Traits;
 
-use Generator;
 use Closure;
-use React\Promise\PromiseInterface;
+use Generator;
 use Throwable;
 use Workflow\ActivityStub;
-use function PHPStan\dumpType;
 
 trait Sagas
 {
@@ -36,9 +34,6 @@ trait Sagas
         return $this;
     }
 
-    /**
-     * @param Closure $compensation
-     */
     public function addCompensation(Closure $compensation): self
     {
         $this->compensations[] = $compensation;
@@ -48,7 +43,6 @@ trait Sagas
 
     /**
      * @return Generator<int, mixed, mixed, void>
-     * @throws Throwable
      */
     public function compensate(): Generator
     {
@@ -60,7 +54,8 @@ trait Sagas
             yield ActivityStub::all($compensations);
         } else {
             for (end($this->compensations); key($this->compensations) !== null; prev($this->compensations)) {
-                if (false === ($currentCompensation = current($this->compensations))) {
+                $currentCompensation = current($this->compensations);
+                if ($currentCompensation === false) {
                     continue;
                 }
                 try {

@@ -35,31 +35,38 @@ abstract class Activity implements ShouldBeEncrypted, ShouldQueue
     use RouteDependencyResolverTrait;
     use SerializesModels;
 
-    /** @var int  */
+    /**
+     * @var int
+     */
     public $tries = PHP_INT_MAX;
 
-    /** @var int  */
+    /**
+     * @var int
+     */
     public $maxExceptions = PHP_INT_MAX;
 
-    /** @var int  */
+    /**
+     * @var int
+     */
     public $timeout = 0;
 
-    /** @var array<int|string, mixed> */
+    /**
+     * @var array<int|string, mixed>
+     */
     public $arguments;
 
-    /** @var string  */
+    /**
+     * @var string
+     */
     public $key = '';
 
     /**
      * The container property is needed in the @see RouteDependencyResolverTrait
      * which in turn is used to dynamically resolve the "execute" method parameters.
-     * @phpstan-ignore-next-line
      */
-    private Container $container;
+    private Container $container; // @phpstan-ignore-line
 
     /**
-     * @param int $index
-     * @param string $now
      * @param StoredWorkflow<TWorkflow, null> $storedWorkflow
      * @param mixed ...$arguments
      */
@@ -162,7 +169,8 @@ abstract class Activity implements ShouldBeEncrypted, ShouldQueue
             $this->now,
             $this->storedWorkflow,
             $throwable,
-        )->onConnection($workflow->connection())->onQueue($workflow->queue());
+        )->onConnection($workflow->connection())
+            ->onQueue($workflow->queue());
     }
 
     public function heartbeat(): void

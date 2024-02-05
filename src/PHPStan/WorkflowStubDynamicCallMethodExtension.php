@@ -19,28 +19,28 @@ use Workflow\WorkflowStub;
 
 class WorkflowStubDynamicCallMethodExtension implements MethodsClassReflectionExtension
 {
-    /** @var array<string, MethodReflection> */
+    /**
+     * @var array<string, MethodReflection>
+     */
     private array $cache = [];
 
-    /** @var ReflectionProvider */
     private ReflectionProvider $reflectionProvider;
 
-    public function __construct(
-        ReflectionProvider $reflectionProvider
-    ) {
+    public function __construct(ReflectionProvider $reflectionProvider)
+    {
         $this->reflectionProvider = $reflectionProvider;
     }
 
     public function hasMethod(ClassReflection $classReflection, string $methodName): bool
     {
-        if (array_key_exists($classReflection->getCacheKey().'-'.$methodName, $this->cache)) {
+        if (array_key_exists($classReflection->getCacheKey() . '-' . $methodName, $this->cache)) {
             return true;
         }
 
         $methodReflection = $this->findMethod($classReflection, $methodName);
 
         if ($methodReflection !== null) {
-            $this->cache[$classReflection->getCacheKey().'-'.$methodName] = $methodReflection;
+            $this->cache[$classReflection->getCacheKey() . '-' . $methodName] = $methodReflection;
 
             return true;
         }
@@ -48,9 +48,11 @@ class WorkflowStubDynamicCallMethodExtension implements MethodsClassReflectionEx
         return false;
     }
 
-    public function getMethod(ClassReflection $classReflection, string $methodName): \PHPStan\Reflection\MethodReflection
-    {
-        return $this->cache[$classReflection->getCacheKey().'-'.$methodName];
+    public function getMethod(
+        ClassReflection $classReflection,
+        string $methodName
+    ): \PHPStan\Reflection\MethodReflection {
+        return $this->cache[$classReflection->getCacheKey() . '-' . $methodName];
     }
 
     private function findMethod(ClassReflection $classReflection, string $methodName): ?MethodReflection
@@ -59,12 +61,15 @@ class WorkflowStubDynamicCallMethodExtension implements MethodsClassReflectionEx
             return null;
         }
 
-        $workflowType = $classReflection->getActiveTemplateTypeMap()->getType('TWorkflow');
+        $workflowType = $classReflection->getActiveTemplateTypeMap()
+            ->getType('TWorkflow');
 
         // Generic type is not specified
         if ($workflowType === null) {
             if (! $classReflection->isGeneric() && ($classReflection->getParentClass()?->isGeneric() ?? false)) {
-                $workflowType = $classReflection->getParentClass()->getActiveTemplateTypeMap()->getType('TWorkflow');
+                $workflowType = $classReflection->getParentClass()
+                    ->getActiveTemplateTypeMap()
+                    ->getType('TWorkflow');
             }
         }
 
@@ -87,26 +92,38 @@ class WorkflowStubDynamicCallMethodExtension implements MethodsClassReflectionEx
         }
 
         if (! collect($workflowReflection->getNativeReflection()->getMethod($methodName)->getAttributes())
-            ->contains(static fn ($attribute): bool => in_array($attribute->getName(), [SignalMethod::class, QueryMethod::class])))
-        {
+            ->contains(
+                static fn ($attribute): bool => in_array($attribute->getName(), [
+                    SignalMethod::class,
+                    QueryMethod::class,
+                ], true)
+            )) {
             return null;
         }
 
         $methodReflection = $workflowReflection->getNativeMethod($methodName);
 
-        return new class($classReflection, $methodName, $methodReflection) implements MethodReflection
-        {
-            /** @var ClassReflection */
+        return new class($classReflection, $methodName, $methodReflection) implements MethodReflection {
+            /**
+             * @var ClassReflection
+             */
             private $classReflection;
 
-            /** @var string */
+            /**
+             * @var string
+             */
             private $methodName;
 
-            /** @var MethodReflection */
+            /**
+             * @var MethodReflection
+             */
             private $methodReflection;
 
-            public function __construct(ClassReflection $classReflection, string $methodName, MethodReflection $methodReflection)
-            {
+            public function __construct(
+                ClassReflection $classReflection,
+                string $methodName,
+                MethodReflection $methodReflection
+            ) {
                 $this->classReflection = $classReflection;
                 $this->methodName = $methodName;
                 $this->methodReflection = $methodReflection;

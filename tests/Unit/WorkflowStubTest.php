@@ -16,9 +16,7 @@ use Workflow\Serializers\Y;
 use Workflow\Signal;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowPendingStatus;
-use Workflow\Workflow;
 use Workflow\WorkflowStub;
-use function PHPStan\dumpType;
 
 final class WorkflowStubTest extends TestCase
 {
@@ -110,7 +108,8 @@ final class WorkflowStubTest extends TestCase
             'index' => 1,
             'class' => Signal::class,
         ]);
-        $log = $workflow->logs()->firstWhere('index', 1);
+        $log = $workflow->logs()
+            ->firstWhere('index', 1);
         $this->assertInstanceOf(StoredWorkflowLog::class, $log);
         $this->assertNotNull($log->result);
         $this->assertTrue(Y::unserialize($log->result));
@@ -153,7 +152,8 @@ final class WorkflowStubTest extends TestCase
             'index' => 1,
             'class' => Signal::class,
         ]);
-        $log = $workflow->logs()->firstWhere('index', 1);
+        $log = $workflow->logs()
+            ->firstWhere('index', 1);
         $this->assertInstanceOf(StoredWorkflowLog::class, $log);
         $this->assertNotNull($log->result);
         $this->assertTrue(Y::unserialize($log->result));
@@ -205,7 +205,8 @@ final class WorkflowStubTest extends TestCase
             'index' => 1,
             'class' => Signal::class,
         ]);
-        $log = $workflow->logs()->firstWhere('index', 1);
+        $log = $workflow->logs()
+            ->firstWhere('index', 1);
         $this->assertInstanceOf(StoredWorkflowLog::class, $log);
         $this->assertNotNull($log->result);
         $this->assertTrue(Y::unserialize($log->result));

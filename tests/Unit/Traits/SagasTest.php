@@ -9,7 +9,6 @@ use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
 use Workflow\Models\StoredWorkflow;
 use Workflow\WorkflowStub;
-use function PHPStan\dumpType;
 
 final class SagasTest extends TestCase
 {

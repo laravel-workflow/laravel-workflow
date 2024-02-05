@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
-use Generator;
 use Illuminate\Contracts\Foundation\Application;
 use Workflow\Activity;
 use Workflow\Workflow;

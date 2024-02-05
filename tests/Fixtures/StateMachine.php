@@ -20,7 +20,7 @@ class StateMachine
 
     private string $currentState;
 
-    public function addState(string $state) : void
+    public function addState(string $state): void
     {
         $this->states[] = $state;
     }

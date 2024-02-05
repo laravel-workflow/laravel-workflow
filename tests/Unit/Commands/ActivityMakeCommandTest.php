@@ -6,7 +6,6 @@ namespace Tests\Unit\Commands;
 
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Testing\PendingCommand;
 use Tests\TestCase;
 
 final class ActivityMakeCommandTest extends TestCase
@@ -30,7 +29,9 @@ final class ActivityMakeCommandTest extends TestCase
         $this->assertFalse($filesystem->exists(self::FOLDER));
         $this->assertFalse($filesystem->exists($file));
 
-        Artisan::call('make:activity', ['name' => self::ACTIVITY]);
+        Artisan::call('make:activity', [
+            'name' => self::ACTIVITY,
+        ]);
 
         $this->assertTrue($filesystem->exists($file));
 

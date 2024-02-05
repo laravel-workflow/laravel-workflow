@@ -29,7 +29,8 @@ final class SideEffectsTest extends TestCase
             'index' => 0,
             'class' => TestWorkflow::class,
         ]);
-        $firstLog = $workflow->logs()->firstWhere('index', 0);
+        $firstLog = $workflow->logs()
+            ->firstWhere('index', 0);
         $this->assertInstanceOf(StoredWorkflowLog::class, $firstLog);
         $this->assertNotNull($firstLog->result);
         $this->assertSame('test', Y::unserialize($firstLog->result));
@@ -59,7 +60,8 @@ final class SideEffectsTest extends TestCase
             'index' => 0,
             'class' => TestWorkflow::class,
         ]);
-        $firstLog = $workflow->logs()->firstWhere('index', 0);
+        $firstLog = $workflow->logs()
+            ->firstWhere('index', 0);
         $this->assertInstanceOf(StoredWorkflowLog::class, $firstLog);
         $this->assertNotNull($firstLog->result);
         $this->assertSame('test', Y::unserialize($firstLog->result));
@@ -91,7 +93,8 @@ final class SideEffectsTest extends TestCase
             'index' => 0,
             'class' => TestWorkflow::class,
         ]);
-        $firstLog = $workflow->logs()->firstWhere('index', 0);
+        $firstLog = $workflow->logs()
+            ->firstWhere('index', 0);
         $this->assertInstanceOf(StoredWorkflowLog::class, $firstLog);
         $this->assertNotNull($firstLog->result);
         $this->assertSame('test', Y::unserialize($firstLog->result));

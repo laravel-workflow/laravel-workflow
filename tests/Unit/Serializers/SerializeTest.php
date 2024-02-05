@@ -40,7 +40,6 @@ final class SerializeTest extends TestCase
 
     /**
      * @return array<string, array<int|string, mixed>>
-     * @throws \Random\RandomException
      */
     public function dataProvider(): array
     {

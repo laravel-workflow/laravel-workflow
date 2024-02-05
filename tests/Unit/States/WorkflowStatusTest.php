@@ -17,7 +17,9 @@ final class WorkflowStatusTest extends TestCase
 {
     public function testConfig(): void
     {
-        $config = (new StoredWorkflow())->getStates()->first()->all();
+        $config = (new StoredWorkflow())->getStates()
+            ->first()
+            ->all();
         $this->assertSame([
             WorkflowCompletedStatus::$name,
             WorkflowCreatedStatus::$name,

@@ -11,9 +11,7 @@ use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\InteractsWithTime;
 use Illuminate\Support\Str;
-use Psr\SimpleCache\InvalidArgumentException;
 use Workflow\Activity;
-use Workflow\Models\StoredWorkflow;
 use Workflow\Workflow;
 
 class WithoutOverlappingMiddleware
@@ -47,9 +45,6 @@ class WithoutOverlappingMiddleware
     /**
      * @param scalar $workflowId
      * @param self::WORKFLOW|self::ACTIVITY $type
-     * @param int $releaseAfter
-     * @param int $expiresAfter
-     * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
     public function __construct($workflowId, $type, int $releaseAfter = 0, int $expiresAfter = 0)
     {
@@ -64,9 +59,8 @@ class WithoutOverlappingMiddleware
     /**
      * @param Workflow | Activity<Workflow, mixed> $job
      * @param callable $next
-     * @return void
      */
-    public function handle($job, $next) : void
+    public function handle($job, $next): void
     {
         $locked = $this->lock($job);
 
@@ -102,8 +96,6 @@ class WithoutOverlappingMiddleware
 
     /**
      * @param Workflow | Activity<Workflow, mixed> $job
-     * @return bool
-     * @throws InvalidArgumentException
      */
     public function lock($job): bool
     {
@@ -159,8 +151,6 @@ class WithoutOverlappingMiddleware
 
     /**
      * @param Workflow | Activity<Workflow, mixed> $job
-     * @return void
-     * @throws InvalidArgumentException
      */
     public function unlock($job): void
     {
@@ -197,12 +187,8 @@ class WithoutOverlappingMiddleware
 
     /**
      * @template T in int|string[]
-     * @param string $key
      * @param T $expectedValue
      * @param T $newValue
-     * @param int $expiresAfter
-     * @return bool
-     * @throws InvalidArgumentException
      */
     private function compareAndSet(string $key, $expectedValue, $newValue, int $expiresAfter = 0): bool
     {

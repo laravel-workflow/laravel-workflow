@@ -14,7 +14,6 @@ use Workflow\Models\StoredWorkflowLog;
 use Workflow\Serializers\Y;
 use Workflow\States\WorkflowPendingStatus;
 use Workflow\WorkflowStub;
-use function PHPStan\dumpType;
 
 final class ActivityStubTest extends TestCase
 {
@@ -41,7 +40,8 @@ final class ActivityStubTest extends TestCase
             'index' => 0,
             'class' => TestActivity::class,
         ]);
-        $firstLog = $workflow->logs()->firstWhere('index', 0);
+        $firstLog = $workflow->logs()
+            ->firstWhere('index', 0);
         $this->assertInstanceOf(StoredWorkflowLog::class, $firstLog);
         $this->assertNotNull($firstLog->result);
 
@@ -102,10 +102,7 @@ final class ActivityStubTest extends TestCase
                 $result = $value;
             });
 
-        /**
-         * @phpstan-ignore-next-line
-         */
-        $this->assertSame('test', $result['message']);
+        $this->assertSame('test', $result['message']); //@phpstan-ignore-line
     }
 
     public function testAll(): void

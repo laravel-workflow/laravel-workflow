@@ -13,13 +13,10 @@ use Workflow\Models\StoredWorkflow;
 class Exception extends Activity
 {
     /**
-     * @param int $index
-     * @param string $now
      * @param StoredWorkflow<Workflow, null> $storedWorkflow
      * @param Throwable|array{class: string, message: string, code: int|string, line: int, file: string, trace: mixed[], snippet: string[]} $exception
      *
      * @TODO: check if this class really must extend the Activity class. This makes typing more difficult.
-     *
      */
     public function __construct(
         public int $index,

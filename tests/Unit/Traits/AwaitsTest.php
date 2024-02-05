@@ -43,7 +43,8 @@ final class AwaitsTest extends TestCase
             'index' => 0,
             'class' => Signal::class,
         ]);
-        $firstLog = $workflow->logs()->firstWhere('index', 0);
+        $firstLog = $workflow->logs()
+            ->firstWhere('index', 0);
         $this->assertInstanceOf(StoredWorkflowLog::class, $firstLog);
         $this->assertNotNull($firstLog->result);
         $this->assertTrue(Y::unserialize($firstLog->result));
@@ -73,7 +74,8 @@ final class AwaitsTest extends TestCase
             'index' => 0,
             'class' => Signal::class,
         ]);
-        $firstLog = $workflow->logs()->firstWhere('index', 0);
+        $firstLog = $workflow->logs()
+            ->firstWhere('index', 0);
         $this->assertInstanceOf(StoredWorkflowLog::class, $firstLog);
         $this->assertNotNull($firstLog->result);
         $this->assertTrue(Y::unserialize($firstLog->result));
@@ -105,7 +107,8 @@ final class AwaitsTest extends TestCase
             'index' => 0,
             'class' => Signal::class,
         ]);
-        $firstLog = $workflow->logs()->firstWhere('index', 0);
+        $firstLog = $workflow->logs()
+            ->firstWhere('index', 0);
         $this->assertInstanceOf(StoredWorkflowLog::class, $firstLog);
         $this->assertNotNull($firstLog->result);
         $this->assertFalse(Y::unserialize($firstLog->result));

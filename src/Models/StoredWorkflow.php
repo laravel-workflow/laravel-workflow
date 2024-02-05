@@ -11,7 +11,6 @@ use Spatie\ModelStates\HasStates;
 use Workflow\States\WorkflowStatus;
 use Workflow\Workflow;
 use Workflow\WorkflowStub;
-use function PHPStan\dumpType;
 
 /**
  * @template TWorkflow of Workflow
@@ -24,6 +23,7 @@ class StoredWorkflow extends Model
     use HasStates;
 
     protected $table = 'workflows';
+
     protected $guarded = [];
 
     protected $dateFormat = 'Y-m-d H:i:s.u';

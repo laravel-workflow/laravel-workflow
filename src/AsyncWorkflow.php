@@ -7,9 +7,7 @@ namespace Workflow;
 use Generator;
 use Illuminate\Container\Container;
 use Illuminate\Support\Facades\App;
-use Laravel\SerializableClosure\Exceptions\PhpVersionNotSupportedException;
 use Laravel\SerializableClosure\SerializableClosure;
-use ReflectionException;
 use ReflectionFunction;
 
 /**
@@ -20,15 +18,12 @@ final class AsyncWorkflow extends Workflow
     /**
      * The container property is needed in the @see RouteDependencyResolverTrait
      * which in turn is used to dynamically resolve the "execute" method parameters.
-     * @phpstan-ignore-next-line
      */
-    private Container $container;
+    private Container $container; // @phpstan-ignore-line
 
     /**
      * @param SerializableClosure $callback
      * @return Generator<int, mixed, void, TReturn>
-     * @throws ReflectionException
-     * @throws PhpVersionNotSupportedException
      */
     public function execute($callback): Generator
     {

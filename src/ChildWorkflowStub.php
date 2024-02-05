@@ -61,7 +61,7 @@ final class ChildWorkflowStub
         if ($log !== null) {
             ++$context->index;
             WorkflowStub::setContext($context);
-            return resolve($log->result !== null ?  Y::unserialize($log->result) : null);
+            return resolve($log->result !== null ? Y::unserialize($log->result) : null);
         }
 
         if (! $context->replaying) {
@@ -69,7 +69,9 @@ final class ChildWorkflowStub
                 ->wherePivot('parent_index', $context->index)
                 ->first();
 
-            $childWorkflow = $storedChildWorkflow !== null ? $storedChildWorkflow->toWorkflow() : WorkflowStub::make($workflow);
+            $childWorkflow = $storedChildWorkflow !== null ? $storedChildWorkflow->toWorkflow() : WorkflowStub::make(
+                $workflow
+            );
 
             if ($childWorkflow->running() && ! $childWorkflow->created()) {
                 try {
