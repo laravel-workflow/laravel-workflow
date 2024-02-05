@@ -12,7 +12,6 @@ use Tests\Fixtures\TestParentAsyncWorkflow;
 use Tests\Fixtures\TestParentExceptionWorkflow;
 use Tests\Fixtures\TestParentTimerWorkflow;
 use Tests\Fixtures\TestParentWorkflow;
-use Tests\TestCase;
 use Tests\TestCaseRequiringWorkers;
 use Workflow\AsyncWorkflow;
 use Workflow\States\WorkflowCompletedStatus;

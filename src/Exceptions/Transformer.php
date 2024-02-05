@@ -12,6 +12,7 @@ use Workflow\Serializers\Y;
 class Transformer
 {
     protected int $traceDepth = PHP_INT_MAX;
+
     protected bool $traceArgs = true;
 
     public function withDepth(int $depth): self
@@ -27,7 +28,6 @@ class Transformer
     }
 
     /**
-     * @param Throwable $throwable
      * @return array{class: string, message: string, code: int|string, line: int, file: string, trace: mixed[], snippet: string[]}
      */
     public function transform(Throwable $throwable): array
@@ -36,7 +36,7 @@ class Transformer
         $iterator = new LimitIterator($file, max(0, $throwable->getLine() - 4), 7);
 
         $trace = array_slice($throwable->getTrace(), 0, $this->traceDepth);
-        if (!$this->traceArgs) {
+        if (! $this->traceArgs) {
             foreach ($trace as &$entry) {
                 $entry['args'] = [];
             }

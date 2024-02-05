@@ -6,7 +6,6 @@ namespace Tests\Feature;
 
 use Illuminate\Support\Facades\DB;
 use Tests\Fixtures\TestSimpleWorkflow;
-use Tests\TestCase;
 use Tests\TestCaseRequiringWorkers;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\WorkflowStub;

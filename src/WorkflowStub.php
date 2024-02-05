@@ -9,13 +9,10 @@ use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Bus\PendingDispatch;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Str;
 use Illuminate\Support\Traits\Macroable;
-use LimitIterator;
 use ReflectionClass;
 use RuntimeException;
 use Spatie\ModelStates\Exceptions\TransitionNotFound;
-use SplFileObject;
 use stdClass;
 use Throwable;
 use Workflow\Events\WorkflowFailed;
@@ -304,10 +301,7 @@ final class WorkflowStub
             $this->storedWorkflow->exceptions()
                 ->create([
                     'class' => $this->storedWorkflow->class,
-                    'exception' => Y::serialize(
-                        app(Transformer::class)
-                             ->transform($exception)
-                    ),
+                    'exception' => Y::serialize(app(Transformer::class) ->transform($exception)),
                 ]);
         } catch (QueryException) {
             // already logged
@@ -315,10 +309,7 @@ final class WorkflowStub
 
         $this->storedWorkflow->status->transitionTo(WorkflowFailedStatus::class);
 
-        $encodedException = json_encode(
-            app(Transformer::class)
-                ->transform($exception)
-        );
+        $encodedException = json_encode(app(Transformer::class) ->transform($exception));
         if ($encodedException === false) {
             throw new RuntimeException('Could not encode exception.');
         }

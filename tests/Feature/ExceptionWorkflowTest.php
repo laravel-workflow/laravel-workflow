@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use Tests\Fixtures\TestExceptionWorkflow;
-use Tests\TestCase;
 use Tests\TestCaseRequiringWorkers;
 use Workflow\Serializers\Y;
 use Workflow\States\WorkflowCompletedStatus;

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use Tests\Fixtures\TestStateMachineWorkflow;
-use Tests\TestCase;
 use Tests\TestCaseRequiringWorkers;
 use Workflow\Signal;
 use Workflow\States\WorkflowCompletedStatus;

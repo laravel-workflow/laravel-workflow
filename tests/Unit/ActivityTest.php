@@ -10,7 +10,6 @@ use Tests\Fixtures\TestExceptionActivity;
 use Tests\Fixtures\TestInvalidActivity;
 use Tests\Fixtures\TestOtherActivity;
 use Tests\Fixtures\TestWorkflow;
-use Tests\TestCase;
 use Tests\TestCaseRequiringDatabase;
 use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Y;

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Models;
 
-use Tests\TestCase;
 use Tests\TestCaseRequiringDatabase;
 use Workflow\Models\StoredWorkflow;
 

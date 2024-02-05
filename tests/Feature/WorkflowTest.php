@@ -7,7 +7,6 @@ namespace Tests\Feature;
 use Tests\Fixtures\TestActivity;
 use Tests\Fixtures\TestOtherActivity;
 use Tests\Fixtures\TestWorkflow;
-use Tests\TestCase;
 use Tests\TestCaseRequiringWorkers;
 use Workflow\Signal;
 use Workflow\States\WorkflowCompletedStatus;

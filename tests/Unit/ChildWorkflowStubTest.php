@@ -6,7 +6,6 @@ namespace Tests\Unit;
 
 use Tests\Fixtures\TestChildWorkflow;
 use Tests\Fixtures\TestParentWorkflow;
-use Tests\TestCase;
 use Tests\TestCaseRequiringDatabase;
 use Workflow\ChildWorkflowStub;
 use Workflow\Models\StoredWorkflow;

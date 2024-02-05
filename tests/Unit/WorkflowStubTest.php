@@ -9,7 +9,6 @@ use Illuminate\Support\Carbon;
 use Tests\Fixtures\TestAwaitWorkflow;
 use Tests\Fixtures\TestBadConnectionWorkflow;
 use Tests\Fixtures\TestWorkflow;
-use Tests\TestCase;
 use Tests\TestCaseRequiringDatabase;
 use Workflow\Models\StoredWorkflow;
 use Workflow\Models\StoredWorkflowLog;

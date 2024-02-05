@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace Tests;
 
-
 abstract class TestCaseRequiringDatabase extends TestCase
 {
-
     protected function defineDatabaseMigrations()
     {
         $this->artisan('migrate:fresh', [

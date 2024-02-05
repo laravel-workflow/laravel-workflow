@@ -10,7 +10,6 @@ use Tests\Fixtures\TestChildWorkflow;
 use Tests\Fixtures\TestOtherActivity;
 use Tests\Fixtures\TestParentWorkflow;
 use Tests\Fixtures\TestWorkflow;
-use Tests\TestCase;
 use Tests\TestCaseRequiringDatabase;
 use Workflow\Exception;
 use Workflow\Exceptions\Transformer;

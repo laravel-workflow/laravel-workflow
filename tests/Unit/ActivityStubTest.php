@@ -7,7 +7,6 @@ namespace Tests\Unit;
 use Exception;
 use Tests\Fixtures\TestActivity;
 use Tests\Fixtures\TestWorkflow;
-use Tests\TestCase;
 use Tests\TestCaseRequiringDatabase;
 use Workflow\ActivityStub;
 use Workflow\Models\StoredWorkflow;

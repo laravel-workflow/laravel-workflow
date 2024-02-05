@@ -7,7 +7,6 @@ namespace Tests\Feature;
 use Tests\Fixtures\TestActivity;
 use Tests\Fixtures\TestOtherActivity;
 use Tests\Fixtures\TestSideEffectWorkflow;
-use Tests\TestCase;
 use Tests\TestCaseRequiringWorkers;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\WorkflowStub;

@@ -11,7 +11,6 @@ use Mockery;
 use Mockery\MockInterface;
 use Tests\Fixtures\TestActivity;
 use Tests\Fixtures\TestWorkflow;
-use Tests\TestCase;
 use Tests\TestCaseRequiringDatabase;
 use Workflow\Events\ActivityCompleted;
 use Workflow\Events\ActivityFailed;

@@ -7,7 +7,6 @@ namespace Tests\Feature;
 use Tests\Fixtures\TestActivity;
 use Tests\Fixtures\TestSagaWorkflow;
 use Tests\Fixtures\TestUndoActivity;
-use Tests\TestCase;
 use Tests\TestCaseRequiringWorkers;
 use Workflow\Exception;
 use Workflow\States\WorkflowCompletedStatus;

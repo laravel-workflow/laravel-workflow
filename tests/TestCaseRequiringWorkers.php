@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests;
 
-use Dotenv\Dotenv;
 use Symfony\Component\Process\Process;
 
 abstract class TestCaseRequiringWorkers extends TestCaseRequiringDatabase

@@ -10,7 +10,6 @@ use Tests\Fixtures\TestConcurrentWorkflow;
 use Tests\Fixtures\TestOtherActivity;
 use Tests\Fixtures\TestParentWorkflow;
 use Tests\Fixtures\TestTimeTravelWorkflow;
-use Tests\TestCase;
 use Tests\TestCaseRequiringDatabase;
 use Workflow\WorkflowStub;
 
