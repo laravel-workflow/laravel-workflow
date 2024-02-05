@@ -11,7 +11,7 @@ abstract class TestCaseRequiringWorkers extends TestCaseRequiringDatabase
     public const NUMBER_OF_WORKERS = 2;
 
     /**
-     * @var Process
+     * @var Process[]
      */
     private static array $workers = [];
 
