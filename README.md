@@ -49,11 +49,10 @@ class MyWorkflow extends Workflow
 **2. Create an activity.**
 ```php
 use Workflow\Activity;
-use Generator;
 
 class MyActivity extends Activity
 {
-    public function execute($name): Generator
+    public function execute(string $name): string
     {
         return "Hello, {$name}!";
     }
