@@ -22,7 +22,7 @@ abstract class TestCase extends BaseTestCase
         Dotenv::createImmutable(__DIR__ . '/..')->safeLoad();
 
         for ($i = 0; $i < self::NUMBER_OF_WORKERS; $i++) {
-            self::$workers[$i] = new Process(['php', 'artisan', 'queue:work']);
+            self::$workers[$i] = new Process(['php', 'artisan', 'queue:work'], null, $_ENV);
             self::$workers[$i]->start();
         }
     }
