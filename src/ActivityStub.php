@@ -91,7 +91,7 @@ final class ActivityStub
 
         $activity::dispatch(
             $context->index,
-            Carbon::parse($context->now)->toDateTimeString(),
+            Carbon::parse($context->now)->format('Y-m-d\TH:i:s.u\Z'),
             $context->storedWorkflow,
             ...$arguments
         );
