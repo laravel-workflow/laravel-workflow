@@ -6,20 +6,24 @@ namespace Workflow;
 
 use Workflow\Models\StoredWorkflow;
 
+/**
+ * @extends Activity<Workflow, array{class: string, message: string, code: int|string, line: int, file: string, trace: mixed[], snippet: string[]}>
+ */
 class Exception extends Activity
 {
+    /**
+     * @param StoredWorkflow<Workflow, null> $storedWorkflow
+     * @param array{class: string, message: string, code: int|string, line: int, file: string, trace: mixed[], snippet: string[]} $exception
+     *
+     * @TODO: check if this class really must extend the Activity class. This makes typing more difficult.
+     */
     public function __construct(
         public int $index,
         public string $now,
-        public StoredWorkflow $storedWorkflow,
-        public $exception,
-        $connection = null,
-        $queue = null
+        public StoredWorkflow $storedWorkflow, // @phpstan-ignore-line
+        public array $exception,
     ) {
-        $connection = $connection ?? config('queue.default');
-        $queue = $queue ?? config('queue.connections.' . $connection . '.queue', 'default');
-        $this->onConnection($connection);
-        $this->onQueue($queue);
+        parent::__construct($index, $now, $storedWorkflow);
     }
 
     public function handle()

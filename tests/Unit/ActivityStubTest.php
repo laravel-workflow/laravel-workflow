@@ -7,14 +7,15 @@ namespace Tests\Unit;
 use Exception;
 use Tests\Fixtures\TestActivity;
 use Tests\Fixtures\TestWorkflow;
-use Tests\TestCase;
+use Tests\TestCaseRequiringDatabase;
 use Workflow\ActivityStub;
 use Workflow\Models\StoredWorkflow;
+use Workflow\Models\StoredWorkflowLog;
 use Workflow\Serializers\Y;
 use Workflow\States\WorkflowPendingStatus;
 use Workflow\WorkflowStub;
 
-final class ActivityStubTest extends TestCase
+final class ActivityStubTest extends TestCaseRequiringDatabase
 {
     public function testStoresResult(): void
     {
@@ -39,7 +40,12 @@ final class ActivityStubTest extends TestCase
             'index' => 0,
             'class' => TestActivity::class,
         ]);
-        $this->assertSame('activity', Y::unserialize($workflow->logs()->firstWhere('index', 0)->result));
+        $firstLog = $workflow->logs()
+            ->firstWhere('index', 0);
+        $this->assertInstanceOf(StoredWorkflowLog::class, $firstLog);
+        $this->assertNotNull($firstLog->result);
+
+        $this->assertSame('activity', Y::unserialize($firstLog->result));
     }
 
     public function testLoadsStoredResult(): void
@@ -71,6 +77,7 @@ final class ActivityStubTest extends TestCase
         $this->expectException(Exception::class);
 
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
+        /** @var StoredWorkflow<TestWorkflow, null> $storedWorkflow */
         $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
         $storedWorkflow->update([
             'arguments' => Y::serialize([]),
@@ -86,10 +93,16 @@ final class ActivityStubTest extends TestCase
 
         ActivityStub::make(TestActivity::class)
             ->then(static function ($value) use (&$result) {
+                /**
+                 * phpstan correctly infers the "string" type here as the result of this activity
+                 * can only be a string. However, an exception is manually placed in the logs...
+                 *
+                 * this leads to an error below
+                 */
                 $result = $value;
             });
 
-        $this->assertSame('test', $result['message']);
+        $this->assertSame('test', $result['message']); //@phpstan-ignore-line
     }
 
     public function testAll(): void

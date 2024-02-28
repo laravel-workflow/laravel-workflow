@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
+use Generator;
 use Workflow\ActivityStub;
 use Workflow\Workflow;
 
 final class TestHeartbeatWorkflow extends Workflow
 {
-    public function execute()
+    public function execute(): Generator
     {
         $otherResult = yield ActivityStub::make(TestOtherActivity::class, 'other');
 

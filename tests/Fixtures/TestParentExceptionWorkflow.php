@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
+use Generator;
 use Workflow\ActivityStub;
 use Workflow\ChildWorkflowStub;
 use Workflow\Workflow;
@@ -14,7 +15,7 @@ class TestParentExceptionWorkflow extends Workflow
 
     public $queue = 'default';
 
-    public function execute($shouldThrow = false)
+    public function execute(bool $shouldThrow = false): Generator
     {
         $otherResult = yield ChildWorkflowStub::make(TestChildExceptionWorkflow::class, $shouldThrow);
 

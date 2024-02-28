@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
+use Generator;
 use Workflow\ActivityStub;
 use Workflow\Workflow;
 
@@ -13,7 +14,7 @@ class TestRetriesWorkflow extends Workflow
 
     public $queue = 'default';
 
-    public function execute()
+    public function execute(): Generator
     {
         yield ActivityStub::make(TestRetriesActivity::class);
     }

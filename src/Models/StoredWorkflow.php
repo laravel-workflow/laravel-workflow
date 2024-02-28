@@ -4,78 +4,97 @@ declare(strict_types=1);
 
 namespace Workflow\Models;
 
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\ModelStates\HasStates;
 use Workflow\States\WorkflowStatus;
+use Workflow\Workflow;
 use Workflow\WorkflowStub;
 
 /**
- * @extends Illuminate\Database\Eloquent\Model
+ * @template TWorkflow of Workflow
+ * @template TParentStoredWorkflow of ?true
+ * @property class-string<TWorkflow> $class
+ * @property (TParentStoredWorkflow is true ? object{parent_index: int, parent_now: Carbon} : null) $parents_pivot
  */
 class StoredWorkflow extends Model
 {
     use HasStates;
 
-    /**
-     * @var string
-     */
     protected $table = 'workflows';
 
-    /**
-     * @var mixed[]
-     */
     protected $guarded = [];
 
     protected $dateFormat = 'Y-m-d H:i:s.u';
 
-    /**
-     * @var array<string, class-string<\Workflow\States\WorkflowStatus>>
-     */
     protected $casts = [
         'status' => WorkflowStatus::class,
     ];
 
+    /**
+     * @return WorkflowStub<TWorkflow>
+     */
     public function toWorkflow()
     {
         return WorkflowStub::fromStoredWorkflow($this);
     }
 
-    public function logs(): \Illuminate\Database\Eloquent\Relations\HasMany
+    /**
+     * @return HasMany<StoredWorkflowLog>
+     */
+    public function logs(): HasMany
     {
         return $this->hasMany(config('workflows.stored_workflow_log_model', StoredWorkflowLog::class));
     }
 
-    public function signals(): \Illuminate\Database\Eloquent\Relations\HasMany
+    /**
+     * @return HasMany<StoredWorkflowSignal>
+     */
+    public function signals(): HasMany
     {
         return $this->hasMany(config('workflows.stored_workflow_signal_model', StoredWorkflowSignal::class));
     }
 
-    public function timers(): \Illuminate\Database\Eloquent\Relations\HasMany
+    /**
+     * @return HasMany<StoredWorkflowTimer>
+     */
+    public function timers(): HasMany
     {
         return $this->hasMany(config('workflows.stored_workflow_timer_model', StoredWorkflowTimer::class));
     }
 
-    public function exceptions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    /**
+     * @return HasMany<StoredWorkflowException>
+     */
+    public function exceptions(): HasMany
     {
         return $this->hasMany(config('workflows.stored_workflow_exception_model', StoredWorkflowException::class));
     }
 
-    public function parents(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    /**
+     * @return BelongsToMany<StoredWorkflow<Workflow, true>>
+     */
+    public function parents(): BelongsToMany
     {
         return $this->belongsToMany(
             config('workflows.stored_workflow_model', self::class),
             config('workflows.workflow_relationships_table', 'workflow_relationships'),
             'child_workflow_id',
             'parent_workflow_id'
-        )->withPivot(['parent_index', 'parent_now']);
+        )->withPivot(['parent_index', 'parent_now'])->as('parents_pivot');
     }
 
-    public function children(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    /**
+     * @return BelongsToMany<StoredWorkflow<Workflow, null>>
+     */
+    public function children(): BelongsToMany
     {
         return $this->belongsToMany(
             config('workflows.stored_workflow_model', self::class),
             config('workflows.workflow_relationships_table', 'workflow_relationships'),
             'parent_workflow_id',
             'child_workflow_id'
-        )->withPivot(['parent_index', 'parent_now']);
+        )->withPivot(['parent_index', 'parent_now'])->as('children_pivot');
     }
 }

@@ -13,19 +13,27 @@ use Workflow\Signal;
 
 trait AwaitWithTimeouts
 {
-    public static function awaitWithTimeout($seconds, $condition): PromiseInterface
+    /**
+     * @param callable():bool $condition
+     * @return PromiseInterface<bool>
+     */
+    public static function awaitWithTimeout(int|string $seconds, callable $condition): PromiseInterface
     {
+        if (self::$context === null) {
+            throw new \RuntimeException('ActivityStub::awaitWithTimeout() must be called within a workflow');
+        }
+
         $log = self::$context->storedWorkflow->logs()
             ->whereIndex(self::$context->index)
             ->first();
 
-        if ($log) {
+        if ($log !== null) {
             ++self::$context->index;
-            return resolve(Y::unserialize($log->result));
+            return resolve($log->result !== null ? Y::unserialize($log->result) : null);
         }
 
         if (is_string($seconds)) {
-            $seconds = CarbonInterval::fromString($seconds)->totalSeconds;
+            $seconds = (int) CarbonInterval::fromString($seconds)->totalSeconds;
         }
 
         $result = $condition();
@@ -45,9 +53,9 @@ trait AwaitWithTimeouts
                         ->whereIndex(self::$context->index)
                         ->first();
 
-                    if ($log) {
+                    if ($log !== null) {
                         ++self::$context->index;
-                        return resolve(Y::unserialize($log->result));
+                        return resolve($log->result !== null ? Y::unserialize($log->result) : null);
                     }
                 }
             }

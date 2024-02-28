@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use Tests\Fixtures\TestTimeoutWorkflow;
-use Tests\TestCase;
+use Tests\TestCaseRequiringWorkers;
 use Workflow\WorkflowStub;
 
-final class TimeoutWorkflowTest extends TestCase
+final class TimeoutWorkflowTest extends TestCaseRequiringWorkers
 {
     public function testTimeout(): void
     {

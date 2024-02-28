@@ -10,27 +10,27 @@ use Tests\Fixtures\TestExceptionActivity;
 use Tests\Fixtures\TestInvalidActivity;
 use Tests\Fixtures\TestOtherActivity;
 use Tests\Fixtures\TestWorkflow;
-use Tests\TestCase;
+use Tests\TestCaseRequiringDatabase;
 use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Y;
 use Workflow\States\WorkflowCreatedStatus;
 use Workflow\States\WorkflowFailedStatus;
 use Workflow\WorkflowStub;
 
-final class ActivityTest extends TestCase
+final class ActivityTest extends TestCaseRequiringDatabase
 {
     public function testActivity(): void
     {
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
-        $activity = new TestOtherActivity(0, now()->toDateTimeString(), StoredWorkflow::findOrFail($workflow->id()), [
-            'other',
-        ]);
+        $activity = new TestOtherActivity(0, now()->toDateTimeString(), StoredWorkflow::findOrFail(
+            $workflow->id()
+        ), 'other');
         $activity->timeout = 1;
         $activity->heartbeat();
 
         $result = $activity->handle();
 
-        $this->assertSame(['other'], $result);
+        $this->assertSame('other', $result);
         $this->assertSame([1, 2, 5, 10, 15, 30, 60, 120], $activity->backoff());
         $this->assertSame($workflow->id(), $activity->workflowId());
         $this->assertSame($activity->timeout, pcntl_alarm(0));
@@ -89,9 +89,9 @@ final class ActivityTest extends TestCase
             'class' => TestOtherActivity::class,
             'result' => Y::serialize('other'),
         ]);
-        $activity = new TestOtherActivity(0, now()->toDateTimeString(), StoredWorkflow::findOrFail($workflow->id()), [
-            'other',
-        ]);
+        $activity = new TestOtherActivity(0, now()->toDateTimeString(), StoredWorkflow::findOrFail(
+            $workflow->id()
+        ), 'other');
         $activity->timeout = 1;
         $activity->heartbeat();
 

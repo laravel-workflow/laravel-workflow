@@ -15,15 +15,18 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Routing\RouteDependencyResolverTrait;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Cache;
-use LimitIterator;
-use SplFileObject;
 use Throwable;
+use Workflow\Exceptions\Transformer;
 use Workflow\Middleware\WithoutOverlappingMiddleware;
 use Workflow\Middleware\WorkflowMiddleware;
 use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Y;
 
-class Activity implements ShouldBeEncrypted, ShouldQueue
+/**
+ * @template TWorkflow of Workflow
+ * @template TReturn
+ */
+abstract class Activity implements ShouldBeEncrypted, ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
@@ -31,18 +34,41 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
     use RouteDependencyResolverTrait;
     use SerializesModels;
 
+    /**
+     * @var int
+     */
     public $tries = PHP_INT_MAX;
 
+    /**
+     * @var int
+     */
     public $maxExceptions = PHP_INT_MAX;
 
+    /**
+     * @var int
+     */
     public $timeout = 0;
 
+    /**
+     * @var array<int|string, mixed>
+     */
     public $arguments;
 
+    /**
+     * @var string
+     */
     public $key = '';
 
-    private Container $container;
+    /**
+     * The container property is needed in the @see RouteDependencyResolverTrait
+     * which in turn is used to dynamically resolve the "execute" method parameters.
+     */
+    private Container $container; // @phpstan-ignore-line
 
+    /**
+     * @param StoredWorkflow<TWorkflow, null> $storedWorkflow
+     * @param mixed ...$arguments
+     */
     public function __construct(
         public int $index,
         public string $now,
@@ -51,27 +77,32 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
     ) {
         $this->arguments = $arguments;
 
-        if (property_exists($this, 'connection')) {
-            $this->onConnection($this->connection);
-        }
+        $this->onConnection($this->connection ?? null);
 
-        if (property_exists($this, 'queue')) {
-            $this->onQueue($this->queue);
-        }
+        $this->onQueue($this->queue ?? null);
 
         $this->afterCommit = true;
     }
 
+    /**
+     * @return int[]
+     */
     public function backoff()
     {
         return [1, 2, 5, 10, 15, 30, 60, 120];
     }
 
+    /**
+     * @return int
+     */
     public function workflowId()
     {
         return $this->storedWorkflow->id;
     }
 
+    /**
+     * @return void | TReturn
+     */
     public function handle()
     {
         if (! method_exists($this, 'execute')) {
@@ -85,7 +116,7 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
         }
 
         try {
-            return $this->{'execute'}(...$this->resolveClassMethodDependencies($this->arguments, $this, 'execute'));
+            return $this->execute(...$this->resolveClassMethodDependencies($this->arguments, $this, 'execute'));
         } catch (\Throwable $throwable) {
             $this->storedWorkflow->exceptions()
                 ->create([
@@ -97,6 +128,9 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
         }
     }
 
+    /**
+     * @return list<mixed>
+     */
     public function middleware()
     {
         return [
@@ -114,35 +148,22 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
     {
         $workflow = $this->storedWorkflow->toWorkflow();
 
-        $file = new SplFileObject($throwable->getFile());
-        $iterator = new LimitIterator($file, max(0, $throwable->getLine() - 4), 7);
-
-        $throwable = [
-            'class' => get_class($throwable),
-            'message' => $throwable->getMessage(),
-            'code' => $throwable->getCode(),
-            'line' => $throwable->getLine(),
-            'file' => $throwable->getFile(),
-            'trace' => collect($throwable->getTrace())
-                ->filter(static fn ($trace) => Y::serializable($trace))
-                ->toArray(),
-            'snippet' => array_slice(iterator_to_array($iterator), 0, 7),
-        ];
-
         Exception::dispatch(
             $this->index,
             $this->now,
             $this->storedWorkflow,
-            $throwable,
-            $workflow->connection(),
-            $workflow->queue()
-        );
+            app(Transformer::class)->transform($throwable),
+        )->onConnection($workflow->connection())
+            ->onQueue($workflow->queue());
     }
 
     public function heartbeat(): void
     {
         pcntl_alarm(max($this->timeout, 0));
-        if ($this->timeout) {
+        if ($this->timeout > 0) {
+            /**
+             * NOTE: the key is set in @see WithoutOverlappingMiddleware in the lock function
+             */
             Cache::put($this->key, 1, $this->timeout);
         }
     }

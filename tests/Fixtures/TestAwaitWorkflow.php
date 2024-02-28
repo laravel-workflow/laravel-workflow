@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
+use Generator;
 use Workflow\SignalMethod;
 use Workflow\Workflow;
 use Workflow\WorkflowStub;
@@ -18,7 +19,7 @@ final class TestAwaitWorkflow extends Workflow
         $this->canceled = true;
     }
 
-    public function execute()
+    public function execute(): Generator
     {
         yield WorkflowStub::await(fn (): bool => $this->canceled);
 

@@ -10,7 +10,7 @@ interface SerializerInterface
 
     public static function decode(string $data): string;
 
-    public static function serialize($data): string;
+    public static function serialize(mixed $data): string;
 
-    public static function unserialize(string $data);
+    public static function unserialize(string $data): mixed;
 }

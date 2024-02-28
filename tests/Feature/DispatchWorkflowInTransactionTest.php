@@ -6,11 +6,11 @@ namespace Tests\Feature;
 
 use Illuminate\Support\Facades\DB;
 use Tests\Fixtures\TestSimpleWorkflow;
-use Tests\TestCase;
+use Tests\TestCaseRequiringWorkers;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\WorkflowStub;
 
-final class DispatchWorkflowInTransactionTest extends TestCase
+final class DispatchWorkflowInTransactionTest extends TestCaseRequiringWorkers
 {
     public function testRaceCondition(): void
     {
@@ -37,6 +37,7 @@ final class DispatchWorkflowInTransactionTest extends TestCase
             sleep(3);
         });
 
+        $this->assertNotNull($workflow);
         /**
          * the workflow stays in the pending state as the transaction was not committed
          * when the worker was told to process the workflow

@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace Workflow\Middleware;
 
 use Illuminate\Container\Container;
+use Illuminate\Contracts\Cache\LockProvider;
 use Illuminate\Contracts\Cache\Repository as Cache;
 use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\InteractsWithTime;
 use Illuminate\Support\Str;
+use Workflow\Activity;
+use Workflow\Workflow;
 
 class WithoutOverlappingMiddleware
 {
@@ -21,34 +24,49 @@ class WithoutOverlappingMiddleware
 
     public string $key;
 
+    /**
+     * @var self::WORKFLOW|self::ACTIVITY
+     */
     public int $type;
 
-    public $releaseAfter;
+    public int $releaseAfter;
 
-    public $expiresAfter;
+    public int $expiresAfter;
 
-    public $prefix = 'laravel-workflow-overlap:';
+    public string $prefix = 'laravel-workflow-overlap:';
 
+    /**
+     * @var Cache&LockProvider
+     */
     private $cache;
 
-    private $active = true;
+    private bool $active = true;
 
-    public function __construct($workflowId, $type, $releaseAfter = 0, $expiresAfter = 0)
+    /**
+     * @param scalar $workflowId
+     * @param self::WORKFLOW|self::ACTIVITY $type
+     */
+    public function __construct($workflowId, $type, int $releaseAfter = 0, int $expiresAfter = 0)
     {
         $this->key = "{$workflowId}";
         $this->type = $type;
         $this->releaseAfter = $releaseAfter;
         $this->expiresAfter = $this->secondsUntil($expiresAfter);
+        // @phpstan-ignore-next-line
         $this->cache = Container::getInstance()->make(Cache::class);
     }
 
-    public function handle($job, $next)
+    /**
+     * @param Workflow | Activity<Workflow, mixed> $job
+     * @param callable $next
+     */
+    public function handle($job, $next): void
     {
         $locked = $this->lock($job);
 
         if ($locked) {
             Queue::before(
-                fn (JobProcessing $event) => $this->active = $job->job->getJobId() === $event->job->getJobId()
+                fn (JobProcessing $event) => $this->active = $job->job?->getJobId() === $event->job->getJobId()
             );
             Queue::stopping(fn () => $this->active ? $this->unlock($job) : null);
             try {
@@ -61,22 +79,25 @@ class WithoutOverlappingMiddleware
         }
     }
 
-    public function getLockKey()
+    public function getLockKey(): string
     {
         return $this->prefix . $this->key;
     }
 
-    public function getWorkflowSemaphoreKey()
+    public function getWorkflowSemaphoreKey(): string
     {
         return $this->getLockKey() . ':workflow';
     }
 
-    public function getActivitySemaphoreKey()
+    public function getActivitySemaphoreKey(): string
     {
         return $this->getLockKey() . ':activity';
     }
 
-    public function lock($job)
+    /**
+     * @param Workflow | Activity<Workflow, mixed> $job
+     */
+    public function lock($job): bool
     {
         $workflowSemaphore = (int) $this->cache->get($this->getWorkflowSemaphoreKey(), 0);
         $activitySemaphore = 0;
@@ -94,8 +115,8 @@ class WithoutOverlappingMiddleware
                 if ($workflowSemaphore === 0 && $activitySemaphore === 0) {
                     $locked = $this->compareAndSet(
                         $this->getWorkflowSemaphoreKey(),
-                        (int) $workflowSemaphore,
-                        (int) $workflowSemaphore + 1,
+                        $workflowSemaphore,
+                        $workflowSemaphore + 1,
                         $this->expiresAfter
                     );
                 }
@@ -111,7 +132,7 @@ class WithoutOverlappingMiddleware
                         array_merge($activitySemaphores, [$job->key])
                     );
                     if ($locked) {
-                        if ($this->expiresAfter) {
+                        if ($this->expiresAfter > 0) {
                             $this->cache->put($job->key, 1, $this->expiresAfter);
                         } else {
                             $this->cache->put($job->key, 1);
@@ -128,7 +149,10 @@ class WithoutOverlappingMiddleware
         return $locked;
     }
 
-    public function unlock($job)
+    /**
+     * @param Workflow | Activity<Workflow, mixed> $job
+     */
+    public function unlock($job): void
     {
         switch ($this->type) {
             case self::WORKFLOW:
@@ -137,8 +161,8 @@ class WithoutOverlappingMiddleware
                     $workflowSemaphore = (int) $this->cache->get($this->getWorkflowSemaphoreKey(), 0);
                     $unlocked = $this->compareAndSet(
                         $this->getWorkflowSemaphoreKey(),
-                        (int) $workflowSemaphore,
-                        (int) max($workflowSemaphore - 1, 0),
+                        $workflowSemaphore,
+                        max($workflowSemaphore - 1, 0),
                         $this->expiresAfter
                     );
                 }
@@ -161,18 +185,23 @@ class WithoutOverlappingMiddleware
         }
     }
 
-    private function compareAndSet($key, $expectedValue, $newValue, $expiresAfter = 0)
+    /**
+     * @template T in int|string[]
+     * @param T $expectedValue
+     * @param T $newValue
+     */
+    private function compareAndSet(string $key, $expectedValue, $newValue, int $expiresAfter = 0): bool
     {
         $lock = $this->cache->lock($this->getLockKey());
 
-        if ($lock->get()) {
+        if ($lock->get() === true) {
             try {
                 $currentValue = $this->cache->get($key, $expectedValue);
 
                 $currentValue = is_int($expectedValue) ? (int) $currentValue : $currentValue;
 
                 if ($currentValue === $expectedValue) {
-                    if ($expiresAfter) {
+                    if ($expiresAfter > 0) {
                         $this->cache->put($key, $newValue, $expiresAfter);
                     } else {
                         $this->cache->put($key, $newValue);

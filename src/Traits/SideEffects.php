@@ -11,15 +11,24 @@ use Workflow\Serializers\Y;
 
 trait SideEffects
 {
-    public static function sideEffect($callable): PromiseInterface
+    /**
+     * @template T
+     * @param callable(): T $callable
+     * @return PromiseInterface<T>
+     */
+    public static function sideEffect(callable $callable): PromiseInterface
     {
+        if (self::$context === null) {
+            throw new \RuntimeException('ActivityStub::sideEffect() must be called within a workflow');
+        }
+
         $log = self::$context->storedWorkflow->logs()
             ->whereIndex(self::$context->index)
             ->first();
 
-        if ($log) {
+        if ($log !== null) {
             ++self::$context->index;
-            return resolve(Y::unserialize($log->result));
+            return resolve($log->result !== null ? Y::unserialize($log->result) : null);
         }
 
         $result = $callable();
@@ -38,9 +47,9 @@ trait SideEffects
                     ->whereIndex(self::$context->index)
                     ->first();
 
-                if ($log) {
+                if ($log !== null) {
                     ++self::$context->index;
-                    return resolve(Y::unserialize($log->result));
+                    return resolve($log->result !== null ? Y::unserialize($log->result) : null);
                 }
             }
         }

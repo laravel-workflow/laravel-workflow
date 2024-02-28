@@ -9,15 +9,16 @@ use Illuminate\Support\Carbon;
 use Tests\Fixtures\TestAwaitWorkflow;
 use Tests\Fixtures\TestBadConnectionWorkflow;
 use Tests\Fixtures\TestWorkflow;
-use Tests\TestCase;
+use Tests\TestCaseRequiringDatabase;
 use Workflow\Models\StoredWorkflow;
+use Workflow\Models\StoredWorkflowLog;
 use Workflow\Serializers\Y;
 use Workflow\Signal;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowPendingStatus;
 use Workflow\WorkflowStub;
 
-final class WorkflowStubTest extends TestCase
+final class WorkflowStubTest extends TestCaseRequiringDatabase
 {
     public function testMake(): void
     {
@@ -30,6 +31,7 @@ final class WorkflowStubTest extends TestCase
             'status' => WorkflowPendingStatus::$name,
         ]);
 
+        /** @var WorkflowStub<TestWorkflow> $workflow */
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
         $workflow->start();
@@ -81,6 +83,7 @@ final class WorkflowStubTest extends TestCase
 
     public function testAwait(): void
     {
+        /** @var WorkflowStub<TestWorkflow> $workflow */
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $workflow->start();
         $workflow->cancel();
@@ -88,7 +91,7 @@ final class WorkflowStubTest extends TestCase
 
         $workflow = WorkflowStub::load($workflow->id());
 
-        $this->assertSame(0, WorkflowStub::getContext()->index);
+        $this->assertSame(0, WorkflowStub::getContext()?->index);
 
         $promise = WorkflowStub::await(static fn () => false);
 
@@ -105,7 +108,11 @@ final class WorkflowStubTest extends TestCase
             'index' => 1,
             'class' => Signal::class,
         ]);
-        $this->assertTrue(Y::unserialize($workflow->logs()->firstWhere('index', 1)->result));
+        $log = $workflow->logs()
+            ->firstWhere('index', 1);
+        $this->assertInstanceOf(StoredWorkflowLog::class, $log);
+        $this->assertNotNull($log->result);
+        $this->assertTrue(Y::unserialize($log->result));
 
         $workflow->fresh();
         $context = WorkflowStub::getContext();
@@ -120,6 +127,7 @@ final class WorkflowStubTest extends TestCase
 
     public function testAwaitWithTimeout(): void
     {
+        /** @var WorkflowStub<TestWorkflow> $workflow */
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $workflow->start();
         $workflow->cancel();
@@ -127,7 +135,7 @@ final class WorkflowStubTest extends TestCase
 
         $workflow = WorkflowStub::load($workflow->id());
 
-        $this->assertSame(0, WorkflowStub::getContext()->index);
+        $this->assertSame(0, WorkflowStub::getContext()?->index);
 
         $promise = WorkflowStub::awaitWithTimeout(60, static fn () => false);
 
@@ -144,7 +152,11 @@ final class WorkflowStubTest extends TestCase
             'index' => 1,
             'class' => Signal::class,
         ]);
-        $this->assertTrue(Y::unserialize($workflow->logs()->firstWhere('index', 1)->result));
+        $log = $workflow->logs()
+            ->firstWhere('index', 1);
+        $this->assertInstanceOf(StoredWorkflowLog::class, $log);
+        $this->assertNotNull($log->result);
+        $this->assertTrue(Y::unserialize($log->result));
 
         $workflow->fresh();
         $context = WorkflowStub::getContext();
@@ -159,13 +171,14 @@ final class WorkflowStubTest extends TestCase
 
     public function testAwaitWithTimeoutTimedout(): void
     {
+        /** @var WorkflowStub<TestWorkflow> $workflow */
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $workflow->start();
         $workflow->cancel();
         while (! $workflow->isCanceled());
 
         $this->assertSame(1, $workflow->logs()->count());
-        $this->assertSame(1, WorkflowStub::getContext()->index);
+        $this->assertSame(1, WorkflowStub::getContext()?->index);
 
         $workflow = WorkflowStub::load($workflow->id());
         $context = WorkflowStub::getContext();
@@ -192,13 +205,18 @@ final class WorkflowStubTest extends TestCase
             'index' => 1,
             'class' => Signal::class,
         ]);
-        $this->assertTrue(Y::unserialize($workflow->logs()->firstWhere('index', 1)->result));
+        $log = $workflow->logs()
+            ->firstWhere('index', 1);
+        $this->assertInstanceOf(StoredWorkflowLog::class, $log);
+        $this->assertNotNull($log->result);
+        $this->assertTrue(Y::unserialize($log->result));
     }
 
     public function testConnection(): void
     {
         Carbon::setTestNow('2022-01-01');
 
+        /** @var WorkflowStub<TestWorkflow> $workflow */
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $otherWorkflow = WorkflowStub::load(WorkflowStub::make(TestBadConnectionWorkflow::class)->id());
 

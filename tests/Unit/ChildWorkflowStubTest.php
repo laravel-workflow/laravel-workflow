@@ -6,14 +6,14 @@ namespace Tests\Unit;
 
 use Tests\Fixtures\TestChildWorkflow;
 use Tests\Fixtures\TestParentWorkflow;
-use Tests\TestCase;
+use Tests\TestCaseRequiringDatabase;
 use Workflow\ChildWorkflowStub;
 use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Y;
 use Workflow\States\WorkflowPendingStatus;
 use Workflow\WorkflowStub;
 
-final class ChildWorkflowStubTest extends TestCase
+final class ChildWorkflowStubTest extends TestCaseRequiringDatabase
 {
     public function testStoresResult(): void
     {

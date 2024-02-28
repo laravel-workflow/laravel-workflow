@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use Tests\Fixtures\TestAwaitWithTimeoutWorkflow;
-use Tests\TestCase;
+use Tests\TestCaseRequiringWorkers;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\WorkflowStub;
 
-final class AwaitWithTimeoutWorkflowTest extends TestCase
+final class AwaitWithTimeoutWorkflowTest extends TestCaseRequiringWorkers
 {
     public function testCompleted(): void
     {

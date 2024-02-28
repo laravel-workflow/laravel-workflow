@@ -12,6 +12,7 @@ use Workflow\Serializers\Y;
 final class SerializeTest extends TestCase
 {
     /**
+     * @param mixed $data
      * @dataProvider dataProvider
      */
     public function testSerialize($data): void
@@ -37,6 +38,9 @@ final class SerializeTest extends TestCase
         }
     }
 
+    /**
+     * @return array<string, array<int|string, mixed>>
+     */
     public function dataProvider(): array
     {
         return [

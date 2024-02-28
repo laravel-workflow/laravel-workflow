@@ -7,11 +7,11 @@ namespace Tests\Feature;
 use Tests\Fixtures\TestActivity;
 use Tests\Fixtures\TestConcurrentWorkflow;
 use Tests\Fixtures\TestOtherActivity;
-use Tests\TestCase;
+use Tests\TestCaseRequiringWorkers;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\WorkflowStub;
 
-final class ConcurrentWorkflowTest extends TestCase
+final class ConcurrentWorkflowTest extends TestCaseRequiringWorkers
 {
     public function testCompleted(): void
     {

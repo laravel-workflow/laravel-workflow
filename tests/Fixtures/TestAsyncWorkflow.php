@@ -4,23 +4,26 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
+use Generator;
 use Illuminate\Contracts\Foundation\Application;
 use Workflow\ActivityStub;
 use Workflow\Workflow;
 
 final class TestAsyncWorkflow extends Workflow
 {
-    public function execute()
+    public function execute(): Generator
     {
-        $results = yield ActivityStub::async(static function (Application $app) {
-            assert($app->runningInConsole());
+        $results = yield ActivityStub::async(
+            static function (Application $app) {
+                assert($app->runningInConsole());
 
-            $otherResult = yield ActivityStub::make(TestOtherActivity::class, 'other');
+                $otherResult = yield ActivityStub::make(TestOtherActivity::class, 'other');
 
-            $result = yield ActivityStub::make(TestActivity::class);
+                $result = yield ActivityStub::make(TestActivity::class);
 
-            return [$otherResult, $result];
-        });
+                return [$otherResult, $result];
+            }
+        );
 
         $otherResult = $results[0];
         $result = $results[1];

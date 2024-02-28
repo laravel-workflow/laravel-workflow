@@ -14,10 +14,17 @@ use Workflow\Signal;
 
 trait Timers
 {
-    public static function timer($seconds): PromiseInterface
+    /**
+     * @return PromiseInterface<bool>
+     */
+    public static function timer(string|int $seconds): PromiseInterface
     {
+        if (self::$context === null) {
+            throw new \RuntimeException('ActivityStub::timer() must be called within a workflow');
+        }
+
         if (is_string($seconds)) {
-            $seconds = CarbonInterval::fromString($seconds)->totalSeconds;
+            $seconds = (int) CarbonInterval::fromString($seconds)->totalSeconds;
         }
 
         if ($seconds <= 0) {
@@ -29,9 +36,9 @@ trait Timers
             ->whereIndex(self::$context->index)
             ->first();
 
-        if ($log) {
+        if ($log !== null) {
             ++self::$context->index;
-            return resolve(Y::unserialize($log->result));
+            return resolve($log->result !== null ? Y::unserialize($log->result) : null);
         }
 
         $timer = self::$context->storedWorkflow->timers()
@@ -49,6 +56,10 @@ trait Timers
                         'stop_at' => $when,
                     ]);
             }
+        }
+
+        if ($timer === null) {
+            throw new \RuntimeException('A timer must have been created, but it was not found.');
         }
 
         $result = $timer->stop_at

@@ -1,0 +1,5 @@
+services:
+  -
+    class: \Workflow\PHPStan\WorkflowStubDynamicCallMethodExtension
+    tags:
+      - phpstan.broker.methodsClassReflectionExtension

@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 namespace Workflow\Traits;
 
+use Closure;
+use Generator;
 use Throwable;
 use Workflow\ActivityStub;
 
 trait Sagas
 {
+    /**
+     * @var Closure[]
+     */
     private array $compensations = [];
 
     private bool $parallelCompensation = false;
@@ -29,14 +34,17 @@ trait Sagas
         return $this;
     }
 
-    public function addCompensation(callable $compensation): self
+    public function addCompensation(Closure $compensation): self
     {
         $this->compensations[] = $compensation;
 
         return $this;
     }
 
-    public function compensate()
+    /**
+     * @return Generator<int, mixed, mixed, void>
+     */
+    public function compensate(): Generator
     {
         if ($this->parallelCompensation) {
             $compensations = [];
@@ -46,8 +54,12 @@ trait Sagas
             yield ActivityStub::all($compensations);
         } else {
             for (end($this->compensations); key($this->compensations) !== null; prev($this->compensations)) {
+                $currentCompensation = current($this->compensations);
+                if ($currentCompensation === false) {
+                    continue;
+                }
                 try {
-                    yield current($this->compensations)();
+                    yield $currentCompensation();
                 } catch (Throwable $th) {
                     if (! $this->continueWithError) {
                         throw $th;

@@ -18,6 +18,9 @@ final class EncodeTest extends TestCase
         $this->assertSame($bytes, $decoded);
     }
 
+    /**
+     * @return array<string, string[]>
+     */
     public function dataProvider(): array
     {
         return [

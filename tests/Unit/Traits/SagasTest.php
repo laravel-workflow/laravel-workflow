@@ -14,6 +14,7 @@ final class SagasTest extends TestCase
 {
     public function testCompensation(): void
     {
+        /** @var WorkflowStub<TestWorkflow> $workflow */
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
         $job = new ($storedWorkflow->class)($storedWorkflow, []);
@@ -24,6 +25,7 @@ final class SagasTest extends TestCase
     public function testCompensationWithError(): void
     {
         $this->expectException(Exception::class);
+        /** @var WorkflowStub<TestWorkflow> $workflow */
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
         $job = new ($storedWorkflow->class)($storedWorkflow, []);
@@ -33,6 +35,7 @@ final class SagasTest extends TestCase
 
     public function testCompensationContinueWithError(): void
     {
+        /** @var WorkflowStub<TestWorkflow> $workflow */
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
         $job = new ($storedWorkflow->class)($storedWorkflow, []);

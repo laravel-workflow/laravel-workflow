@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\Http;
 
 trait FetchesMonitorAuth
 {
+    /**
+     * @return mixed[]
+     */
     protected function auth(): array
     {
         return Cache::remember('workflows.monitor_auth', 3600, static function () {

@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use Tests\Fixtures\TestAwaitWorkflow;
-use Tests\TestCase;
+use Tests\TestCaseRequiringWorkers;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\WorkflowStub;
 
-final class AwaitWorkflowTest extends TestCase
+final class AwaitWorkflowTest extends TestCaseRequiringWorkers
 {
     public function testCompleted(): void
     {

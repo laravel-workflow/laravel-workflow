@@ -10,16 +10,31 @@ use React\Promise\PromiseInterface;
 use function React\Promise\resolve;
 use Workflow\Serializers\Y;
 
+/**
+ * @template TWorkflow of Workflow
+ */
 final class ChildWorkflowStub
 {
+    /**
+     * @param iterable<mixed> $promises
+     * @return PromiseInterface<mixed>
+     */
     public static function all(iterable $promises): PromiseInterface
     {
         return all([...$promises]);
     }
 
+    /**
+     * @param class-string<TWorkflow> $workflow
+     * @param mixed ...$arguments
+     * @return PromiseInterface<void>
+     */
     public static function make($workflow, ...$arguments): PromiseInterface
     {
         $context = WorkflowStub::getContext();
+        if ($context === null) {
+            throw new \RuntimeException('ActivityStub::make() must be called within a workflow');
+        }
 
         $log = $context->storedWorkflow->logs()
             ->whereIndex($context->index)
@@ -28,7 +43,7 @@ final class ChildWorkflowStub
         if (WorkflowStub::faked()) {
             $mocks = WorkflowStub::mocks();
 
-            if (! $log && array_key_exists($workflow, $mocks)) {
+            if ($log === null && array_key_exists($workflow, $mocks)) {
                 $result = $mocks[$workflow];
 
                 $log = $context->storedWorkflow->logs()
@@ -43,10 +58,10 @@ final class ChildWorkflowStub
             }
         }
 
-        if ($log) {
+        if ($log !== null) {
             ++$context->index;
             WorkflowStub::setContext($context);
-            return resolve(Y::unserialize($log->result));
+            return resolve($log->result !== null ? Y::unserialize($log->result) : null);
         }
 
         if (! $context->replaying) {
@@ -54,7 +69,9 @@ final class ChildWorkflowStub
                 ->wherePivot('parent_index', $context->index)
                 ->first();
 
-            $childWorkflow = $storedChildWorkflow ? $storedChildWorkflow->toWorkflow() : WorkflowStub::make($workflow);
+            $childWorkflow = $storedChildWorkflow !== null ? $storedChildWorkflow->toWorkflow() : WorkflowStub::make(
+                $workflow
+            );
 
             if ($childWorkflow->running() && ! $childWorkflow->created()) {
                 try {

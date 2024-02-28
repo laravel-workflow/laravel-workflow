@@ -7,10 +7,11 @@ namespace Tests\Unit\Middleware;
 use Exception;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
+use Mockery;
 use Mockery\MockInterface;
 use Tests\Fixtures\TestActivity;
 use Tests\Fixtures\TestWorkflow;
-use Tests\TestCase;
+use Tests\TestCaseRequiringDatabase;
 use Workflow\Events\ActivityCompleted;
 use Workflow\Events\ActivityFailed;
 use Workflow\Events\ActivityStarted;
@@ -21,7 +22,7 @@ use Workflow\States\WorkflowRunningStatus;
 use Workflow\States\WorkflowWaitingStatus;
 use Workflow\WorkflowStub;
 
-final class WorkflowMiddlewareTest extends TestCase
+final class WorkflowMiddlewareTest extends TestCaseRequiringDatabase
 {
     public function testMiddleware(): void
     {
@@ -36,7 +37,7 @@ final class WorkflowMiddlewareTest extends TestCase
             'status' => WorkflowWaitingStatus::class,
         ]);
 
-        $activity = $this->mock(TestActivity::class);
+        $activity = Mockery::mock(TestActivity::class);
         $activity->index = 0;
         $activity->now = now()
             ->toDateTimeString();
@@ -66,7 +67,7 @@ final class WorkflowMiddlewareTest extends TestCase
             'status' => WorkflowCompletedStatus::class,
         ]);
 
-        $activity = $this->mock(TestActivity::class);
+        $activity = Mockery::mock(TestActivity::class);
         $activity->index = 0;
         $activity->now = now()
             ->toDateTimeString();
@@ -97,7 +98,7 @@ final class WorkflowMiddlewareTest extends TestCase
             'status' => WorkflowRunningStatus::class,
         ]);
 
-        $activity = $this->mock(TestActivity::class, static function (MockInterface $mock) {
+        $activity = Mockery::mock(TestActivity::class, static function (MockInterface $mock) {
             $mock->shouldReceive('release')
                 ->once();
         });
@@ -131,7 +132,7 @@ final class WorkflowMiddlewareTest extends TestCase
             'status' => WorkflowWaitingStatus::class,
         ]);
 
-        $activity = $this->mock(TestActivity::class);
+        $activity = Mockery::mock(TestActivity::class);
         $activity->index = 0;
         $activity->now = now()
             ->toDateTimeString();

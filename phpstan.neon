@@ -1,4 +1,21 @@
+includes:
+    - src/PHPStan/extension.neon
 parameters:
-    level: 0
+    strictRules:
+        strictCalls: false
+        noVariableVariables: false
+    parallel:
+        maximumNumberOfProcesses: 8
+    tmpDir: .phpstan
+    paths:
+        - src/
+        - tests/
+    databaseMigrationsPath:
+        - src/migrations/
+    editorUrl: 'phpstorm://open?file=%%file%%&line=%%line%%'
+    level: 8
     bootstrapFiles:
         - classAliases.php
+    excludePaths:
+        - ./src/migrations/*.php
+

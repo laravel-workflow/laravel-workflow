@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace Tests\Fixtures;
 
 use Exception;
+use Generator;
 use Workflow\ActivityStub;
 use Workflow\Workflow;
 
 final class TestFailingWorkflow extends Workflow
 {
-    public function execute($shouldFail = false)
+    public function execute(bool $shouldFail = false): Generator
     {
         $otherResult = yield ActivityStub::make(TestOtherActivity::class, 'other');
 

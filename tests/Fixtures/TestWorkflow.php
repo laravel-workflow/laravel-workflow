@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
+use Generator;
 use Illuminate\Contracts\Foundation\Application;
 use Workflow\ActivityStub;
 use Workflow\QueryMethod;
@@ -31,7 +32,7 @@ class TestWorkflow extends Workflow
         return $this->canceled;
     }
 
-    public function execute(Application $app, $shouldAssert = false)
+    public function execute(Application $app, bool $shouldAssert = false): Generator
     {
         assert($app->runningInConsole());
 
@@ -42,7 +43,7 @@ class TestWorkflow extends Workflow
         $otherResult = yield ActivityStub::make(TestOtherActivity::class, 'other');
 
         if ($shouldAssert) {
-            assert(! $this->canceled);
+            assert(! $this->canceled); // @phpstan-ignore-line
         }
 
         yield WorkflowStub::await(fn (): bool => $this->canceled);

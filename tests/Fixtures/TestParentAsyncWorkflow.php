@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
+use Generator;
 use Workflow\ActivityStub;
 use Workflow\ChildWorkflowStub;
 use Workflow\Workflow;
@@ -14,7 +15,7 @@ class TestParentAsyncWorkflow extends Workflow
 
     public $queue = 'default';
 
-    public function execute()
+    public function execute(): Generator
     {
         $results = yield ActivityStub::async(static function () {
             $otherResult = yield ChildWorkflowStub::make(TestChildWorkflow::class);

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Fixtures;
 
 use Exception;
+use Generator;
 use Workflow\ActivityStub;
 use Workflow\Workflow;
 use Workflow\WorkflowStub;
@@ -15,7 +16,7 @@ class TestSideEffectWorkflow extends Workflow
 
     public $queue = 'default';
 
-    public function execute()
+    public function execute(): Generator
     {
         $sideEffect = yield WorkflowStub::sideEffect(static fn () => random_int(PHP_INT_MIN, PHP_INT_MAX));
 
