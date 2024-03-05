@@ -69,7 +69,17 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
         $this->afterCommit = true;
     }
 
-    public function query($method)
+	public static function make() : WorkflowStub
+	{
+		return WorkflowStub::make(static::class);
+	}
+
+	public static function makeChild(...$args) : PromiseInterface
+	{
+		return ChildWorkflowStub::make(static::class, ...$args);
+	}
+
+	public function query($method)
     {
         $this->replaying = true;
         $this->handle();
