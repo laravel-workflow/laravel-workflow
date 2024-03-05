@@ -79,6 +79,13 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
 		return ChildWorkflowStub::make(static::class, ...$args);
 	}
 
+	public static function start(...$args) : WorkflowStub
+	{
+		$workflow = self::make();
+		$workflow->start(...$args);
+		return $workflow;
+	}
+
 	public function query($method)
     {
         $this->replaying = true;
