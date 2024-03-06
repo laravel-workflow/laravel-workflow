@@ -63,11 +63,10 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
         $this->afterCommit = true;
     }
 
-    public static function make(...$args) : PromiseInterface
+    public static function make(...$args): PromiseInterface
     {
         return ActivityStub::make(static::class, ...$args);
     }
-
 
     public function backoff()
     {
