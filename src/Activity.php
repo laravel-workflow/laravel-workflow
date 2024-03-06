@@ -16,6 +16,7 @@ use Illuminate\Routing\RouteDependencyResolverTrait;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Cache;
 use LimitIterator;
+use React\Promise\PromiseInterface;
 use SplFileObject;
 use Throwable;
 use Workflow\Middleware\WithoutOverlappingMiddleware;
@@ -60,6 +61,11 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
         }
 
         $this->afterCommit = true;
+    }
+
+    public static function make(...$args): PromiseInterface
+    {
+        return ActivityStub::make(static::class, ...$args);
     }
 
     public function backoff()
