@@ -226,12 +226,11 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
             );
 
             if ($parentWorkflow) {
-
                 try {
                     $parentWorkflow->toWorkflow()
                         ->next($parentWorkflow->pivot->parent_index, $this->now, $this->storedWorkflow->class, $return);
                 } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
-                    //Do nothing
+                    return;
                 }
             }
         }
