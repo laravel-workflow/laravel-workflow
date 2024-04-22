@@ -6,6 +6,7 @@ namespace Tests\Unit;
 
 use Exception;
 use Illuminate\Support\Carbon;
+use PHPUnit\Util\Test;
 use Tests\Fixtures\TestAwaitWorkflow;
 use Tests\Fixtures\TestBadConnectionWorkflow;
 use Tests\Fixtures\TestWorkflow;
@@ -207,4 +208,23 @@ final class WorkflowStubTest extends TestCase
         $this->assertSame('redis', WorkflowStub::connection());
         $this->assertSame('default', WorkflowStub::queue());
     }
+
+
+    public function testTags()
+    {
+        $tags = ['one', 'two'];
+
+        $workflow = WorkflowStub::make(TestWorkflow::class)
+            ->setTags('one', 'two');
+
+        $workflow->cancel();
+        $this->assertSame($tags, $workflow->tags());
+
+        $workflow = WorkflowStub::make(TestWorkflow::class)
+            ->setTags($tags);
+
+        $workflow->cancel();
+        $this->assertSame($tags, $workflow->tags());
+    }
+
 }
