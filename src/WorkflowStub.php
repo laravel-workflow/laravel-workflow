@@ -144,6 +144,11 @@ final class WorkflowStub
         return $this->storedWorkflow->logs;
     }
 
+    public function tags()
+    {
+        return $this->storedWorkflow->tags;
+    }
+
     public function exceptions()
     {
         return $this->storedWorkflow->exceptions;
@@ -176,6 +181,12 @@ final class WorkflowStub
     public function running(): bool
     {
         return ! in_array($this->status(), [WorkflowCompletedStatus::class, WorkflowFailedStatus::class], true);
+    }
+
+    public function setTags(...$tags) : static
+    {
+        $this->storedWorkflow->tags = is_array($tags[0]) ? $tags[0] : $tags;
+        return $this;
     }
 
     public function status(): string|bool

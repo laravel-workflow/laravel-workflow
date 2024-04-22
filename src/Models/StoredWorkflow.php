@@ -32,6 +32,7 @@ class StoredWorkflow extends Model
      */
     protected $casts = [
         'status' => WorkflowStatus::class,
+        'tags'   => 'array'
     ];
 
     public function toWorkflow()
