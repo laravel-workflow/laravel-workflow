@@ -6,7 +6,6 @@ namespace Tests\Unit;
 
 use Exception;
 use Illuminate\Support\Carbon;
-use PHPUnit\Util\Test;
 use Tests\Fixtures\TestAwaitWorkflow;
 use Tests\Fixtures\TestBadConnectionWorkflow;
 use Tests\Fixtures\TestWorkflow;
@@ -209,7 +208,6 @@ final class WorkflowStubTest extends TestCase
         $this->assertSame('default', WorkflowStub::queue());
     }
 
-
     public function testTags()
     {
         $tags = ['one', 'two'];
@@ -226,5 +224,4 @@ final class WorkflowStubTest extends TestCase
         $workflow->cancel();
         $this->assertSame($tags, $workflow->tags());
     }
-
 }
