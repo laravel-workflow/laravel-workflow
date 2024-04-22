@@ -20,8 +20,6 @@ final class CreateWorkflowsTable extends Migration
                 ->nullable();
             $blueprint->text('output')
                 ->nullable();
-            $blueprint->json('tags')
-                ->nullable();
             $blueprint->string('status')
                 ->default('pending')
                 ->index();
