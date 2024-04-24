@@ -4,28 +4,17 @@ declare(strict_types=1);
 
 namespace Workflow\Middleware;
 
-use Exception;
-use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use LimitIterator;
 use SplFileObject;
 use Workflow\Events\ActivityCompleted;
 use Workflow\Events\ActivityFailed;
 use Workflow\Events\ActivityStarted;
-use Workflow\Serializers\Y;
 
 final class WorkflowMiddleware
 {
-    private $active = true;
-
     public function handle($job, $next): void
     {
-        Queue::stopping(fn () => $this->active ? $job->storedWorkflow->exceptions()
-            ->create([
-                'class' => $job::class,
-                'exception' => Y::serialize(new Exception('Activity timed out.')),
-            ]) : null);
-
         $uuid = (string) Str::uuid();
 
         ActivityStarted::dispatch(
@@ -71,8 +60,6 @@ final class WorkflowMiddleware
             ]), now()
                 ->format('Y-m-d\TH:i:s.u\Z'));
             throw $throwable;
-        } finally {
-            $this->active = false;
         }
     }
 }
