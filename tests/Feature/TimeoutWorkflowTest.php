@@ -18,6 +18,6 @@ final class TimeoutWorkflowTest extends TestCase
 
         while ($workflow->running());
 
-        $this->assertSame(2, $workflow->exceptions()->count());
+        $this->assertSame(1, $workflow->exceptions()->count());
     }
 }
