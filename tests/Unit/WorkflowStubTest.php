@@ -14,7 +14,6 @@ use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Y;
 use Workflow\Signal;
 use Workflow\States\WorkflowCompletedStatus;
-use Workflow\States\WorkflowFailedStatus;
 use Workflow\States\WorkflowPendingStatus;
 use Workflow\WorkflowStub;
 
