@@ -286,11 +286,7 @@ final class WorkflowStub
             );
         }
 
-        try {
-            $this->storedWorkflow->status->transitionTo(WorkflowPendingStatus::class);
-        } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
-            // already running
-        }
+        $this->storedWorkflow->status->transitionTo(WorkflowPendingStatus::class);
 
         $dispatch = static::faked() ? 'dispatchSync' : 'dispatch';
 

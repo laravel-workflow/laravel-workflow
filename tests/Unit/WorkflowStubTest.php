@@ -79,23 +79,6 @@ final class WorkflowStubTest extends TestCase
         $this->assertSame(1, $workflow->logs()->count());
     }
 
-    public function testCompletePending(): void
-    {
-        Carbon::setTestNow('2022-01-01');
-
-        $workflow = WorkflowStub::make(TestAwaitWorkflow::class);
-        $workflow->start();
-        WorkflowStub::getContext()->storedWorkflow->status->transitionTo(WorkflowPendingStatus::class);
-        $workflow->cancel();
-        $workflow->fail(new Exception('resume'));
-        $workflow->resume();
-        $this->assertSame('2022-01-01 00:00:00', WorkflowStub::now()->toDateTimeString());
-        $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
-        $this->assertSame('workflow', $workflow->output());
-        $this->assertSame(1, $workflow->exceptions()->count());
-        $this->assertSame(1, $workflow->logs()->count());
-    }
-
     public function testAwait(): void
     {
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
