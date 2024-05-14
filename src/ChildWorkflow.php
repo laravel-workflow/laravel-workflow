@@ -4,10 +4,21 @@ declare(strict_types=1);
 
 namespace Workflow;
 
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeEncrypted;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 use Workflow\Models\StoredWorkflow;
 
-class ChildWorkflow extends Activity
+final class ChildWorkflow implements ShouldBeEncrypted, ShouldQueue
 {
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
+
     public function __construct(
         public int $index,
         public string $now,
@@ -38,7 +49,5 @@ class ChildWorkflow extends Activity
                 $this->release();
             }
         }
-
-        return $this->return;
     }
 }

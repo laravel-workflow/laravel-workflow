@@ -24,13 +24,16 @@ final class WorkflowTest extends TestCase
     {
         $exception = new \Exception('test');
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
+        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
+        $storedWorkflow->arguments = Y::serialize([]);
+        $storedWorkflow->save();
         $activity = new Exception(0, now()->toDateTimeString(), StoredWorkflow::findOrFail(
             $workflow->id()
         ), $exception);
 
-        $result = $activity->handle();
+        $activity->handle();
 
-        $this->assertSame($exception, $result);
+        $this->assertSame(Exception::class, $storedWorkflow->logs()->first()->class);
     }
 
     public function testExceptionAlreadyLogged(): void
@@ -38,6 +41,8 @@ final class WorkflowTest extends TestCase
         $exception = new \Exception('test');
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
+        $storedWorkflow->arguments = Y::serialize([]);
+        $storedWorkflow->save();
         $activity = new Exception(0, now()->toDateTimeString(), StoredWorkflow::findOrFail(
             $workflow->id()
         ), $exception);
@@ -50,9 +55,9 @@ final class WorkflowTest extends TestCase
                 'result' => Y::serialize($exception),
             ]);
 
-        $result = $activity->handle();
+        $activity->handle();
 
-        $this->assertNull($result);
+        $this->assertSame(1, $storedWorkflow->logs()->count());
     }
 
     public function testParent(): void

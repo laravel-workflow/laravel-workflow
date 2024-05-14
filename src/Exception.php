@@ -4,10 +4,21 @@ declare(strict_types=1);
 
 namespace Workflow;
 
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeEncrypted;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 use Workflow\Models\StoredWorkflow;
 
-class Exception extends Activity
+final class Exception implements ShouldBeEncrypted, ShouldQueue
 {
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
+
     public function __construct(
         public int $index,
         public string $now,
@@ -24,10 +35,18 @@ class Exception extends Activity
 
     public function handle()
     {
-        if ($this->storedWorkflow->logs()->whereIndex($this->index)->exists()) {
-            return;
-        }
+        $workflow = $this->storedWorkflow->toWorkflow();
 
-        return $this->exception;
+        try {
+            if ($this->storedWorkflow->logs()->whereIndex($this->index)->exists()) {
+                $workflow->resume();
+            } else {
+                $workflow->next($this->index, $this->now, self::class, $this->exception);
+            }
+        } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
+            if ($workflow->running()) {
+                $this->release();
+            }
+        }
     }
 }
