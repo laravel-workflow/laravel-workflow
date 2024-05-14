@@ -19,6 +19,12 @@ final class ChildWorkflow implements ShouldBeEncrypted, ShouldQueue
     use Queueable;
     use SerializesModels;
 
+    public $tries = PHP_INT_MAX;
+
+    public $maxExceptions = PHP_INT_MAX;
+
+    public $timeout = 0;
+
     public function __construct(
         public int $index,
         public string $now,
