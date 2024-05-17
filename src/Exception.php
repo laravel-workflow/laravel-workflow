@@ -10,6 +10,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Workflow\Middleware\WithoutOverlappingMiddleware;
 use Workflow\Models\StoredWorkflow;
 
 final class Exception implements ShouldBeEncrypted, ShouldQueue
