@@ -56,4 +56,11 @@ final class ChildWorkflow implements ShouldBeEncrypted, ShouldQueue
             }
         }
     }
+
+    public function middleware()
+    {
+        return [
+            new WithoutOverlappingMiddleware($this->parentWorkflow->id, WithoutOverlappingMiddleware::ACTIVITY),
+        ];
+    }
 }
