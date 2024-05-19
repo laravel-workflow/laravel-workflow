@@ -14,14 +14,14 @@ use Tests\TestCase;
 use Workflow\Events\ActivityCompleted;
 use Workflow\Events\ActivityFailed;
 use Workflow\Events\ActivityStarted;
-use Workflow\Middleware\WorkflowMiddleware;
+use Workflow\Middleware\ActivityMiddleware;
 use Workflow\Models\StoredWorkflow;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowRunningStatus;
 use Workflow\States\WorkflowWaitingStatus;
 use Workflow\WorkflowStub;
 
-final class WorkflowMiddlewareTest extends TestCase
+final class ActivityMiddlewareTest extends TestCase
 {
     public function testMiddleware(): void
     {
@@ -42,7 +42,7 @@ final class WorkflowMiddlewareTest extends TestCase
             ->toDateTimeString();
         $activity->storedWorkflow = $storedWorkflow;
 
-        $middleware = new WorkflowMiddleware();
+        $middleware = new ActivityMiddleware();
 
         $middleware->handle($activity, static function ($job) {
             return true;
@@ -72,7 +72,7 @@ final class WorkflowMiddlewareTest extends TestCase
             ->toDateTimeString();
         $activity->storedWorkflow = $storedWorkflow;
 
-        $middleware = new WorkflowMiddleware();
+        $middleware = new ActivityMiddleware();
 
         $middleware->handle($activity, static function ($job) {
             return true;
@@ -106,7 +106,7 @@ final class WorkflowMiddlewareTest extends TestCase
             ->toDateTimeString();
         $activity->storedWorkflow = $storedWorkflow;
 
-        $middleware = new WorkflowMiddleware();
+        $middleware = new ActivityMiddleware();
 
         $middleware->handle($activity, static function ($job) {
             return true;
@@ -137,7 +137,7 @@ final class WorkflowMiddlewareTest extends TestCase
             ->toDateTimeString();
         $activity->storedWorkflow = $storedWorkflow;
 
-        $middleware = new WorkflowMiddleware();
+        $middleware = new ActivityMiddleware();
 
         try {
             $middleware->handle($activity, static function ($job) {

@@ -226,8 +226,13 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
             );
 
             if ($parentWorkflow) {
-                $parentWorkflow->toWorkflow()
-                    ->next($parentWorkflow->pivot->parent_index, $this->now, $this->storedWorkflow->class, $return);
+                ChildWorkflow::dispatch(
+                    $parentWorkflow->pivot->parent_index,
+                    $this->now,
+                    $this->storedWorkflow,
+                    $return,
+                    $parentWorkflow
+                );
             }
         }
     }

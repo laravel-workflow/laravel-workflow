@@ -11,7 +11,7 @@ use Workflow\Events\ActivityCompleted;
 use Workflow\Events\ActivityFailed;
 use Workflow\Events\ActivityStarted;
 
-final class WorkflowMiddleware
+final class ActivityMiddleware
 {
     public function handle($job, $next): void
     {
@@ -33,6 +33,7 @@ final class WorkflowMiddleware
             try {
                 $job->storedWorkflow->toWorkflow()
                     ->next($job->index, $job->now, $job::class, $result);
+
                 ActivityCompleted::dispatch(
                     $job->storedWorkflow->id,
                     $uuid,
@@ -59,6 +60,7 @@ final class WorkflowMiddleware
                 'snippet' => array_slice(iterator_to_array($iterator), 0, 7),
             ]), now()
                 ->format('Y-m-d\TH:i:s.u\Z'));
+
             throw $throwable;
         }
     }

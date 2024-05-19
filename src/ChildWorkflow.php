@@ -13,7 +13,7 @@ use Illuminate\Queue\SerializesModels;
 use Workflow\Middleware\WithoutOverlappingMiddleware;
 use Workflow\Models\StoredWorkflow;
 
-final class Exception implements ShouldBeEncrypted, ShouldQueue
+final class ChildWorkflow implements ShouldBeEncrypted, ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
@@ -30,7 +30,8 @@ final class Exception implements ShouldBeEncrypted, ShouldQueue
         public int $index,
         public string $now,
         public StoredWorkflow $storedWorkflow,
-        public $exception,
+        public $return,
+        public StoredWorkflow $parentWorkflow,
         $connection = null,
         $queue = null
     ) {
@@ -42,13 +43,13 @@ final class Exception implements ShouldBeEncrypted, ShouldQueue
 
     public function handle()
     {
-        $workflow = $this->storedWorkflow->toWorkflow();
+        $workflow = $this->parentWorkflow->toWorkflow();
 
         try {
-            if ($this->storedWorkflow->logs()->whereIndex($this->index)->exists()) {
+            if ($this->parentWorkflow->logs()->whereIndex($this->index)->exists()) {
                 $workflow->resume();
             } else {
-                $workflow->next($this->index, $this->now, self::class, $this->exception);
+                $workflow->next($this->index, $this->now, $this->storedWorkflow->class, $this->return);
             }
         } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
             if ($workflow->running()) {
@@ -60,7 +61,7 @@ final class Exception implements ShouldBeEncrypted, ShouldQueue
     public function middleware()
     {
         return [
-            new WithoutOverlappingMiddleware($this->storedWorkflow->id, WithoutOverlappingMiddleware::ACTIVITY),
+            new WithoutOverlappingMiddleware($this->parentWorkflow->id, WithoutOverlappingMiddleware::ACTIVITY),
         ];
     }
 }
