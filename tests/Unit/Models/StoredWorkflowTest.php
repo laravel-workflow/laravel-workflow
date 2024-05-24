@@ -41,10 +41,20 @@ final class StoredWorkflowTest extends TestCase
                 'stop_at' => now(),
             ]);
 
+        $workflow->children()
+            ->create([
+                'class' => 'class',
+                'status' => 'completed',
+            ], [
+                'parent_index' => 0,
+                'parent_now' => now(),
+            ]);
+
         $this->assertSame(1, $workflow->exceptions()->count());
         $this->assertSame(1, $workflow->logs()->count());
         $this->assertSame(1, $workflow->signals()->count());
         $this->assertSame(1, $workflow->timers()->count());
+        $this->assertSame(1, $workflow->children()->count());
 
         Carbon::setTestNow(now()->addMonth()->addSecond());
 
@@ -58,5 +68,6 @@ final class StoredWorkflowTest extends TestCase
         $this->assertSame(0, $workflow->logs()->count());
         $this->assertSame(0, $workflow->signals()->count());
         $this->assertSame(0, $workflow->timers()->count());
+        $this->assertSame(0, $workflow->children()->count());
     }
 }
