@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Models;
 
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 use Workflow\Models\StoredWorkflow;
 
@@ -13,6 +14,7 @@ final class StoredWorkflowTest extends TestCase
     {
         $workflow = StoredWorkflow::create([
             'class' => 'class',
+            'status' => 'completed',
         ]);
 
         $workflow->exceptions()
@@ -43,5 +45,18 @@ final class StoredWorkflowTest extends TestCase
         $this->assertSame(1, $workflow->logs()->count());
         $this->assertSame(1, $workflow->signals()->count());
         $this->assertSame(1, $workflow->timers()->count());
+
+        Carbon::setTestNow(now()->addMonth()->addSecond());
+
+        $this->artisan('model:prune', [
+            '--model' => 'Workflow\Models\StoredWorkflow',
+        ])
+            ->doesntExpectOutputToContain('No prunable models found.')
+            ->assertExitCode(0);
+
+        $this->assertSame(0, $workflow->exceptions()->count());
+        $this->assertSame(0, $workflow->logs()->count());
+        $this->assertSame(0, $workflow->signals()->count());
+        $this->assertSame(0, $workflow->timers()->count());
     }
 }
