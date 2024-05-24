@@ -19,6 +19,8 @@ return [
 
     'workflow_relationships_table' => 'workflow_relationships',
 
+    'prune_age' => '1 month',
+
     'monitor' => env('WORKFLOW_MONITOR', false),
 
     'monitor_url' => env('WORKFLOW_MONITOR_URL'),
