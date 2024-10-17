@@ -44,22 +44,26 @@ class StoredWorkflow extends Model
 
     public function logs(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(config('workflows.stored_workflow_log_model', StoredWorkflowLog::class));
+        return $this->hasMany(config('workflows.stored_workflow_log_model', StoredWorkflowLog::class))
+            ->orderBy('id');
     }
 
     public function signals(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(config('workflows.stored_workflow_signal_model', StoredWorkflowSignal::class));
+        return $this->hasMany(config('workflows.stored_workflow_signal_model', StoredWorkflowSignal::class))
+            ->orderBy('id');
     }
 
     public function timers(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(config('workflows.stored_workflow_timer_model', StoredWorkflowTimer::class));
+        return $this->hasMany(config('workflows.stored_workflow_timer_model', StoredWorkflowTimer::class))
+            ->orderBy('id');
     }
 
     public function exceptions(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(config('workflows.stored_workflow_exception_model', StoredWorkflowException::class));
+        return $this->hasMany(config('workflows.stored_workflow_exception_model', StoredWorkflowException::class))
+            ->orderBy('id');
     }
 
     public function parents(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
