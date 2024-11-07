@@ -4,24 +4,25 @@ declare(strict_types=1);
 
 namespace Workflow;
 
-use BadMethodCallException;
-use Illuminate\Bus\Queueable;
-use Illuminate\Container\Container;
-use Illuminate\Contracts\Queue\ShouldBeEncrypted;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Routing\RouteDependencyResolverTrait;
-use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Cache;
+use Throwable;
 use LimitIterator;
 use SplFileObject;
-use Throwable;
-use Workflow\Middleware\ActivityMiddleware;
-use Workflow\Middleware\WithoutOverlappingMiddleware;
-use Workflow\Models\StoredWorkflow;
+use BadMethodCallException;
 use Workflow\Serializers\Y;
+use Illuminate\Bus\Queueable;
+use Illuminate\Container\Container;
+use Illuminate\Support\Facades\App;
+use Workflow\Models\StoredWorkflow;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Workflow\Middleware\ActivityMiddleware;
+use Workflow\Exceptions\NonRetryableException;
+use Illuminate\Contracts\Queue\ShouldBeEncrypted;
+use Illuminate\Routing\RouteDependencyResolverTrait;
+use Workflow\Middleware\WithoutOverlappingMiddleware;
 
 class Activity implements ShouldBeEncrypted, ShouldQueue
 {
@@ -93,6 +94,10 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
                     'exception' => Y::serialize($throwable),
                 ]);
 
+            if ($throwable instanceof NonRetryableException) {
+                $this->fail($throwable);
+            }
+
             throw $throwable;
         }
     }
@@ -124,7 +129,7 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
             'line' => $throwable->getLine(),
             'file' => $throwable->getFile(),
             'trace' => collect($throwable->getTrace())
-                ->filter(static fn ($trace) => Y::serializable($trace))
+                ->filter(static fn($trace) => Y::serializable($trace))
                 ->toArray(),
             'snippet' => array_slice(iterator_to_array($iterator), 0, 7),
         ];
