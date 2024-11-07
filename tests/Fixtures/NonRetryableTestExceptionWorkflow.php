@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
-use Workflow\Workflow;
 use Workflow\ActivityStub;
-use Tests\Fixtures\TestActivity;
-use Tests\Fixtures\NonRetryableTestExceptionActivity;
+use Workflow\Workflow;
 
 final class NonRetryableTestExceptionWorkflow extends Workflow
 {
