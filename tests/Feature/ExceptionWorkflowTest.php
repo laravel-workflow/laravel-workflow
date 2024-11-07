@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use Tests\Fixtures\NonRetryableTestExceptionActivity;
 use Tests\Fixtures\NonRetryableTestExceptionWorkflow;
 use Tests\Fixtures\TestExceptionWorkflow;
 use Tests\TestCase;
