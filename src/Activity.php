@@ -4,25 +4,25 @@ declare(strict_types=1);
 
 namespace Workflow;
 
-use Throwable;
-use LimitIterator;
-use SplFileObject;
 use BadMethodCallException;
-use Workflow\Serializers\Y;
 use Illuminate\Bus\Queueable;
 use Illuminate\Container\Container;
-use Illuminate\Support\Facades\App;
-use Workflow\Models\StoredWorkflow;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Workflow\Middleware\ActivityMiddleware;
-use Workflow\Exceptions\NonRetryableException;
-use Illuminate\Contracts\Queue\ShouldBeEncrypted;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 use Illuminate\Routing\RouteDependencyResolverTrait;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Cache;
+use LimitIterator;
+use SplFileObject;
+use Throwable;
+use Workflow\Exceptions\NonRetryableException;
+use Workflow\Middleware\ActivityMiddleware;
 use Workflow\Middleware\WithoutOverlappingMiddleware;
+use Workflow\Models\StoredWorkflow;
+use Workflow\Serializers\Y;
 
 class Activity implements ShouldBeEncrypted, ShouldQueue
 {
@@ -129,7 +129,7 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
             'line' => $throwable->getLine(),
             'file' => $throwable->getFile(),
             'trace' => collect($throwable->getTrace())
-                ->filter(static fn($trace) => Y::serializable($trace))
+                ->filter(static fn ($trace) => Y::serializable($trace))
                 ->toArray(),
             'snippet' => array_slice(iterator_to_array($iterator), 0, 7),
         ];

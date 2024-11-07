@@ -13,6 +13,6 @@ final class NonRetryableTestExceptionWorkflow extends Workflow
     {
         yield ActivityStub::make(NonRetryableTestExceptionActivity::class);
 
-        return "Workflow completes";
+        return 'Workflow completes';
     }
 }

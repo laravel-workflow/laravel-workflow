@@ -11,6 +11,6 @@ final class NonRetryableTestExceptionActivity extends Activity
 {
     public function execute()
     {
-        throw new NonRetryableException("This is a non-retryable error");
+        throw new NonRetryableException('This is a non-retryable error');
     }
 }
