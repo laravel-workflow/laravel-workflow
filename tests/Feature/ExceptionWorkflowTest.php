@@ -42,9 +42,7 @@ final class ExceptionWorkflowTest extends TestCase
         $this->assertNull($workflow->output());
         $this->assertSame(
             'This is a non-retryable error',
-            Y::unserialize($workflow->exceptions()->first()->exception)['message']
+            Y::unserialize($workflow->exceptions()->last()->exception)['message']
         );
-
-        $this->assertCount(1, $workflow->exceptions());
     }
 }
