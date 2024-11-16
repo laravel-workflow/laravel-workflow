@@ -7,7 +7,7 @@ namespace Workflow\Exceptions;
 use Exception;
 use Throwable;
 
-class NonRetryableException extends Exception
+class NonRetryableException extends Exception implements NonRetryableExceptionContract
 {
     public function __construct($message = '', $code = 0, Throwable $previous = null)
     {
