@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Cache;
 use LimitIterator;
 use SplFileObject;
 use Throwable;
+use Workflow\Exceptions\NonRetryableExceptionContract;
 use Workflow\Middleware\ActivityMiddleware;
 use Workflow\Middleware\WithoutOverlappingMiddleware;
 use Workflow\Models\StoredWorkflow;
@@ -92,6 +93,10 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
                     'class' => $this::class,
                     'exception' => Y::serialize($throwable),
                 ]);
+
+            if ($throwable instanceof NonRetryableExceptionContract) {
+                $this->fail($throwable);
+            }
 
             throw $throwable;
         }
