@@ -7,6 +7,8 @@ namespace Tests\Unit\Serializers;
 use Tests\Fixtures\TestEnum;
 use Tests\TestCase;
 use Throwable;
+use Workflow\Serializers\Base64;
+use Workflow\Serializers\Serializer;
 use Workflow\Serializers\Y;
 
 final class SerializeTest extends TestCase
@@ -14,27 +16,19 @@ final class SerializeTest extends TestCase
     /**
      * @dataProvider dataProvider
      */
-    public function testSerialize($data): void
+    public function testYSerialize($data): void
     {
-        $unserialized = Y::unserialize(Y::serialize($data));
-        if (is_object($data)) {
-            if ($data instanceof Throwable) {
-                $this->assertEquals([
-                    'class' => get_class($data),
-                    'message' => $data->getMessage(),
-                    'code' => $data->getCode(),
-                    'line' => $data->getLine(),
-                    'file' => $data->getFile(),
-                    'trace' => collect($data->getTrace())
-                        ->filter(static fn ($trace) => Y::serializable($trace))
-                        ->toArray(),
-                ], $unserialized);
-            } else {
-                $this->assertEqualsCanonicalizing($data, $unserialized);
-            }
-        } else {
-            $this->assertSame($data, $unserialized);
-        }
+        config('workflow_serializer', Y::class);
+        $this->testSerialize($data);
+    }
+
+    /**
+     * @dataProvider dataProvider
+     */
+    public function testBase64Serialize($data): void
+    {
+        config('workflow_serializer', Base64::class);
+        $this->testSerialize($data);
     }
 
     public function dataProvider(): array
@@ -67,5 +61,28 @@ final class SerializeTest extends TestCase
             'string foo' => ['foo'],
             'string bytes' => [random_bytes(4096)],
         ];
+    }
+
+    private function testSerialize($data): void
+    {
+        $unserialized = Serializer::unserialize(Serializer::serialize($data));
+        if (is_object($data)) {
+            if ($data instanceof Throwable) {
+                $this->assertEquals([
+                    'class' => get_class($data),
+                    'message' => $data->getMessage(),
+                    'code' => $data->getCode(),
+                    'line' => $data->getLine(),
+                    'file' => $data->getFile(),
+                    'trace' => collect($data->getTrace())
+                        ->filter(static fn ($trace) => Serializer::serializable($trace))
+                        ->toArray(),
+                ], $unserialized);
+            } else {
+                $this->assertEqualsCanonicalizing($data, $unserialized);
+            }
+        } else {
+            $this->assertSame($data, $unserialized);
+        }
     }
 }

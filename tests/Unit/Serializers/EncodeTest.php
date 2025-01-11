@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tests\Unit\Serializers;
 
 use Tests\TestCase;
+use Workflow\Serializers\Base64;
+use Workflow\Serializers\Serializer;
 use Workflow\Serializers\Y;
 
 final class EncodeTest extends TestCase
@@ -12,9 +14,20 @@ final class EncodeTest extends TestCase
     /**
      * @dataProvider dataProvider
      */
-    public function testEncode(string $bytes): void
+    public function testYEncode(string $bytes): void
     {
-        $decoded = Y::decode(Y::encode($bytes));
+        config('workflow_serializer', Y::class);
+        $decoded = Serializer::decode(Serializer::encode($bytes));
+        $this->assertSame($bytes, $decoded);
+    }
+
+    /**
+     * @dataProvider dataProvider
+     */
+    public function testBase64Encode(string $bytes): void
+    {
+        config('workflow_serializer', Base64::class);
+        $decoded = Serializer::decode(Serializer::encode($bytes));
         $this->assertSame($bytes, $decoded);
     }
 
@@ -25,15 +38,15 @@ final class EncodeTest extends TestCase
             'foo' => ['foo'],
             'bytes' => [random_bytes(4096)],
             'bytes x2' => [random_bytes(8192)],
-            'null' => ['\x00'],
-            'null x2' => ['\x00\x00'],
-            'escape x2' => ['\x01\01'],
-            'null escape' => ['\x00\x01'],
-            'escape next' => ['\x01\x02'],
-            'null escape x2' => ['\x00\x01\x00\x01'],
-            'escape next x2' => ['\x01\x02\x01\x02'],
-            'escape null escape next' => ['\x01\x00\x01\x02'],
-            'next escape null escape' => ['\x02\x01\x00\x01'],
+            'null' => [chr(0)],
+            'null x2' => [chr(0) . chr(0)],
+            'escape x2' => [chr(1) . chr(1)],
+            'null escape' => [chr(0) . chr(1)],
+            'escape next' => [chr(1) . chr(2)],
+            'null escape x2' => [chr(0) . chr(1) . chr(0) . chr(1)],
+            'escape next x2' => [chr(1) . chr(2) . chr(1) . chr(2)],
+            'escape null escape next' => [chr(1) . chr(0) . chr(1) . chr(2)],
+            'next escape null escape' => [chr(2) . chr(1) . chr(0) . chr(1)],
         ];
     }
 }

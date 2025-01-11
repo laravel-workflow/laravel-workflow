@@ -21,7 +21,7 @@ use Throwable;
 use Workflow\Events\WorkflowCompleted;
 use Workflow\Middleware\WithoutOverlappingMiddleware;
 use Workflow\Models\StoredWorkflow;
-use Workflow\Serializers\Y;
+use Workflow\Serializers\Serializer;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowRunningStatus;
 use Workflow\States\WorkflowWaitingStatus;
@@ -133,7 +133,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
                 $query->where('created_at', '<=', $log->created_at->format('Y-m-d H:i:s.u'));
             })
             ->each(function ($signal): void {
-                $this->{$signal->method}(...Y::unserialize($signal->arguments));
+                $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
             });
 
         if ($parentWorkflow) {
@@ -170,7 +170,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
                         $query->where('created_at', '<=', $nextLog->created_at->format('Y-m-d H:i:s.u'));
                     })
                     ->each(function ($signal): void {
-                        $this->{$signal->method}(...Y::unserialize($signal->arguments));
+                        $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
                     });
             }
 
@@ -214,7 +214,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
                 throw new Exception('Workflow failed.', 0, $th);
             }
 
-            $this->storedWorkflow->output = Y::serialize($return);
+            $this->storedWorkflow->output = Serializer::serialize($return);
 
             $this->storedWorkflow->status->transitionTo(WorkflowCompletedStatus::class);
 

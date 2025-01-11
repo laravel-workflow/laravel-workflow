@@ -8,7 +8,7 @@ use function React\Promise\all;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use function React\Promise\resolve;
-use Workflow\Serializers\Y;
+use Workflow\Serializers\Serializer;
 
 final class ChildWorkflowStub
 {
@@ -36,7 +36,9 @@ final class ChildWorkflowStub
                         'index' => $context->index,
                         'now' => $context->now,
                         'class' => $workflow,
-                        'result' => Y::serialize(is_callable($result) ? $result($context, ...$arguments) : $result),
+                        'result' => Serializer::serialize(
+                            is_callable($result) ? $result($context, ...$arguments) : $result
+                        ),
                     ]);
 
                 WorkflowStub::recordDispatched($workflow, $arguments);
@@ -46,7 +48,7 @@ final class ChildWorkflowStub
         if ($log) {
             ++$context->index;
             WorkflowStub::setContext($context);
-            return resolve(Y::unserialize($log->result));
+            return resolve(Serializer::unserialize($log->result));
         }
 
         if (! $context->replaying) {

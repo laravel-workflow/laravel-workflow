@@ -7,7 +7,7 @@ namespace Tests\Unit\Traits;
 use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
 use Workflow\Models\StoredWorkflow;
-use Workflow\Serializers\Y;
+use Workflow\Serializers\Serializer;
 use Workflow\Signal;
 use Workflow\WorkflowStub;
 
@@ -42,7 +42,7 @@ final class AwaitsTest extends TestCase
             'index' => 0,
             'class' => Signal::class,
         ]);
-        $this->assertTrue(Y::unserialize($workflow->logs()->firstWhere('index', 0)->result));
+        $this->assertTrue(Serializer::unserialize($workflow->logs()->firstWhere('index', 0)->result));
     }
 
     public function testLoadsStoredResult(): void
@@ -54,7 +54,7 @@ final class AwaitsTest extends TestCase
                 'index' => 0,
                 'now' => WorkflowStub::now(),
                 'class' => Signal::class,
-                'result' => Y::serialize(true),
+                'result' => Serializer::serialize(true),
             ]);
 
         WorkflowStub::await(static fn () => true)
@@ -69,7 +69,7 @@ final class AwaitsTest extends TestCase
             'index' => 0,
             'class' => Signal::class,
         ]);
-        $this->assertTrue(Y::unserialize($workflow->logs()->firstWhere('index', 0)->result));
+        $this->assertTrue(Serializer::unserialize($workflow->logs()->firstWhere('index', 0)->result));
     }
 
     public function testResolvesConflictingResult(): void
@@ -83,7 +83,7 @@ final class AwaitsTest extends TestCase
                     'index' => 0,
                     'now' => WorkflowStub::now(),
                     'class' => Signal::class,
-                    'result' => Y::serialize(false),
+                    'result' => Serializer::serialize(false),
                 ]);
             return true;
         })
@@ -98,6 +98,6 @@ final class AwaitsTest extends TestCase
             'index' => 0,
             'class' => Signal::class,
         ]);
-        $this->assertFalse(Y::unserialize($workflow->logs()->firstWhere('index', 0)->result));
+        $this->assertFalse(Serializer::unserialize($workflow->logs()->firstWhere('index', 0)->result));
     }
 }

@@ -7,7 +7,7 @@ namespace Tests\Feature;
 use Tests\Fixtures\NonRetryableTestExceptionWorkflow;
 use Tests\Fixtures\TestExceptionWorkflow;
 use Tests\TestCase;
-use Workflow\Serializers\Y;
+use Workflow\Serializers\Serializer;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowFailedStatus;
 use Workflow\WorkflowStub;
@@ -25,7 +25,10 @@ final class ExceptionWorkflowTest extends TestCase
         $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
         $this->assertSame('workflow_activity_other', $workflow->output());
         if ($workflow->exceptions()->first()) {
-            $this->assertSame('failed', Y::unserialize($workflow->exceptions()->first()->exception)['message']);
+            $this->assertSame(
+                'failed',
+                Serializer::unserialize($workflow->exceptions()->first()->exception)['message']
+            );
         }
     }
 
@@ -42,7 +45,7 @@ final class ExceptionWorkflowTest extends TestCase
         $this->assertNull($workflow->output());
         $this->assertSame(
             'This is a non-retryable error',
-            Y::unserialize($workflow->exceptions()->last()->exception)['message']
+            Serializer::unserialize($workflow->exceptions()->last()->exception)['message']
         );
     }
 }

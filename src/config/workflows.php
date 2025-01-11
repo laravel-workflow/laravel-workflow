@@ -19,6 +19,8 @@ return [
 
     'workflow_relationships_table' => 'workflow_relationships',
 
+    'workflow_serializer' => Workflow\Serializers\Y::class,
+
     'prune_age' => '1 month',
 
     'monitor' => env('WORKFLOW_MONITOR', false),

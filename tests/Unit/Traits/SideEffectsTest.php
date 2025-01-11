@@ -7,7 +7,7 @@ namespace Tests\Unit\Traits;
 use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
 use Workflow\Models\StoredWorkflow;
-use Workflow\Serializers\Y;
+use Workflow\Serializers\Serializer;
 use Workflow\WorkflowStub;
 
 final class SideEffectsTest extends TestCase
@@ -28,7 +28,7 @@ final class SideEffectsTest extends TestCase
             'index' => 0,
             'class' => TestWorkflow::class,
         ]);
-        $this->assertSame('test', Y::unserialize($workflow->logs()->firstWhere('index', 0)->result));
+        $this->assertSame('test', Serializer::unserialize($workflow->logs()->firstWhere('index', 0)->result));
     }
 
     public function testLoadsStoredResult(): void
@@ -40,7 +40,7 @@ final class SideEffectsTest extends TestCase
                 'index' => 0,
                 'now' => WorkflowStub::now(),
                 'class' => TestWorkflow::class,
-                'result' => Y::serialize('test'),
+                'result' => Serializer::serialize('test'),
             ]);
 
         WorkflowStub::sideEffect(static fn () => '')
@@ -55,7 +55,7 @@ final class SideEffectsTest extends TestCase
             'index' => 0,
             'class' => TestWorkflow::class,
         ]);
-        $this->assertSame('test', Y::unserialize($workflow->logs()->firstWhere('index', 0)->result));
+        $this->assertSame('test', Serializer::unserialize($workflow->logs()->firstWhere('index', 0)->result));
     }
 
     public function testResolvesConflictingResult(): void
@@ -69,7 +69,7 @@ final class SideEffectsTest extends TestCase
                     'index' => 0,
                     'now' => WorkflowStub::now(),
                     'class' => TestWorkflow::class,
-                    'result' => Y::serialize('test'),
+                    'result' => Serializer::serialize('test'),
                 ]);
             return '';
         })
@@ -84,6 +84,6 @@ final class SideEffectsTest extends TestCase
             'index' => 0,
             'class' => TestWorkflow::class,
         ]);
-        $this->assertSame('test', Y::unserialize($workflow->logs()->firstWhere('index', 0)->result));
+        $this->assertSame('test', Serializer::unserialize($workflow->logs()->firstWhere('index', 0)->result));
     }
 }
