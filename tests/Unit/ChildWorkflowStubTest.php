@@ -9,7 +9,7 @@ use Tests\Fixtures\TestParentWorkflow;
 use Tests\TestCase;
 use Workflow\ChildWorkflowStub;
 use Workflow\Models\StoredWorkflow;
-use Workflow\Serializers\Y;
+use Workflow\Serializers\Serializer;
 use Workflow\States\WorkflowPendingStatus;
 use Workflow\WorkflowStub;
 
@@ -20,7 +20,7 @@ final class ChildWorkflowStubTest extends TestCase
         $workflow = WorkflowStub::load(WorkflowStub::make(TestParentWorkflow::class)->id());
         $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
         $storedWorkflow->update([
-            'arguments' => Y::serialize([]),
+            'arguments' => Serializer::serialize([]),
             'status' => WorkflowPendingStatus::$name,
         ]);
 
@@ -39,7 +39,7 @@ final class ChildWorkflowStubTest extends TestCase
         $workflow = WorkflowStub::load(WorkflowStub::make(TestParentWorkflow::class)->id());
         $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
         $storedWorkflow->update([
-            'arguments' => Y::serialize([]),
+            'arguments' => Serializer::serialize([]),
             'status' => WorkflowPendingStatus::$name,
         ]);
         $storedWorkflow->logs()
@@ -47,7 +47,7 @@ final class ChildWorkflowStubTest extends TestCase
                 'index' => 0,
                 'now' => WorkflowStub::now(),
                 'class' => TestParentWorkflow::class,
-                'result' => Y::serialize('test'),
+                'result' => Serializer::serialize('test'),
             ]);
 
         ChildWorkflowStub::make(TestChildWorkflow::class)
@@ -63,14 +63,14 @@ final class ChildWorkflowStubTest extends TestCase
         $workflow = WorkflowStub::load(WorkflowStub::make(TestParentWorkflow::class)->id());
         $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
         $storedWorkflow->update([
-            'arguments' => Y::serialize([]),
+            'arguments' => Serializer::serialize([]),
             'status' => WorkflowPendingStatus::$name,
         ]);
 
         $childWorkflow = WorkflowStub::load(WorkflowStub::make(TestChildWorkflow::class)->id());
         $storedChildWorkflow = StoredWorkflow::findOrFail($childWorkflow->id());
         $storedChildWorkflow->update([
-            'arguments' => Y::serialize([]),
+            'arguments' => Serializer::serialize([]),
             'status' => WorkflowPendingStatus::$name,
         ]);
         $storedChildWorkflow->parents()
@@ -94,7 +94,7 @@ final class ChildWorkflowStubTest extends TestCase
         $workflow = WorkflowStub::load(WorkflowStub::make(TestParentWorkflow::class)->id());
         $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
         $storedWorkflow->update([
-            'arguments' => Y::serialize([]),
+            'arguments' => Serializer::serialize([]),
             'status' => WorkflowPendingStatus::$name,
         ]);
         $storedWorkflow->logs()
@@ -102,7 +102,7 @@ final class ChildWorkflowStubTest extends TestCase
                 'index' => 0,
                 'now' => WorkflowStub::now(),
                 'class' => TestParentWorkflow::class,
-                'result' => Y::serialize('test'),
+                'result' => Serializer::serialize('test'),
             ]);
 
         ChildWorkflowStub::all([ChildWorkflowStub::make(TestChildWorkflow::class)])

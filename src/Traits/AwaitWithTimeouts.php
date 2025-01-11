@@ -8,7 +8,7 @@ use Carbon\CarbonInterval;
 use Illuminate\Database\QueryException;
 use React\Promise\PromiseInterface;
 use function React\Promise\resolve;
-use Workflow\Serializers\Y;
+use Workflow\Serializers\Serializer;
 use Workflow\Signal;
 
 trait AwaitWithTimeouts
@@ -21,7 +21,7 @@ trait AwaitWithTimeouts
 
         if ($log) {
             ++self::$context->index;
-            return resolve(Y::unserialize($log->result));
+            return resolve(Serializer::unserialize($log->result));
         }
 
         if (is_string($seconds)) {
@@ -38,7 +38,7 @@ trait AwaitWithTimeouts
                             'index' => self::$context->index,
                             'now' => self::$context->now,
                             'class' => Signal::class,
-                            'result' => Y::serialize($result),
+                            'result' => Serializer::serialize($result),
                         ]);
                 } catch (QueryException $exception) {
                     $log = self::$context->storedWorkflow->logs()
@@ -47,7 +47,7 @@ trait AwaitWithTimeouts
 
                     if ($log) {
                         ++self::$context->index;
-                        return resolve(Y::unserialize($log->result));
+                        return resolve(Serializer::unserialize($log->result));
                     }
                 }
             }

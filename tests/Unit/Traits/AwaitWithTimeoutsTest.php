@@ -7,7 +7,7 @@ namespace Tests\Unit\Traits;
 use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
 use Workflow\Models\StoredWorkflow;
-use Workflow\Serializers\Y;
+use Workflow\Serializers\Serializer;
 use Workflow\Signal;
 use Workflow\States\WorkflowPendingStatus;
 use Workflow\WorkflowStub;
@@ -19,7 +19,7 @@ final class AwaitWithTimeoutsTest extends TestCase
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
         $storedWorkflow->update([
-            'arguments' => Y::serialize([]),
+            'arguments' => Serializer::serialize([]),
             'status' => WorkflowPendingStatus::$name,
         ]);
 
@@ -56,7 +56,7 @@ final class AwaitWithTimeoutsTest extends TestCase
             'index' => 0,
             'class' => Signal::class,
         ]);
-        $this->assertTrue(Y::unserialize($workflow->logs()->firstWhere('index', 0)->result));
+        $this->assertTrue(Serializer::unserialize($workflow->logs()->firstWhere('index', 0)->result));
     }
 
     public function testLoadsStoredResult(): void
@@ -68,7 +68,7 @@ final class AwaitWithTimeoutsTest extends TestCase
                 'index' => 0,
                 'now' => WorkflowStub::now(),
                 'class' => Signal::class,
-                'result' => Y::serialize(true),
+                'result' => Serializer::serialize(true),
             ]);
 
         WorkflowStub::awaitWithTimeout('1 minute', static fn () => true)
@@ -83,7 +83,7 @@ final class AwaitWithTimeoutsTest extends TestCase
             'index' => 0,
             'class' => Signal::class,
         ]);
-        $this->assertTrue(Y::unserialize($workflow->logs()->firstWhere('index', 0)->result));
+        $this->assertTrue(Serializer::unserialize($workflow->logs()->firstWhere('index', 0)->result));
     }
 
     public function testResolvesConflictingResult(): void
@@ -97,7 +97,7 @@ final class AwaitWithTimeoutsTest extends TestCase
                     'index' => 0,
                     'now' => WorkflowStub::now(),
                     'class' => Signal::class,
-                    'result' => Y::serialize(false),
+                    'result' => Serializer::serialize(false),
                 ]);
             return true;
         })
@@ -112,6 +112,6 @@ final class AwaitWithTimeoutsTest extends TestCase
             'index' => 0,
             'class' => Signal::class,
         ]);
-        $this->assertFalse(Y::unserialize($workflow->logs()->firstWhere('index', 0)->result));
+        $this->assertFalse(Serializer::unserialize($workflow->logs()->firstWhere('index', 0)->result));
     }
 }

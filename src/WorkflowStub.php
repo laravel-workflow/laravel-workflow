@@ -14,7 +14,7 @@ use SplFileObject;
 use Workflow\Events\WorkflowFailed;
 use Workflow\Events\WorkflowStarted;
 use Workflow\Models\StoredWorkflow;
-use Workflow\Serializers\Y;
+use Workflow\Serializers\Serializer;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowCreatedStatus;
 use Workflow\States\WorkflowFailedStatus;
@@ -58,7 +58,7 @@ final class WorkflowStub
             $this->storedWorkflow->signals()
                 ->create([
                     'method' => $method,
-                    'arguments' => Y::serialize($arguments),
+                    'arguments' => Serializer::serialize($arguments),
                 ]);
 
             $this->storedWorkflow->toWorkflow();
@@ -79,7 +79,7 @@ final class WorkflowStub
         ) {
             return (new $this->storedWorkflow->class(
                 $this->storedWorkflow,
-                ...Y::unserialize($this->storedWorkflow->arguments),
+                ...Serializer::unserialize($this->storedWorkflow->arguments),
             ))
                 ->query($method);
         }
@@ -155,7 +155,7 @@ final class WorkflowStub
             return null;
         }
 
-        return Y::unserialize($this->storedWorkflow->fresh()->output);
+        return Serializer::unserialize($this->storedWorkflow->fresh()->output);
     }
 
     public function completed(): bool
@@ -199,7 +199,7 @@ final class WorkflowStub
 
     public function start(...$arguments): void
     {
-        $this->storedWorkflow->arguments = Y::serialize($arguments);
+        $this->storedWorkflow->arguments = Serializer::serialize($arguments);
 
         $this->dispatch();
     }
@@ -224,7 +224,7 @@ final class WorkflowStub
             $this->storedWorkflow->exceptions()
                 ->create([
                     'class' => $this->storedWorkflow->class,
-                    'exception' => Y::serialize($exception),
+                    'exception' => Serializer::serialize($exception),
                 ]);
         } catch (QueryException) {
             // already logged
@@ -265,7 +265,7 @@ final class WorkflowStub
                     'index' => $index,
                     'now' => $now,
                     'class' => $class,
-                    'result' => Y::serialize($result),
+                    'result' => Serializer::serialize($result),
                 ]);
         } catch (QueryException) {
             // already logged
@@ -280,7 +280,7 @@ final class WorkflowStub
             WorkflowStarted::dispatch(
                 $this->storedWorkflow->id,
                 $this->storedWorkflow->class,
-                json_encode(Y::unserialize($this->storedWorkflow->arguments)),
+                json_encode(Serializer::unserialize($this->storedWorkflow->arguments)),
                 now()
                     ->format('Y-m-d\TH:i:s.u\Z')
             );
@@ -292,7 +292,7 @@ final class WorkflowStub
 
         $this->storedWorkflow->class::$dispatch(
             $this->storedWorkflow,
-            ...Y::unserialize($this->storedWorkflow->arguments)
+            ...Serializer::unserialize($this->storedWorkflow->arguments)
         );
     }
 }

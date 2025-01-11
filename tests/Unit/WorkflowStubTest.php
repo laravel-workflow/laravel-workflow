@@ -11,7 +11,7 @@ use Tests\Fixtures\TestBadConnectionWorkflow;
 use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
 use Workflow\Models\StoredWorkflow;
-use Workflow\Serializers\Y;
+use Workflow\Serializers\Serializer;
 use Workflow\Signal;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowPendingStatus;
@@ -26,7 +26,7 @@ final class WorkflowStubTest extends TestCase
         $parentWorkflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $storedParentWorkflow = StoredWorkflow::findOrFail($parentWorkflow->id());
         $storedParentWorkflow->update([
-            'arguments' => Y::serialize([]),
+            'arguments' => Serializer::serialize([]),
             'status' => WorkflowPendingStatus::$name,
         ]);
 
@@ -105,7 +105,7 @@ final class WorkflowStubTest extends TestCase
             'index' => 1,
             'class' => Signal::class,
         ]);
-        $this->assertTrue(Y::unserialize($workflow->logs()->firstWhere('index', 1)->result));
+        $this->assertTrue(Serializer::unserialize($workflow->logs()->firstWhere('index', 1)->result));
 
         $workflow->fresh();
         $context = WorkflowStub::getContext();
@@ -144,7 +144,7 @@ final class WorkflowStubTest extends TestCase
             'index' => 1,
             'class' => Signal::class,
         ]);
-        $this->assertTrue(Y::unserialize($workflow->logs()->firstWhere('index', 1)->result));
+        $this->assertTrue(Serializer::unserialize($workflow->logs()->firstWhere('index', 1)->result));
 
         $workflow->fresh();
         $context = WorkflowStub::getContext();
@@ -192,7 +192,7 @@ final class WorkflowStubTest extends TestCase
             'index' => 1,
             'class' => Signal::class,
         ]);
-        $this->assertTrue(Y::unserialize($workflow->logs()->firstWhere('index', 1)->result));
+        $this->assertTrue(Serializer::unserialize($workflow->logs()->firstWhere('index', 1)->result));
     }
 
     public function testConnection(): void

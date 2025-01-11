@@ -22,7 +22,7 @@ use Workflow\Exceptions\NonRetryableExceptionContract;
 use Workflow\Middleware\ActivityMiddleware;
 use Workflow\Middleware\WithoutOverlappingMiddleware;
 use Workflow\Models\StoredWorkflow;
-use Workflow\Serializers\Y;
+use Workflow\Serializers\Serializer;
 
 class Activity implements ShouldBeEncrypted, ShouldQueue
 {
@@ -91,7 +91,7 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
             $this->storedWorkflow->exceptions()
                 ->create([
                     'class' => $this::class,
-                    'exception' => Y::serialize($throwable),
+                    'exception' => Serializer::serialize($throwable),
                 ]);
 
             if ($throwable instanceof NonRetryableExceptionContract) {
@@ -129,7 +129,7 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
             'line' => $throwable->getLine(),
             'file' => $throwable->getFile(),
             'trace' => collect($throwable->getTrace())
-                ->filter(static fn ($trace) => Y::serializable($trace))
+                ->filter(static fn ($trace) => Serializer::serializable($trace))
                 ->toArray(),
             'snippet' => array_slice(iterator_to_array($iterator), 0, 7),
         ];
