@@ -16,7 +16,9 @@ final class EncodeTest extends TestCase
      */
     public function testYEncode(string $bytes): void
     {
-        config('workflow_serializer', Y::class);
+        config([
+            'serializer' => Y::class,
+        ]);
         $decoded = Serializer::decode(Serializer::encode($bytes));
         $this->assertSame($bytes, $decoded);
     }
@@ -26,7 +28,9 @@ final class EncodeTest extends TestCase
      */
     public function testBase64Encode(string $bytes): void
     {
-        config('workflow_serializer', Base64::class);
+        config([
+            'serializer' => Base64::class,
+        ]);
         $decoded = Serializer::decode(Serializer::encode($bytes));
         $this->assertSame($bytes, $decoded);
     }

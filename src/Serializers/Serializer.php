@@ -17,6 +17,6 @@ final class Serializer
 
     public static function make(): AbstractSerializer
     {
-        return config('workflow.serializer', Y::class)::getInstance();
+        return config('serializer', Y::class)::getInstance();
     }
 }

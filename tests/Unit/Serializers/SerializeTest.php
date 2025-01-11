@@ -18,7 +18,9 @@ final class SerializeTest extends TestCase
      */
     public function testYSerialize($data): void
     {
-        config('workflow_serializer', Y::class);
+        config([
+            'serializer' => Y::class,
+        ]);
         $this->testSerialize($data);
     }
 
@@ -27,7 +29,9 @@ final class SerializeTest extends TestCase
      */
     public function testBase64Serialize($data): void
     {
-        config('workflow_serializer', Base64::class);
+        config([
+            'serializer' => Base64::class,
+        ]);
         $this->testSerialize($data);
     }
 
