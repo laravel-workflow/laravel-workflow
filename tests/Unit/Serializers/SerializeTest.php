@@ -16,23 +16,12 @@ final class SerializeTest extends TestCase
     /**
      * @dataProvider dataProvider
      */
-    public function testYSerialize($data): void
+    public function testSerialize($data): void
     {
-        config([
-            'serializer' => Y::class,
-        ]);
-        $this->testSerialize($data);
-    }
-
-    /**
-     * @dataProvider dataProvider
-     */
-    public function testBase64Serialize($data): void
-    {
-        config([
-            'serializer' => Base64::class,
-        ]);
-        $this->testSerialize($data);
+        $this->testSerializeUnserialize($data, Y::class, Y::class);
+        $this->testSerializeUnserialize($data, Base64::class, Base64::class);
+        $this->testSerializeUnserialize($data, Y::class, Base64::class);
+        $this->testSerializeUnserialize($data, Base64::class, Y::class);
     }
 
     public function dataProvider(): array
@@ -67,9 +56,16 @@ final class SerializeTest extends TestCase
         ];
     }
 
-    private function testSerialize($data): void
+    private function testSerializeUnserialize($data, $serializer, $unserializer): void
     {
-        $unserialized = Serializer::unserialize(Serializer::serialize($data));
+        config([
+            'serializer' => $serializer,
+        ]);
+        $serialized = Serializer::serialize($data);
+        config([
+            'serializer' => $unserializer,
+        ]);
+        $unserialized = Serializer::unserialize($serialized);
         if (is_object($data)) {
             if ($data instanceof Throwable) {
                 $this->assertEquals([

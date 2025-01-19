@@ -22,11 +22,11 @@ final class Base64 extends AbstractSerializer
 
     public static function encode(string $data): string
     {
-        return base64_encode($data);
+        return 'base64:' . base64_encode($data);
     }
 
     public static function decode(string $data): string
     {
-        return base64_decode($data, true);
+        return base64_decode(substr($data, 7), true);
     }
 }
