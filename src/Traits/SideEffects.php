@@ -7,7 +7,7 @@ namespace Workflow\Traits;
 use Illuminate\Database\QueryException;
 use React\Promise\PromiseInterface;
 use function React\Promise\resolve;
-use Workflow\Serializers\Y;
+use Workflow\Serializers\Serializer;
 
 trait SideEffects
 {
@@ -19,7 +19,7 @@ trait SideEffects
 
         if ($log) {
             ++self::$context->index;
-            return resolve(Y::unserialize($log->result));
+            return resolve(Serializer::unserialize($log->result));
         }
 
         $result = $callable();
@@ -31,7 +31,7 @@ trait SideEffects
                         'index' => self::$context->index,
                         'now' => self::$context->now,
                         'class' => self::$context->storedWorkflow->class,
-                        'result' => Y::serialize($result),
+                        'result' => Serializer::serialize($result),
                     ]);
             } catch (QueryException $exception) {
                 $log = self::$context->storedWorkflow->logs()
@@ -40,7 +40,7 @@ trait SideEffects
 
                 if ($log) {
                     ++self::$context->index;
-                    return resolve(Y::unserialize($log->result));
+                    return resolve(Serializer::unserialize($log->result));
                 }
             }
         }
