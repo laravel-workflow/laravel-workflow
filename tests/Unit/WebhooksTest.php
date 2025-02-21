@@ -41,7 +41,7 @@ final class WebhooksTest extends TestCase
         $method = $webhooksReflection->getMethod('discoverWorkflows');
         $method->setAccessible(true);
 
-        $files = $method->invoke(null, 'does-not-exist');
+        $files = $method->invoke(null, 'namespace', 'does-not-exist');
 
         $this->assertIsArray($files);
         $this->assertTrue(count($files) === 0);
