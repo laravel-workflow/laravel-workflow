@@ -300,6 +300,47 @@ final class WebhooksTest extends TestCase
 
         $this->assertSame(WorkflowPendingStatus::class, $workflow->status());
     }
+
+    public function testStartUnauthorized(): void
+    {
+        config([
+            'workflows.webhook_auth.method' => 'invalid',
+        ]);
+
+        $response = $this->postJson('/webhooks/start/test-webhook-workflow');
+
+        $response->assertStatus(401);
+        $response->assertJson([
+            'error' => 'Unauthorized',
+        ]);
+    }
+
+    public function testSignalUnauthorized(): void
+    {
+        config([
+            'workflows.webhook_auth.method' => 'none',
+        ]);
+
+        $response = $this->postJson('/webhooks/start/test-webhook-workflow');
+
+        $this->assertSame(1, StoredWorkflow::count());
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'message' => 'Workflow started',
+        ]);
+
+        config([
+            'workflows.webhook_auth.method' => 'invalid',
+        ]);
+
+        $response = $this->postJson('/webhooks/signal/test-webhook-workflow/1/cancel');
+
+        $response->assertStatus(401);
+        $response->assertJson([
+            'error' => 'Unauthorized',
+        ]);
+    }
 }
 
 class TestClass
