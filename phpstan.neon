@@ -2,5 +2,3 @@ parameters:
     level: 0
     bootstrapFiles:
         - classAliases.php
-    ignoreErrors:
-        - '#Attribute class Workflow\\Webhook does not have the class target#'
