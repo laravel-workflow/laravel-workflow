@@ -41,6 +41,9 @@ final class ActivityMiddleware
                     now()
                         ->format('Y-m-d\TH:i:s.u\Z')
                 );
+            } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $throwable) {
+                $job->storedWorkflow->toWorkflow()
+                    ->fail($throwable);
             } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
                 if ($job->storedWorkflow->toWorkflow()->running()) {
                     $job->release();
