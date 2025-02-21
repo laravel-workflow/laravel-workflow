@@ -35,6 +35,18 @@ final class WebhooksTest extends TestCase
         $this->assertTrue(count($files) > 0);
     }
 
+    public function testDiscoverWorkflowsNotAFolder()
+    {
+        $webhooksReflection = new ReflectionClass(Webhooks::class);
+        $method = $webhooksReflection->getMethod('discoverWorkflows');
+        $method->setAccessible(true);
+
+        $files = $method->invoke(null, 'does-not-exist');
+
+        $this->assertIsArray($files);
+        $this->assertTrue(count($files) === 0);
+    }
+
     public function testGetClassFromFile()
     {
         $webhooksReflection = new ReflectionClass(Webhooks::class);
