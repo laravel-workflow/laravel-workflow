@@ -54,7 +54,7 @@ final class WebhookWorkflowTest extends TestCase
             ->toArray());
     }
 
-    public function testSingal(): void
+    public function testSignal(): void
     {
         $this->postJson('/webhooks/start/test-webhook-workflow');
 
