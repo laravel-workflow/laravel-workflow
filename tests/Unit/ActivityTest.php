@@ -102,4 +102,15 @@ final class ActivityTest extends TestCase
         $this->assertSame($workflow->id(), $activity->workflowId());
         $this->assertSame($activity->timeout, pcntl_alarm(0));
     }
+
+    public function testWebhookUrl(): void
+    {
+        $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
+        $activity = new TestOtherActivity(0, now()->toDateTimeString(), StoredWorkflow::findOrFail($workflow->id()), [
+            'other',
+        ]);
+
+        $this->assertSame('http://localhost/webhooks/test-workflow', $activity->webhookUrl());
+        $this->assertSame('http://localhost/webhooks/signal/1/other', $activity->webhookUrl('other'));
+    }
 }

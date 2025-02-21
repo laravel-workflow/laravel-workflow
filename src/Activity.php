@@ -15,6 +15,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Routing\RouteDependencyResolverTrait;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 use LimitIterator;
 use SplFileObject;
 use Throwable;
@@ -71,6 +72,17 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
     public function workflowId()
     {
         return $this->storedWorkflow->id;
+    }
+
+    public function webhookUrl(string $signalMethod = ''): string
+    {
+        $basePath = config('workflows.webhooks_route', '/webhooks');
+        if ($signalMethod === '') {
+            $workflow = Str::kebab(class_basename($this->storedWorkflow->class));
+            return url("{$basePath}/{$workflow}");
+        }
+        $signal = Str::kebab($signalMethod);
+        return url("{$basePath}/signal/{$this->storedWorkflow->id}/{$signal}");
     }
 
     public function handle()
