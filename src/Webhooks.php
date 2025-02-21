@@ -162,7 +162,7 @@ class Webhooks
 
     private static function validateAuth(Request $request): bool
     {
-        $config = config('workflows.webhook_auth');
+        $config = config('workflows.webhook_auth', ['method' => 'none']);
 
         if ($config['method'] === 'none') {
             return true;
