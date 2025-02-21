@@ -14,27 +14,27 @@ class Webhooks
 {
     public static function routes($customNamespace = null, $customAppPath = null)
     {
-        $folder = config('workflows.workflows_folder', 'Workflows');
-        $namespace = $customNamespace ?? "App\\{$folder}";
+        $workflows_folder = config('workflows.workflows_folder', 'Workflows');
+        $folder = $customAppPath ?? app_path($workflows_folder);
+        $namespace = $customNamespace ?? "App\\{$workflows_folder}";
         $basePath = rtrim(config('workflows.webhooks_route', 'webhooks'), '/');
 
-        foreach (self::discoverWorkflows($namespace, $customAppPath) as $workflow) {
+        foreach (self::discoverWorkflows($namespace, $folder) as $workflow) {
             self::registerWorkflowWebhooks($workflow, $basePath);
             self::registerSignalWebhooks($workflow, $basePath);
         }
     }
 
-    private static function discoverWorkflows($namespace, $customAppPath = null)
+    private static function discoverWorkflows($namespace, $folder)
     {
-        $basePath = $customAppPath ?? app_path(Str::replace('\\', '/', $namespace));
-        if (! is_dir($basePath)) {
+        if (! is_dir($folder)) {
             return [];
         }
 
-        $files = self::scanDirectory($basePath);
+        $files = self::scanDirectory($folder);
 
         $filter = array_filter(
-            array_map(static fn ($file) => self::getClassFromFile($file, $namespace, $basePath), $files),
+            array_map(static fn ($file) => self::getClassFromFile($file, $namespace, $folder), $files),
             static fn ($class) => is_subclass_of($class, \Workflow\Workflow::class)
         );
 
