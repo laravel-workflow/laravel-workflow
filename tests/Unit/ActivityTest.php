@@ -12,7 +12,7 @@ use Tests\Fixtures\TestOtherActivity;
 use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
 use Workflow\Models\StoredWorkflow;
-use Workflow\Serializers\Y;
+use Workflow\Serializers\Serializer;
 use Workflow\States\WorkflowCreatedStatus;
 use Workflow\States\WorkflowFailedStatus;
 use Workflow\WorkflowStub;
@@ -87,7 +87,7 @@ final class ActivityTest extends TestCase
             'index' => 0,
             'now' => now(),
             'class' => TestOtherActivity::class,
-            'result' => Y::serialize('other'),
+            'result' => Serializer::serialize('other'),
         ]);
         $activity = new TestOtherActivity(0, now()->toDateTimeString(), StoredWorkflow::findOrFail($workflow->id()), [
             'other',

@@ -10,7 +10,7 @@ use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
 use Workflow\ActivityStub;
 use Workflow\Models\StoredWorkflow;
-use Workflow\Serializers\Y;
+use Workflow\Serializers\Serializer;
 use Workflow\States\WorkflowPendingStatus;
 use Workflow\WorkflowStub;
 
@@ -21,7 +21,7 @@ final class ActivityStubTest extends TestCase
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
         $storedWorkflow->update([
-            'arguments' => Y::serialize([]),
+            'arguments' => Serializer::serialize([]),
             'status' => WorkflowPendingStatus::$name,
         ]);
 
@@ -39,7 +39,7 @@ final class ActivityStubTest extends TestCase
             'index' => 0,
             'class' => TestActivity::class,
         ]);
-        $this->assertSame('activity', Y::unserialize($workflow->logs()->firstWhere('index', 0)->result));
+        $this->assertSame('activity', Serializer::unserialize($workflow->logs()->firstWhere('index', 0)->result));
     }
 
     public function testLoadsStoredResult(): void
@@ -47,7 +47,7 @@ final class ActivityStubTest extends TestCase
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
         $storedWorkflow->update([
-            'arguments' => Y::serialize([]),
+            'arguments' => Serializer::serialize([]),
             'status' => WorkflowPendingStatus::$name,
         ]);
         $storedWorkflow->logs()
@@ -55,7 +55,7 @@ final class ActivityStubTest extends TestCase
                 'index' => 0,
                 'now' => WorkflowStub::now(),
                 'class' => TestActivity::class,
-                'result' => Y::serialize('test'),
+                'result' => Serializer::serialize('test'),
             ]);
 
         ActivityStub::make(TestActivity::class)
@@ -73,7 +73,7 @@ final class ActivityStubTest extends TestCase
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
         $storedWorkflow->update([
-            'arguments' => Y::serialize([]),
+            'arguments' => Serializer::serialize([]),
             'status' => WorkflowPendingStatus::$name,
         ]);
         $storedWorkflow->logs()
@@ -81,7 +81,7 @@ final class ActivityStubTest extends TestCase
                 'index' => 0,
                 'now' => WorkflowStub::now(),
                 'class' => TestActivity::class,
-                'result' => Y::serialize(new Exception('test')),
+                'result' => Serializer::serialize(new Exception('test')),
             ]);
 
         ActivityStub::make(TestActivity::class)
@@ -97,7 +97,7 @@ final class ActivityStubTest extends TestCase
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
         $storedWorkflow->update([
-            'arguments' => Y::serialize([]),
+            'arguments' => Serializer::serialize([]),
             'status' => WorkflowPendingStatus::$name,
         ]);
         $storedWorkflow->logs()
@@ -105,7 +105,7 @@ final class ActivityStubTest extends TestCase
                 'index' => 0,
                 'now' => WorkflowStub::now(),
                 'class' => TestActivity::class,
-                'result' => Y::serialize('test'),
+                'result' => Serializer::serialize('test'),
             ]);
 
         ActivityStub::all([ActivityStub::make(TestActivity::class)])
@@ -121,7 +121,7 @@ final class ActivityStubTest extends TestCase
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
         $storedWorkflow->update([
-            'arguments' => Y::serialize([]),
+            'arguments' => Serializer::serialize([]),
             'status' => WorkflowPendingStatus::$name,
         ]);
         $storedWorkflow->logs()
@@ -129,7 +129,7 @@ final class ActivityStubTest extends TestCase
                 'index' => 0,
                 'now' => WorkflowStub::now(),
                 'class' => TestActivity::class,
-                'result' => Y::serialize('test'),
+                'result' => Serializer::serialize('test'),
             ]);
 
         ActivityStub::async(static function () {

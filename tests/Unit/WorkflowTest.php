@@ -13,7 +13,7 @@ use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
 use Workflow\Exception;
 use Workflow\Models\StoredWorkflow;
-use Workflow\Serializers\Y;
+use Workflow\Serializers\Serializer;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowPendingStatus;
 use Workflow\WorkflowStub;
@@ -25,7 +25,7 @@ final class WorkflowTest extends TestCase
         $exception = new \Exception('test');
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
-        $storedWorkflow->arguments = Y::serialize([]);
+        $storedWorkflow->arguments = Serializer::serialize([]);
         $storedWorkflow->save();
         $activity = new Exception(0, now()->toDateTimeString(), StoredWorkflow::findOrFail(
             $workflow->id()
@@ -41,7 +41,7 @@ final class WorkflowTest extends TestCase
         $exception = new \Exception('test');
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
-        $storedWorkflow->arguments = Y::serialize([]);
+        $storedWorkflow->arguments = Serializer::serialize([]);
         $storedWorkflow->save();
         $activity = new Exception(0, now()->toDateTimeString(), StoredWorkflow::findOrFail(
             $workflow->id()
@@ -52,7 +52,7 @@ final class WorkflowTest extends TestCase
                 'index' => 0,
                 'now' => WorkflowStub::now(),
                 'class' => TestOtherActivity::class,
-                'result' => Y::serialize($exception),
+                'result' => Serializer::serialize($exception),
             ]);
 
         $activity->handle();
@@ -67,7 +67,7 @@ final class WorkflowTest extends TestCase
         $parentWorkflow = WorkflowStub::load(WorkflowStub::make(TestParentWorkflow::class)->id());
 
         $storedParentWorkflow = StoredWorkflow::findOrFail($parentWorkflow->id());
-        $storedParentWorkflow->arguments = Y::serialize([]);
+        $storedParentWorkflow->arguments = Serializer::serialize([]);
         $storedParentWorkflow->save();
 
         $storedParentWorkflow->logs()
@@ -75,7 +75,7 @@ final class WorkflowTest extends TestCase
                 'index' => 0,
                 'now' => now(),
                 'class' => TestChildWorkflow::class,
-                'result' => Y::serialize('child_workflow'),
+                'result' => Serializer::serialize('child_workflow'),
             ]);
 
         $storedParentWorkflow->logs()
@@ -83,13 +83,13 @@ final class WorkflowTest extends TestCase
                 'index' => 1,
                 'now' => now(),
                 'class' => TestActivity::class,
-                'result' => Y::serialize('activity'),
+                'result' => Serializer::serialize('activity'),
             ]);
 
         $childWorkflow = WorkflowStub::load(WorkflowStub::make(TestChildWorkflow::class)->id());
 
         $storedChildWorkflow = StoredWorkflow::findOrFail($childWorkflow->id());
-        $storedChildWorkflow->arguments = Y::serialize([]);
+        $storedChildWorkflow->arguments = Serializer::serialize([]);
         $storedChildWorkflow->status = WorkflowPendingStatus::class;
         $storedChildWorkflow->save();
         $storedChildWorkflow->parents()
@@ -103,7 +103,7 @@ final class WorkflowTest extends TestCase
                 'index' => 0,
                 'now' => now(),
                 'class' => TestOtherActivity::class,
-                'result' => Y::serialize('other'),
+                'result' => Serializer::serialize('other'),
             ]);
 
         (new (TestChildWorkflow::class)($storedChildWorkflow))->handle();
@@ -121,7 +121,7 @@ final class WorkflowTest extends TestCase
         $parentWorkflow = WorkflowStub::load(WorkflowStub::make(TestParentWorkflow::class)->id());
 
         $storedParentWorkflow = StoredWorkflow::findOrFail($parentWorkflow->id());
-        $storedParentWorkflow->arguments = Y::serialize([]);
+        $storedParentWorkflow->arguments = Serializer::serialize([]);
         $storedParentWorkflow->status = WorkflowPendingStatus::class;
         $storedParentWorkflow->save();
 
@@ -130,7 +130,7 @@ final class WorkflowTest extends TestCase
                 'index' => 0,
                 'now' => now(),
                 'class' => TestChildWorkflow::class,
-                'result' => Y::serialize('child_workflow'),
+                'result' => Serializer::serialize('child_workflow'),
             ]);
 
         $storedParentWorkflow->logs()
@@ -138,13 +138,13 @@ final class WorkflowTest extends TestCase
                 'index' => 1,
                 'now' => now(),
                 'class' => TestActivity::class,
-                'result' => Y::serialize('activity'),
+                'result' => Serializer::serialize('activity'),
             ]);
 
         $childWorkflow = WorkflowStub::load(WorkflowStub::make(TestChildWorkflow::class)->id());
 
         $storedChildWorkflow = StoredWorkflow::findOrFail($childWorkflow->id());
-        $storedChildWorkflow->arguments = Y::serialize([]);
+        $storedChildWorkflow->arguments = Serializer::serialize([]);
         $storedChildWorkflow->status = WorkflowPendingStatus::class;
         $storedChildWorkflow->save();
         $storedChildWorkflow->parents()
@@ -158,7 +158,7 @@ final class WorkflowTest extends TestCase
                 'index' => 0,
                 'now' => now(),
                 'class' => TestOtherActivity::class,
-                'result' => Y::serialize('other'),
+                'result' => Serializer::serialize('other'),
             ]);
 
         (new (TestChildWorkflow::class)($storedChildWorkflow))->handle();
