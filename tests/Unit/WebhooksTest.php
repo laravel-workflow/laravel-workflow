@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use Mockery;
 use ReflectionClass;
 use ReflectionMethod;
@@ -218,11 +219,65 @@ final class WebhooksTest extends TestCase
             'param2' => 'value2',
         ], $params);
     }
+
+    public function testUnauthorizedRequestFails()
+    {
+        config([
+            'workflows.webhook_auth.method' => 'unsupported',
+        ]);
+
+        $request = Request::create('/webhooks/start/test-webhook-workflow', 'POST');
+
+        $webhooksReflection = new ReflectionClass(Webhooks::class);
+        $method = $webhooksReflection->getMethod('validateAuth');
+        $method->setAccessible(true);
+
+        $this->assertFalse($method->invoke(null, $request));
+    }
+
+    public function testResolveNamedParametersUsesDefaults()
+    {
+        $payload = [
+            'param1' => 'value1',
+        ];
+
+        $webhooksReflection = new ReflectionClass(Webhooks::class);
+        $method = $webhooksReflection->getMethod('resolveNamedParameters');
+        $method->setAccessible(true);
+
+        $params = $method->invoke(null, TestClass::class, 'testMethodWithDefault', $payload);
+
+        $this->assertSame([
+            'param1' => 'value1',
+            'param2' => 'default_value',
+        ], $params);
+    }
+
+    public function testWebhookRegistration()
+    {
+        Route::shouldReceive('post')
+            ->once()
+            ->withArgs(static function ($uri, $callback) {
+                return str_contains($uri, 'webhooks/start/test-webhook-workflow');
+            });
+
+        Route::shouldReceive('post')
+            ->once()
+            ->withArgs(static function ($uri, $callback) {
+                return str_contains($uri, 'webhooks/signal/test-webhook-workflow/{workflowId}/cancel');
+            });
+
+        Webhooks::routes('Tests\\Fixtures', __DIR__ . '/../Fixtures');
+    }
 }
 
 class TestClass
 {
     public function testMethod($param1, $param2)
+    {
+    }
+
+    public function testMethodWithDefault($param1, $param2 = 'default_value')
     {
     }
 }
