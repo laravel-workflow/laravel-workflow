@@ -59,11 +59,11 @@ final class SerializeTest extends TestCase
     private function testSerializeUnserialize($data, $serializer, $unserializer): void
     {
         config([
-            'serializer' => $serializer,
+            'workflows.serializer' => $serializer,
         ]);
         $serialized = Serializer::serialize($data);
         config([
-            'serializer' => $unserializer,
+            'workflows.serializer' => $unserializer,
         ]);
         $unserialized = Serializer::unserialize($serialized);
         if (is_object($data)) {

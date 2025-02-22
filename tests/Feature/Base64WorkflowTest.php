@@ -17,7 +17,7 @@ final class Base64WorkflowTest extends TestCase
     public function testBase64ToY(): void
     {
         config([
-            'serializer' => Base64::class,
+            'workflows.serializer' => Base64::class,
         ]);
 
         $workflow = WorkflowStub::make(TestExceptionWorkflow::class);
@@ -30,7 +30,7 @@ final class Base64WorkflowTest extends TestCase
         $this->assertSame('workflow_activity_other', $workflow->output());
 
         config([
-            'serializer' => Y::class,
+            'workflows.serializer' => Y::class,
         ]);
 
         if ($workflow->exceptions()->first()) {
@@ -44,7 +44,7 @@ final class Base64WorkflowTest extends TestCase
     public function testYToBase64(): void
     {
         config([
-            'serializer' => Y::class,
+            'workflows.serializer' => Y::class,
         ]);
 
         $workflow = WorkflowStub::make(TestExceptionWorkflow::class);
@@ -57,7 +57,7 @@ final class Base64WorkflowTest extends TestCase
         $this->assertSame('workflow_activity_other', $workflow->output());
 
         config([
-            'serializer' => Base64::class,
+            'workflows.serializer' => Base64::class,
         ]);
 
         if ($workflow->exceptions()->first()) {

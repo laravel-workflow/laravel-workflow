@@ -15,7 +15,7 @@ final class Serializer
                 $instance = Y::getInstance();
             }
         } else {
-            $instance = config('serializer', Y::class)::getInstance();
+            $instance = config('workflows.serializer', Y::class)::getInstance();
         }
 
         if (method_exists($instance, $name)) {
