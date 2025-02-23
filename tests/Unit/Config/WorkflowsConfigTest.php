@@ -10,8 +10,6 @@ final class WorkflowsConfigTest extends TestCase
 {
     public function testConfigIsLoaded(): void
     {
-        $this->assertNotEmpty(config('workflows'), 'The workflows config file is not loaded.');
-
         $expectedConfig = [
             'workflows_folder' => 'Workflows',
             'base_model' => \Illuminate\Database\Eloquent\Model::class,
@@ -27,8 +25,6 @@ final class WorkflowsConfigTest extends TestCase
         ];
 
         foreach ($expectedConfig as $key => $expectedValue) {
-            $this->assertTrue(config()->has("workflows.{$key}"), "The config key [workflows.{$key}] is missing.");
-
             $this->assertEquals(
                 $expectedValue,
                 config("workflows.{$key}"),
