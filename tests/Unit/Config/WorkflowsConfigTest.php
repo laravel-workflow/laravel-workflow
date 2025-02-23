@@ -10,6 +10,10 @@ final class WorkflowsConfigTest extends TestCase
 {
     public function testConfigIsLoaded(): void
     {
+        $config = require dirname(__DIR__, 3) . '/src/config/workflows.php';
+
+        $this->assertNotEmpty($config, 'The workflows config file is not loaded.');
+
         $expectedConfig = [
             'workflows_folder' => 'Workflows',
             'base_model' => \Illuminate\Database\Eloquent\Model::class,
@@ -22,12 +26,22 @@ final class WorkflowsConfigTest extends TestCase
             'serializer' => \Workflow\Serializers\Y::class,
             'prune_age' => '1 month',
             'webhooks_route' => env('WORKFLOW_WEBHOOKS_ROUTE', 'webhooks'),
+            'monitor' => env('WORKFLOW_MONITOR', false),
+            'monitor_url' => env('WORKFLOW_MONITOR_URL'),
+            'monitor_api_key' => env('WORKFLOW_MONITOR_API_KEY'),
+            'monitor_connection' => env('WORKFLOW_MONITOR_CONNECTION', config('queue.default')),
+            'monitor_queue' => env(
+                'WORKFLOW_MONITOR_QUEUE',
+                config('queue.connections.' . config('queue.default') . '.queue', 'default')
+            ),
         ];
 
         foreach ($expectedConfig as $key => $expectedValue) {
+            $this->assertTrue(array_key_exists($key, $config), "The config key [workflows.{$key}] is missing.");
+
             $this->assertEquals(
                 $expectedValue,
-                config("workflows.{$key}"),
+                $config[$key],
                 "The config key [workflows.{$key}] does not match the expected value."
             );
         }
