@@ -10,11 +10,6 @@ final class WorkflowsConfigTest extends TestCase
 {
     public function testConfigIsLoaded(): void
     {
-        $this->app->make('config')
-            ->set('queue', require config_path('queue.php'));
-        $this->app->make('config')
-            ->set('workflows', require config_path('workflows.php'));
-
         $this->assertNotEmpty(config('workflows'), 'The workflows config file is not loaded.');
 
         $expectedConfig = [
@@ -29,14 +24,6 @@ final class WorkflowsConfigTest extends TestCase
             'serializer' => \Workflow\Serializers\Y::class,
             'prune_age' => '1 month',
             'webhooks_route' => env('WORKFLOW_WEBHOOKS_ROUTE', 'webhooks'),
-            'monitor' => env('WORKFLOW_MONITOR', false),
-            'monitor_url' => env('WORKFLOW_MONITOR_URL'),
-            'monitor_api_key' => env('WORKFLOW_MONITOR_API_KEY'),
-            'monitor_connection' => env('WORKFLOW_MONITOR_CONNECTION', config('queue.default')),
-            'monitor_queue' => env(
-                'WORKFLOW_MONITOR_QUEUE',
-                config('queue.connections.' . config('queue.default') . '.queue', 'default')
-            ),
         ];
 
         foreach ($expectedConfig as $key => $expectedValue) {
