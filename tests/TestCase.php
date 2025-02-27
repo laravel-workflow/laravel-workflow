@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests;
 
-use Dotenv\Dotenv;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 use Symfony\Component\Process\Process;
 
