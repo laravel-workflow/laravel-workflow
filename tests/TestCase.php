@@ -16,10 +16,20 @@ abstract class TestCase extends BaseTestCase
 
     public static function setUpBeforeClass(): void
     {
-        Dotenv::createImmutable(__DIR__ . '/..')->safeLoad();
+        if (getenv('GITHUB_ACTIONS') !== 'true') {
+            if (TestSuiteSubscriber::getCurrentSuite() === 'feature') {
+                Dotenv::createImmutable(__DIR__, '.env.feature')->safeLoad();
+            } elseif (TestSuiteSubscriber::getCurrentSuite() === 'unit') {
+                Dotenv::createImmutable(__DIR__, '.env.unit')->safeLoad();
+            }
+        }
 
         for ($i = 0; $i < self::NUMBER_OF_WORKERS; $i++) {
-            self::$workers[$i] = new Process(['php', 'artisan', 'queue:work']);
+            self::$workers[$i] = new Process([
+                'php',
+                __DIR__ . '/../vendor/orchestra/testbench-core/laravel/artisan',
+                'queue:work',
+            ]);
             self::$workers[$i]->start();
         }
     }
@@ -29,6 +39,19 @@ abstract class TestCase extends BaseTestCase
         foreach (self::$workers as $worker) {
             $worker->stop();
         }
+    }
+
+    protected function setUp(): void
+    {
+        if (getenv('GITHUB_ACTIONS') !== 'true') {
+            if (TestSuiteSubscriber::getCurrentSuite() === 'feature') {
+                Dotenv::createImmutable(__DIR__, '.env.feature')->safeLoad();
+            } elseif (TestSuiteSubscriber::getCurrentSuite() === 'unit') {
+                Dotenv::createImmutable(__DIR__, '.env.unit')->safeLoad();
+            }
+        }
+
+        parent::setUp();
     }
 
     protected function defineDatabaseMigrations()
