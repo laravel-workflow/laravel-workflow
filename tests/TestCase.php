@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests;
 
+use Dotenv\Dotenv;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 use Symfony\Component\Process\Process;
 
@@ -15,6 +16,12 @@ abstract class TestCase extends BaseTestCase
 
     public static function setUpBeforeClass(): void
     {
+        if (TestSuiteSubscriber::getCurrentSuite() === 'feature') {
+            Dotenv::createImmutable(__DIR__, '.env.feature')->safeLoad();
+        } elseif (TestSuiteSubscriber::getCurrentSuite() === 'unit') {
+            Dotenv::createImmutable(__DIR__, '.env.unit')->safeLoad();
+        }
+
         for ($i = 0; $i < self::NUMBER_OF_WORKERS; $i++) {
             self::$workers[$i] = new Process([
                 'php',
@@ -34,32 +41,10 @@ abstract class TestCase extends BaseTestCase
 
     protected function setUp(): void
     {
-        if (env('APP_KEY') === null) {
-            if (TestSuiteSubscriber::getCurrentSuite() === 'feature') {
-                putenv('APP_KEY=base64:i3g6f+dV8FfsIkcxqd7gbiPn2oXk5r00sTmdD6V5utI=');
-                putenv('DB_CONNECTION=pgsql');
-                putenv('DB_HOST=db');
-                putenv('DB_PORT=5432');
-                putenv('DB_DATABASE=laravel');
-                putenv('DB_USERNAME=laravel');
-                putenv('DB_PASSWORD=laravel');
-
-                putenv('REDIS_HOST=redis');
-                putenv('REDIS_PASSWORD=null');
-                putenv('REDIS_PORT=6379');
-
-                putenv('QUEUE_CONNECTION=redis');
-            } elseif (TestSuiteSubscriber::getCurrentSuite() === 'unit') {
-                putenv('APP_KEY=base64:i3g6f+dV8FfsIkcxqd7gbiPn2oXk5r00sTmdD6V5utI=');
-                putenv('DB_CONNECTION=pgsql');
-                putenv('DB_HOST=db');
-                putenv('DB_PORT=5432');
-                putenv('DB_DATABASE=laravel');
-                putenv('DB_USERNAME=laravel');
-                putenv('DB_PASSWORD=laravel');
-
-                putenv('QUEUE_CONNECTION=sync');
-            }
+        if (TestSuiteSubscriber::getCurrentSuite() === 'feature') {
+            Dotenv::createImmutable(__DIR__, '.env.feature')->safeLoad();
+        } elseif (TestSuiteSubscriber::getCurrentSuite() === 'unit') {
+            Dotenv::createImmutable(__DIR__, '.env.unit')->safeLoad();
         }
 
         parent::setUp();
