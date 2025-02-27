@@ -16,8 +16,6 @@ abstract class TestCase extends BaseTestCase
 
     public static function setUpBeforeClass(): void
     {
-        Dotenv::createImmutable(__DIR__ . '/../workbench')->safeLoad();
-
         for ($i = 0; $i < self::NUMBER_OF_WORKERS; $i++) {
             self::$workers[$i] = new Process([
                 'php',
@@ -37,14 +35,35 @@ abstract class TestCase extends BaseTestCase
 
     protected function setUp(): void
     {
-        parent::setUp();
+        if (TestSuiteSubscriber::getCurrentSuite() === 'feature') {
+            putenv('APP_KEY=base64:i3g6f+dV8FfsIkcxqd7gbiPn2oXk5r00sTmdD6V5utI=');
+            putenv('DB_CONNECTION=pgsql');
+            putenv('DB_HOST=db');
+            putenv('DB_PORT=5432');
+            putenv('DB_DATABASE=laravel');
+            putenv('DB_USERNAME=laravel');
+            putenv('DB_PASSWORD=laravel');
+
+            putenv('REDIS_HOST=redis');
+            putenv('REDIS_PASSWORD=null');
+            putenv('REDIS_PORT=6379');
+
+            putenv('QUEUE_CONNECTION=redis');
+        }
 
         if (TestSuiteSubscriber::getCurrentSuite() === 'unit') {
+            putenv('APP_KEY=base64:i3g6f+dV8FfsIkcxqd7gbiPn2oXk5r00sTmdD6V5utI=');
+            putenv('DB_CONNECTION=pgsql');
+            putenv('DB_HOST=db');
+            putenv('DB_PORT=5432');
+            putenv('DB_DATABASE=laravel');
+            putenv('DB_USERNAME=laravel');
+            putenv('DB_PASSWORD=laravel');
+
             putenv('QUEUE_CONNECTION=sync');
-            config([
-                'queue.default' => 'sync',
-            ]);
         }
+
+        parent::setUp();
     }
 
     protected function defineDatabaseMigrations()
