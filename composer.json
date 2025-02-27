@@ -46,13 +46,13 @@
         }
     ],
     "require": {
-        "php": "^8.0.2",
+        "php": "^8.1",
         "laravel/framework": "^9.0|^10.0|^11.0|^12.0",
         "spatie/laravel-model-states": "^2.1",
         "react/promise": "^2.9|^3.0"
     },
     "require-dev": {
-        "orchestra/testbench": "^7.0",
+        "orchestra/testbench": "^8.0",
         "phpstan/phpstan": "^1.9",
         "rector/rector": "^0.15.1",
         "scrutinizer/ocular": "dev-master",
