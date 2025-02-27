@@ -10,7 +10,10 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Tests\\": "tests/"
+            "Tests\\": "tests/",
+            "Workbench\\App\\": "workbench/app/",
+            "Workbench\\Database\\Factories\\": "workbench/database/factories/",
+            "Workbench\\Database\\Seeders\\": "workbench/database/seeders/"
         }
     },
     "scripts": {
@@ -19,7 +22,22 @@
         "stan": "vendor/bin/phpstan analyse src tests",
         "feature": "phpunit --testdox --testsuite feature",
         "unit": "phpunit --testdox --testsuite unit",
-        "test": "phpunit --testdox"
+        "test": "phpunit --testdox",
+        "post-autoload-dump": [
+            "@clear",
+            "@prepare"
+        ],
+        "clear": "@php vendor/bin/testbench package:purge-skeleton --ansi",
+        "prepare": "@php vendor/bin/testbench package:discover --ansi",
+        "build": "@php vendor/bin/testbench workbench:build --ansi",
+        "serve": [
+            "Composer\\Config::disableProcessTimeout",
+            "@build",
+            "@php vendor/bin/testbench serve --ansi"
+        ],
+        "lint": [
+            "@php vendor/bin/phpstan analyse --verbose --ansi"
+        ]
     },
     "authors": [
         {
@@ -34,7 +52,7 @@
         "react/promise": "^2.9|^3.0"
     },
     "require-dev": {
-        "orchestra/testbench": "^7.1",
+        "orchestra/testbench": "^8.0",
         "phpstan/phpstan": "^1.9",
         "rector/rector": "^0.15.1",
         "scrutinizer/ocular": "dev-master",

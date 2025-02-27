@@ -24,13 +24,15 @@ final class SerializeTest extends TestCase
         $this->testSerializeUnserialize($data, Base64::class, Y::class);
     }
 
-    public function dataProvider(): array
+    public static function dataProvider(): array
     {
         return [
             'array []' => [[]],
             'array [[]]' => [[[]]],
             'array assoc' => [
-                'key' => 'value',
+                [
+                    'key' => 'value',
+                ],
             ],
             'bool true' => [true],
             'bool false' => [false],

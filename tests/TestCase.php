@@ -16,10 +16,14 @@ abstract class TestCase extends BaseTestCase
 
     public static function setUpBeforeClass(): void
     {
-        Dotenv::createImmutable(__DIR__ . '/..')->safeLoad();
+        Dotenv::createImmutable(__DIR__ . '/../workbench')->safeLoad();
 
         for ($i = 0; $i < self::NUMBER_OF_WORKERS; $i++) {
-            self::$workers[$i] = new Process(['php', 'artisan', 'queue:work']);
+            self::$workers[$i] = new Process([
+                'php',
+                __DIR__ . '/../vendor/orchestra/testbench-core/laravel/artisan',
+                'queue:work',
+            ]);
             self::$workers[$i]->start();
         }
     }
@@ -28,6 +32,18 @@ abstract class TestCase extends BaseTestCase
     {
         foreach (self::$workers as $worker) {
             $worker->stop();
+        }
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        if (TestSuiteSubscriber::getCurrentSuite() === 'unit') {
+            putenv('QUEUE_CONNECTION=sync');
+            config([
+                'queue.default' => 'sync',
+            ]);
         }
     }
 
