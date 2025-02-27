@@ -21,7 +21,7 @@ abstract class TestCase extends BaseTestCase
                 Dotenv::createImmutable(__DIR__, '.env.feature')->safeLoad();
             } elseif (TestSuiteSubscriber::getCurrentSuite() === 'unit') {
                 Dotenv::createImmutable(__DIR__, '.env.unit')->safeLoad();
-            }    
+            }
         }
 
         for ($i = 0; $i < self::NUMBER_OF_WORKERS; $i++) {
@@ -48,7 +48,7 @@ abstract class TestCase extends BaseTestCase
                 Dotenv::createImmutable(__DIR__, '.env.feature')->safeLoad();
             } elseif (TestSuiteSubscriber::getCurrentSuite() === 'unit') {
                 Dotenv::createImmutable(__DIR__, '.env.unit')->safeLoad();
-            }    
+            }
         }
 
         parent::setUp();
