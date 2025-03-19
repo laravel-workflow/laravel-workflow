@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Workflow\Traits;
 
 use Carbon\CarbonInterval;
-use Illuminate\Database\QueryException;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use function React\Promise\resolve;
@@ -64,7 +63,7 @@ trait Timers
                             'class' => Signal::class,
                             'result' => Serializer::serialize(true),
                         ]);
-                } catch (QueryException $exception) {
+                } catch (\Illuminate\Database\UniqueConstraintViolationException $exception) {
                     // already logged
                 }
             }

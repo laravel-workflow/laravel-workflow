@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Workflow;
 
-use Illuminate\Database\QueryException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Traits\Macroable;
@@ -226,7 +225,7 @@ final class WorkflowStub
                     'class' => $this->storedWorkflow->class,
                     'exception' => Serializer::serialize($exception),
                 ]);
-        } catch (QueryException) {
+        } catch (\Illuminate\Database\UniqueConstraintViolationException $exception) {
             // already logged
         }
 
@@ -267,7 +266,7 @@ final class WorkflowStub
                     'class' => $class,
                     'result' => Serializer::serialize($result),
                 ]);
-        } catch (QueryException) {
+        } catch (\Illuminate\Database\UniqueConstraintViolationException $exception) {
             // already logged
         }
 
