@@ -219,15 +219,11 @@ final class WorkflowStub
 
     public function fail($exception): void
     {
-        try {
-            $this->storedWorkflow->exceptions()
-                ->create([
-                    'class' => $this->storedWorkflow->class,
-                    'exception' => Serializer::serialize($exception),
-                ]);
-        } catch (\Illuminate\Database\UniqueConstraintViolationException $exception) {
-            // already logged
-        }
+        $this->storedWorkflow->exceptions()
+            ->create([
+                'class' => $this->storedWorkflow->class,
+                'exception' => Serializer::serialize($exception),
+            ]);
 
         $this->storedWorkflow->status->transitionTo(WorkflowFailedStatus::class);
 

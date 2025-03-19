@@ -6,6 +6,7 @@ namespace Tests\Unit;
 
 use Exception;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Queue;
 use Tests\Fixtures\TestAwaitWorkflow;
 use Tests\Fixtures\TestBadConnectionWorkflow;
 use Tests\Fixtures\TestWorkflow;
@@ -14,6 +15,7 @@ use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Serializer;
 use Workflow\Signal;
 use Workflow\States\WorkflowCompletedStatus;
+use Workflow\States\WorkflowCreatedStatus;
 use Workflow\States\WorkflowPendingStatus;
 use Workflow\WorkflowStub;
 
@@ -206,5 +208,39 @@ final class WorkflowStubTest extends TestCase
 
         $this->assertSame('redis', WorkflowStub::connection());
         $this->assertSame('default', WorkflowStub::queue());
+    }
+
+    public function testHandlesDuplicateLogInsertionProperly(): void
+    {
+        Queue::fake();
+
+        $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
+        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
+        $storedWorkflow->update([
+            'arguments' => Serializer::serialize([]),
+            'status' => WorkflowCreatedStatus::$name,
+        ]);
+
+        $storedWorkflow->timers()
+            ->create([
+                'index' => 0,
+                'stop_at' => now(),
+            ]);
+        $storedWorkflow->logs()
+            ->create([
+                'index' => 0,
+                'now' => now(),
+                'class' => Signal::class,
+                'result' => Serializer::serialize(true),
+            ]);
+
+        $workflow = $storedWorkflow->toWorkflow();
+
+        $workflow->next(0, now(), Signal::class, true);
+
+        $this->assertSame(WorkflowPendingStatus::class, $workflow->status());
+        $this->assertSame(1, $workflow->logs()->count());
+
+        Queue::assertPushed(TestWorkflow::class, 1);
     }
 }
