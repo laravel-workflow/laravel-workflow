@@ -80,7 +80,6 @@ $workflow->output();
 ### Workflow View
 
 ![workflow](https://user-images.githubusercontent.com/1130888/202866616-98a214d3-a916-4ae1-952e-ca8267ddf4a7.png)
-
 Refer to https://github.com/laravel-workflow/waterline for installation and configuration instructions.
 
 
