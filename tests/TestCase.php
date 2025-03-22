@@ -25,11 +25,7 @@ abstract class TestCase extends BaseTestCase
         }
 
         for ($i = 0; $i < self::NUMBER_OF_WORKERS; $i++) {
-            self::$workers[$i] = new Process([
-                'php',
-                __DIR__ . '/../vendor/bin/testbench',
-                'queue:work',
-            ]);
+            self::$workers[$i] = new Process(['php', __DIR__ . '/../vendor/bin/testbench', 'queue:work']);
             self::$workers[$i]->start();
         }
     }
