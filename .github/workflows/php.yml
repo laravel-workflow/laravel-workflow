@@ -66,8 +66,8 @@ jobs:
 
     - name: Start queue workers
       run: |
-        php artisan queue:work --daemon --quiet &
-        php artisan queue:work --daemon --quiet &
+        php vendor/orchestra/testbench-core/laravel/artisan queue:work --daemon --quiet &
+        php vendor/orchestra/testbench-core/laravel/artisan queue:work --daemon --quiet &
       env:
         APP_KEY: base64:i3g6f+dV8FfsIkcxqd7gbiPn2oXk5r00sTmdD6V5utI=
         DB_CONNECTION: mysql
@@ -99,8 +99,8 @@ jobs:
     - name: Restart queue workers for PostgreSQL
       run: |
         pkill -f 'php artisan queue:work' || true
-        php artisan queue:work --daemon --quiet &
-        php artisan queue:work --daemon --quiet &
+        php vendor/orchestra/testbench-core/laravel/artisan queue:work --daemon --quiet &
+        php vendor/orchestra/testbench-core/laravel/artisan queue:work --daemon --quiet &
       env:
         APP_KEY: base64:i3g6f+dV8FfsIkcxqd7gbiPn2oXk5r00sTmdD6V5utI=
         DB_CONNECTION: pgsql
