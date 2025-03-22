@@ -58,6 +58,13 @@ final class SerializeTest extends TestCase
         ];
     }
 
+    public function testSerializableReturnsFalseForClosure(): void
+    {
+        $this->assertFalse(Serializer::serializable(static function () {
+            return 'test';
+        }));
+    }
+
     private function testSerializeUnserialize($data, $serializer, $unserializer): void
     {
         config([
@@ -86,12 +93,5 @@ final class SerializeTest extends TestCase
         } else {
             $this->assertSame($data, $unserialized);
         }
-    }
-
-    public function testSerializableReturnsFalseForClosure(): void
-    {    
-        $this->assertFalse(Serializer::serializable(function () {
-            return 'test';
-        }));
     }
 }
