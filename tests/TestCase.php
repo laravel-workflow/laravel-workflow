@@ -17,6 +17,7 @@ abstract class TestCase extends BaseTestCase
     public static function setUpBeforeClass(): void
     {
         if (getenv('GITHUB_ACTIONS') !== 'true') {
+            dump('Loading environment variables');
             if (TestSuiteSubscriber::getCurrentSuite() === 'feature') {
                 Dotenv::createImmutable(__DIR__, '.env.feature')->safeLoad();
             } elseif (TestSuiteSubscriber::getCurrentSuite() === 'unit') {
