@@ -15,6 +15,10 @@ final class WithoutOverlappingMiddlewareTest extends TestCase
 {
     public function testMiddleware(): void
     {
+        $this->app->make('cache')
+            ->store()
+            ->clear();
+
         $middleware = new WithoutOverlappingMiddleware(1, WithoutOverlappingMiddleware::WORKFLOW);
         $this->assertSame($middleware->getLockKey(), 'laravel-workflow-overlap:1');
         $this->assertSame($middleware->getWorkflowSemaphoreKey(), 'laravel-workflow-overlap:1:workflow');
@@ -28,6 +32,10 @@ final class WithoutOverlappingMiddlewareTest extends TestCase
 
     public function testAllowsOnlyOneWorkflowInstance(): void
     {
+        $this->app->make('cache')
+            ->store()
+            ->clear();
+
         $workflow1 = $this->mock(TestWorkflow::class);
         $middleware1 = new WithoutOverlappingMiddleware(1, WithoutOverlappingMiddleware::WORKFLOW);
 
@@ -65,6 +73,10 @@ final class WithoutOverlappingMiddlewareTest extends TestCase
 
     public function testAllowsMultipleActivityInstances(): void
     {
+        $this->app->make('cache')
+            ->store()
+            ->clear();
+
         $activity1 = $this->mock(TestActivity::class);
         $middleware1 = new WithoutOverlappingMiddleware(1, WithoutOverlappingMiddleware::ACTIVITY);
 
