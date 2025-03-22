@@ -11,6 +11,10 @@ class MonitorQueueConnectionTest extends TestCase
 {
     public function testReturnsDefaultConnection(): void
     {
+        config([
+            'queue.default' => 'sync',
+        ]);
+
         $instance = $this->makeAnonymousTraitInstance();
 
         $this->assertSame(config('queue.default'), $instance->viaConnection());
@@ -18,6 +22,10 @@ class MonitorQueueConnectionTest extends TestCase
 
     public function testReturnsDefaultQueue(): void
     {
+        config([
+            'queue.default' => 'sync',
+        ]);
+
         $instance = $this->makeAnonymousTraitInstance();
 
         $this->assertSame('default', $instance->viaQueue());
@@ -26,6 +34,7 @@ class MonitorQueueConnectionTest extends TestCase
     public function testReturnsCustomConnection(): void
     {
         config([
+            'queue.default' => 'sync',
             'workflows.monitor_connection' => 'custom_connection',
         ]);
 
@@ -37,6 +46,7 @@ class MonitorQueueConnectionTest extends TestCase
     public function testReturnsCustomQueue(): void
     {
         config([
+            'queue.default' => 'sync',
             'workflows.monitor_queue' => 'custom_queue',
         ]);
 
