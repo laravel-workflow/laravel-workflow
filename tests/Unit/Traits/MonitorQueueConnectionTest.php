@@ -13,6 +13,7 @@ class MonitorQueueConnectionTest extends TestCase
     {
         config([
             'queue.default' => 'sync',
+            'workflows.monitor_connection' => config('queue.default'),
         ]);
 
         $instance = $this->makeAnonymousTraitInstance();
@@ -24,6 +25,7 @@ class MonitorQueueConnectionTest extends TestCase
     {
         config([
             'queue.default' => 'sync',
+            'workflows.monitor_connection' => config('queue.default'),
         ]);
 
         $instance = $this->makeAnonymousTraitInstance();
@@ -47,6 +49,7 @@ class MonitorQueueConnectionTest extends TestCase
     {
         config([
             'queue.default' => 'sync',
+            'workflows.monitor_connection' => config('queue.default'),
             'workflows.monitor_queue' => 'custom_queue',
         ]);
 
