@@ -15,6 +15,10 @@ final class MonitorActivityStartedTest extends TestCase
 {
     public function testHandle(): void
     {
+        $this->app->make('cache')
+            ->store()
+            ->clear();
+
         config([
             'workflows.monitor_url' => 'http://test',
         ]);
