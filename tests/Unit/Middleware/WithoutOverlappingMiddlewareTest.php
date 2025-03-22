@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Middleware;
 
+use Illuminate\Contracts\Cache\Lock;
+use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Support\Facades\Cache;
 use Mockery\MockInterface;
 use Tests\Fixtures\TestActivity;
@@ -110,5 +112,61 @@ final class WithoutOverlappingMiddlewareTest extends TestCase
 
         $this->assertNull(Cache::get($middleware1->getWorkflowSemaphoreKey()));
         $this->assertSame(0, count(Cache::get($middleware1->getActivitySemaphoreKey())));
+    }
+
+    public function testUnknownTypeDoesNotCallNext(): void
+    {
+        $this->app->make('cache')
+            ->store()
+            ->clear();
+
+        $job = $this->mock(TestActivity::class, static function (MockInterface $mock) {
+            $mock->shouldReceive('release')
+                ->once();
+        });
+
+        $middleware = new WithoutOverlappingMiddleware(1, 999);
+
+        $middleware->handle($job, function ($job) {
+            $this->fail('Should not call next when type is unknown');
+        });
+
+        $this->assertNull(Cache::get($middleware->getWorkflowSemaphoreKey()));
+        $this->assertNull(Cache::get($middleware->getActivitySemaphoreKey()));
+    }
+
+    public function testReleaseWhenCompareAndSetFails(): void
+    {
+        $this->app->make('cache')
+            ->store()
+            ->clear();
+
+        $job = $this->mock(TestWorkflow::class, static function (MockInterface $mock) {
+            $mock->shouldReceive('release')
+                ->once();
+        });
+
+        $lock = $this->mock(Lock::class, static function (MockInterface $mock) {
+            $mock->shouldReceive('get')
+                ->once()
+                ->andReturn(false);
+        });
+
+        $cache = $this->mock(Repository::class, static function (MockInterface $mock) use ($lock) {
+            $mock->shouldReceive('lock')
+                ->once()
+                ->andReturn($lock);
+            $mock->shouldReceive('get')
+                ->andReturn([]);
+        });
+
+        $middleware = new WithoutOverlappingMiddleware(1, WithoutOverlappingMiddleware::WORKFLOW);
+
+        $middleware->handle($job, function ($job) {
+            $this->fail('Should not call next when lock is not acquired');
+        });
+
+        $this->assertNull(Cache::get($middleware->getWorkflowSemaphoreKey()));
+        $this->assertNull(Cache::get($middleware->getActivitySemaphoreKey()));
     }
 }
