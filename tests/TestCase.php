@@ -16,7 +16,6 @@ abstract class TestCase extends BaseTestCase
 
     public static function setUpBeforeClass(): void
     {
-        dump('GITHUB_ACTIONS: ' . getenv('GITHUB_ACTIONS'));
         if (getenv('GITHUB_ACTIONS') !== 'true') {
             if (TestSuiteSubscriber::getCurrentSuite() === 'feature') {
                 Dotenv::createImmutable(__DIR__, '.env.feature')->safeLoad();
@@ -32,6 +31,11 @@ abstract class TestCase extends BaseTestCase
                 'queue:work',
             ]);
             self::$workers[$i]->start();
+
+            if (!self::$workers[$i]->isRunning()) {
+                dump(self::$workers[$i]->getOutput());
+                dump(self::$workers[$i]->getErrorOutput());
+            }
         }
     }
 
