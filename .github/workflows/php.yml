@@ -64,6 +64,23 @@ jobs:
         touch testbench.sqlite
         mysql -e 'CREATE DATABASE testbench' -h127.0.0.1 -uroot -ppassword -P ${{ job.services.mysql.ports[3306] }}
 
+    - name: Start queue workers
+      run: |
+        php artisan queue:work --daemon --quiet &
+        php artisan queue:work --daemon --quiet &
+      env:
+        APP_KEY: base64:i3g6f+dV8FfsIkcxqd7gbiPn2oXk5r00sTmdD6V5utI=
+        DB_CONNECTION: mysql
+        DB_DATABASE: testbench
+        DB_HOST: 127.0.0.1
+        DB_PORT: 3306
+        DB_USERNAME: root
+        DB_PASSWORD: password
+        QUEUE_CONNECTION: redis
+        REDIS_HOST: 127.0.0.1
+        REDIS_PASSWORD:
+        REDIS_PORT: 6379
+
     - name: Run test suite (MySQL)
       run: vendor/bin/phpunit --testdox --testsuite feature
       env:
@@ -72,6 +89,24 @@ jobs:
         DB_DATABASE: testbench
         DB_HOST: 127.0.0.1
         DB_PORT: 3306
+        DB_USERNAME: root
+        DB_PASSWORD: password
+        QUEUE_CONNECTION: redis
+        REDIS_HOST: 127.0.0.1
+        REDIS_PASSWORD:
+        REDIS_PORT: 6379
+
+    - name: Restart queue workers for PostgreSQL
+      run: |
+        pkill -f 'php artisan queue:work' || true
+        php artisan queue:work --daemon --quiet &
+        php artisan queue:work --daemon --quiet &
+      env:
+        APP_KEY: base64:i3g6f+dV8FfsIkcxqd7gbiPn2oXk5r00sTmdD6V5utI=
+        DB_CONNECTION: pgsql
+        DB_DATABASE: testbench
+        DB_HOST: 127.0.0.1
+        DB_PORT: 5432
         DB_USERNAME: root
         DB_PASSWORD: password
         QUEUE_CONNECTION: redis

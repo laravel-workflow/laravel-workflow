@@ -22,26 +22,17 @@ abstract class TestCase extends BaseTestCase
             } elseif (TestSuiteSubscriber::getCurrentSuite() === 'unit') {
                 Dotenv::createImmutable(__DIR__, '.env.unit')->safeLoad();
             }
+
+            for ($i = 0; $i < self::NUMBER_OF_WORKERS; $i++) {
+                self::$workers[$i] = new Process([
+                    'php',
+                    __DIR__ . '/../vendor/orchestra/testbench-core/laravel/artisan',
+                    'queue:work',
+                ]);
+                self::$workers[$i]->start();
+            }
         } else {
-            dump('Running in GitHub Actions, skipping dotenv loading.');
-        }
-
-        for ($i = 0; $i < self::NUMBER_OF_WORKERS; $i++) {
-            dump(__DIR__ . '/../vendor/orchestra/testbench-core/laravel/artisan');
-            if (! file_exists(__DIR__ . '/../vendor/orchestra/testbench-core/laravel/artisan')) {
-                dump('Artisan file does not exist.');
-            }
-            self::$workers[$i] = new Process([
-                'php',
-                __DIR__ . '/../vendor/orchestra/testbench-core/laravel/artisan',
-                'queue:work',
-            ]);
-            self::$workers[$i]->start();
-
-            if (! self::$workers[$i]->isRunning()) {
-                dump(self::$workers[$i]->getOutput());
-                dump(self::$workers[$i]->getErrorOutput());
-            }
+            dump('Running in GitHub Actions.');
         }
     }
 
