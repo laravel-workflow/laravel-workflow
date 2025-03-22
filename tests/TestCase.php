@@ -32,7 +32,7 @@ abstract class TestCase extends BaseTestCase
             ]);
             self::$workers[$i]->start();
 
-            if (!self::$workers[$i]->isRunning()) {
+            if (! self::$workers[$i]->isRunning()) {
                 dump(self::$workers[$i]->getOutput());
                 dump(self::$workers[$i]->getErrorOutput());
             }
