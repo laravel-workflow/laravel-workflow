@@ -6,11 +6,13 @@ namespace Tests\Unit;
 
 use BadMethodCallException;
 use Exception;
+use Tests\Fixtures\NonRetryableTestExceptionActivity;
 use Tests\Fixtures\TestExceptionActivity;
 use Tests\Fixtures\TestInvalidActivity;
 use Tests\Fixtures\TestOtherActivity;
 use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
+use Workflow\Exceptions\NonRetryableException;
 use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Serializer;
 use Workflow\States\WorkflowCreatedStatus;
@@ -52,6 +54,24 @@ final class ActivityTest extends TestCase
 
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $activity = new TestExceptionActivity(0, now()->toDateTimeString(), StoredWorkflow::findOrFail(
+            $workflow->id()
+        ));
+
+        $activity->handle();
+
+        $workflow->fresh();
+
+        $this->assertSame(1, $workflow->exceptions()->count());
+        $this->assertSame(0, $workflow->logs()->count());
+        $this->assertSame(WorkflowFailedStatus::class, $workflow->status());
+    }
+
+    public function testNonRetryableExceptionActivity(): void
+    {
+        $this->expectException(NonRetryableException::class);
+
+        $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
+        $activity = new NonRetryableTestExceptionActivity(0, now()->toDateTimeString(), StoredWorkflow::findOrFail(
             $workflow->id()
         ));
 
