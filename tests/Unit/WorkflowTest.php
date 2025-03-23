@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use BadMethodCallException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Event;
 use Tests\Fixtures\TestActivity;
 use Tests\Fixtures\TestChildWorkflow;
 use Tests\Fixtures\TestOtherActivity;
 use Tests\Fixtures\TestParentWorkflow;
+use Tests\Fixtures\TestThrowOnReturnWorkflow;
 use Tests\Fixtures\TestWorkflow;
+use Tests\Fixtures\TestYieldNonPromiseWorkflow;
 use Tests\TestCase;
 use Workflow\Events\WorkflowFailed;
 use Workflow\Exception;
@@ -275,5 +278,53 @@ final class WorkflowTest extends TestCase
         $this->assertSame('2022-01-01 00:00:00', WorkflowStub::now()->toDateTimeString());
         $this->assertSame(WorkflowCompletedStatus::class, $childWorkflow->status());
         $this->assertSame('other', $childWorkflow->output());
+    }
+
+    public function testThrowsWhenExecuteMethodIsMissing(): void
+    {
+        $stub = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
+        $storedWorkflow = StoredWorkflow::findOrFail($stub->id());
+        $storedWorkflow->update([
+            'arguments' => Serializer::serialize([]),
+            'status' => WorkflowPendingStatus::class,
+        ]);
+
+        $this->expectException(BadMethodCallException::class);
+        $this->expectExceptionMessage('Execute method not implemented.');
+
+        $workflow = new Workflow($storedWorkflow);
+        $workflow->handle();
+    }
+
+    public function testThrowsWhenYieldNonPromise(): void
+    {
+        $stub = WorkflowStub::load(WorkflowStub::make(TestYieldNonPromiseWorkflow::class)->id());
+        $storedWorkflow = StoredWorkflow::findOrFail($stub->id());
+        $storedWorkflow->update([
+            'arguments' => Serializer::serialize([]),
+            'status' => WorkflowPendingStatus::class,
+        ]);
+
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('something went wrong');
+
+        $workflow = new TestYieldNonPromiseWorkflow($storedWorkflow);
+        $workflow->handle();
+    }
+
+    public function testThrowsWrappedException(): void
+    {
+        $stub = WorkflowStub::load(WorkflowStub::make(TestThrowOnReturnWorkflow::class)->id());
+        $storedWorkflow = StoredWorkflow::findOrFail($stub->id());
+        $storedWorkflow->update([
+            'arguments' => Serializer::serialize([]),
+            'status' => WorkflowPendingStatus::class,
+        ]);
+
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Workflow failed.');
+
+        $workflow = new TestThrowOnReturnWorkflow($storedWorkflow);
+        $workflow->handle();
     }
 }
