@@ -28,12 +28,25 @@ final class WorkflowTest extends TestCase
     {
         Event::fake();
 
+        $parentWorkflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
+        $storedParentWorkflow = StoredWorkflow::findOrFail($parentWorkflow->id());
+        $storedParentWorkflow->update([
+            'arguments' => Serializer::serialize([]),
+            'status' => WorkflowPendingStatus::$name,
+        ]);
+
         $stub = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $storedWorkflow = StoredWorkflow::findOrFail($stub->id());
         $storedWorkflow->update([
             'arguments' => Serializer::serialize([]),
             'status' => WorkflowPendingStatus::class,
         ]);
+
+        $storedWorkflow->parents()
+            ->attach($storedParentWorkflow, [
+                'parent_index' => 0,
+                'parent_now' => now(),
+            ]);
 
         $workflow = new Workflow($storedWorkflow);
 
@@ -72,6 +85,45 @@ final class WorkflowTest extends TestCase
         );
 
         Event::assertNotDispatched(WorkflowFailed::class, static function ($event) use ($stub) {
+            return $event->workflowId === $stub->id();
+        });
+    }
+
+    public function testFailedWithParentFailed(): void
+    {
+        Event::fake();
+
+        $parentWorkflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
+        $storedParentWorkflow = StoredWorkflow::findOrFail($parentWorkflow->id());
+        $storedParentWorkflow->update([
+            'arguments' => Serializer::serialize([]),
+            'status' => WorkflowFailedStatus::$name,
+        ]);
+
+        $stub = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
+        $storedWorkflow = StoredWorkflow::findOrFail($stub->id());
+        $storedWorkflow->update([
+            'arguments' => Serializer::serialize([]),
+            'status' => WorkflowPendingStatus::class,
+        ]);
+
+        $storedWorkflow->parents()
+            ->attach($storedParentWorkflow, [
+                'parent_index' => 0,
+                'parent_now' => now(),
+            ]);
+
+        $workflow = new Workflow($storedWorkflow);
+
+        $workflow->failed(new \Exception('Test exception'));
+
+        $this->assertSame(WorkflowFailedStatus::class, $stub->status());
+        $this->assertSame(
+            'Test exception',
+            Serializer::unserialize($stub->exceptions()->first()->exception)['message']
+        );
+
+        Event::assertDispatched(WorkflowFailed::class, static function ($event) use ($stub) {
             return $event->workflowId === $stub->id();
         });
     }
