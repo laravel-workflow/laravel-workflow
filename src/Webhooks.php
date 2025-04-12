@@ -9,6 +9,10 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use ReflectionClass;
 use ReflectionMethod;
+use Workflow\Auth\NullAuthenticator;
+use Workflow\Auth\SignatureAuthenticator;
+use Workflow\Auth\TokenAuthenticator;
+use Workflow\Auth\WebhookAuthenticator;
 
 class Webhooks
 {
@@ -162,25 +166,16 @@ class Webhooks
 
     private static function validateAuth(Request $request): bool
     {
-        $config = config('workflows.webhook_auth', [
-            'method' => 'none',
-        ]);
+        $authenticatorClass = match (config('workflows.webhook_auth.method', 'none')) {
+            'none' => NullAuthenticator::class,
+            'signature' => SignatureAuthenticator::class,
+            'token' => TokenAuthenticator::class,
+            'custom' => config('workflows.webhook_auth.custom.class'),
+            default => null,
+        };
 
-        if ($config['method'] === 'none') {
-            return true;
-        }
-
-        if ($config['method'] === 'signature') {
-            $secret = $config['signature']['secret'];
-            $header = $config['signature']['header'];
-            $expectedSignature = hash_hmac('sha256', $request->getContent(), $secret);
-            return $request->header($header) === $expectedSignature;
-        }
-
-        if ($config['method'] === 'token') {
-            $token = $config['token']['token'];
-            $header = $config['token']['header'];
-            return $request->header($header) === $token;
+        if (is_subclass_of($authenticatorClass, WebhookAuthenticator::class)) {
+            return (new $authenticatorClass())->validate($request);
         }
 
         return false;

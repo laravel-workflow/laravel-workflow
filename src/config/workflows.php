@@ -37,18 +37,9 @@ return [
             'header' => env('WORKFLOW_WEBHOOKS_TOKEN_HEADER', 'Authorization'),
             'token' => env('WORKFLOW_WEBHOOKS_TOKEN'),
         ],
+
+        'custom' => [
+            'class' => env('WORKFLOW_WEBHOOKS_CUSTOM_AUTH_CLASS', null),
+        ],
     ],
-
-    'monitor' => env('WORKFLOW_MONITOR', false),
-
-    'monitor_url' => env('WORKFLOW_MONITOR_URL'),
-
-    'monitor_api_key' => env('WORKFLOW_MONITOR_API_KEY'),
-
-    'monitor_connection' => env('WORKFLOW_MONITOR_CONNECTION', config('queue.default')),
-
-    'monitor_queue' => env(
-        'WORKFLOW_MONITOR_QUEUE',
-        config('queue.connections.' . config('queue.default') . '.queue', 'default')
-    ),
 ];
