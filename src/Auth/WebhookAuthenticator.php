@@ -8,5 +8,5 @@ use Illuminate\Http\Request;
 
 interface WebhookAuthenticator
 {
-    public function validate(Request $request): bool;
+    public function validate(Request $request): Request;
 }

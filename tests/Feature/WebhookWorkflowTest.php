@@ -111,7 +111,7 @@ final class WebhookWorkflowTest extends TestCase
 
         $response->assertStatus(401);
         $response->assertJson([
-            'error' => 'Unauthorized',
+            'message' => 'Unauthorized',
         ]);
 
         $response = $this->postJson('/webhooks/start/test-webhook-workflow', [], [
@@ -120,7 +120,7 @@ final class WebhookWorkflowTest extends TestCase
 
         $response->assertStatus(401);
         $response->assertJson([
-            'error' => 'Unauthorized',
+            'message' => 'Unauthorized',
         ]);
 
         $response = $this->postJson('/webhooks/start/test-webhook-workflow', [], [
@@ -165,8 +165,8 @@ final class WebhookWorkflowTest extends TestCase
         $response = $this->postJson('/webhooks/start/test-webhook-workflow');
 
         $response->assertStatus(401);
-        $response->assertJson([
-            'error' => 'Unauthorized',
+        $response->assertJsonStructure([
+            'message' => 'Unauthorized',
         ]);
 
         $response = $this->postJson('/webhooks/start/test-webhook-workflow', [], [

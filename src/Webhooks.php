@@ -79,12 +79,7 @@ class Webhooks
             if ($method->getName() === 'execute') {
                 $slug = Str::kebab(class_basename($workflow));
                 Route::post("{$basePath}/start/{$slug}", static function (Request $request) use ($workflow) {
-                    if (! self::validateAuth($request)) {
-                        return response()->json([
-                            'error' => 'Unauthorized',
-                        ], 401);
-                    }
-
+                    $request = self::validateAuth($request);
                     $params = self::resolveNamedParameters($workflow, 'execute', $request->all());
                     WorkflowStub::make($workflow)->start(...$params);
                     return response()->json([
@@ -101,16 +96,10 @@ class Webhooks
             if (self::hasWebhookAttributeOnMethod($method)) {
                 $slug = Str::kebab(class_basename($workflow));
                 $signal = Str::kebab($method->getName());
-
                 Route::post(
                     "{$basePath}/signal/{$slug}/{workflowId}/{$signal}",
                     static function (Request $request, $workflowId) use ($workflow, $method) {
-                        if (! self::validateAuth($request)) {
-                            return response()->json([
-                                'error' => 'Unauthorized',
-                            ], 401);
-                        }
-
+                        $request = self::validateAuth($request);
                         $workflowInstance = WorkflowStub::load($workflowId);
                         $params = self::resolveNamedParameters(
                             $workflow,
@@ -118,7 +107,6 @@ class Webhooks
                             $request->except('workflow_id')
                         );
                         $workflowInstance->{$method->getName()}(...$params);
-
                         return response()->json([
                             'message' => 'Signal sent',
                         ]);
@@ -164,7 +152,7 @@ class Webhooks
         return $params;
     }
 
-    private static function validateAuth(Request $request): bool
+    private static function validateAuth(Request $request): Request
     {
         $authenticatorClass = match (config('workflows.webhook_auth.method', 'none')) {
             'none' => NullAuthenticator::class,
@@ -174,10 +162,10 @@ class Webhooks
             default => null,
         };
 
-        if (is_subclass_of($authenticatorClass, WebhookAuthenticator::class)) {
-            return (new $authenticatorClass())->validate($request);
+        if (! is_subclass_of($authenticatorClass, WebhookAuthenticator::class)) {
+            abort(401, 'Unauthorized');
         }
 
-        return false;
+        return (new $authenticatorClass())->validate($request);
     }
 }
