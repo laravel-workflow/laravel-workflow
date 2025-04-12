@@ -7,7 +7,7 @@ namespace Tests\Fixtures;
 use Workflow\Activity;
 use Workflow\Exceptions\NonRetryableException;
 
-final class NonRetryableTestExceptionActivity extends Activity
+final class TestNonRetryableExceptionActivity extends Activity
 {
     public function execute()
     {
