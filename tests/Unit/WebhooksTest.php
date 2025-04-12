@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Route;
 use Mockery;
 use ReflectionClass;
 use ReflectionMethod;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Tests\Fixtures\TestAuthenticator;
 use Tests\TestCase;
 use Workflow\Models\StoredWorkflow;
 use Workflow\States\WorkflowPendingStatus;
@@ -126,7 +128,7 @@ final class WebhooksTest extends TestCase
         $method = $webhooksReflection->getMethod('validateAuth');
         $method->setAccessible(true);
 
-        $this->assertTrue($method->invoke(null, $request));
+        $this->assertInstanceOf(Request::class, $method->invoke(null, $request));
     }
 
     public function testValidatesAuthForTokenSuccess()
@@ -145,11 +147,13 @@ final class WebhooksTest extends TestCase
         $method = $webhooksReflection->getMethod('validateAuth');
         $method->setAccessible(true);
 
-        $this->assertTrue($method->invoke(null, $request));
+        $this->assertInstanceOf(Request::class, $method->invoke(null, $request));
     }
 
     public function testValidatesAuthForTokenFailure()
     {
+        $this->expectException(HttpException::class);
+
         config([
             'workflows.webhook_auth.method' => 'token',
             'workflows.webhook_auth.token.token' => 'valid-token',
@@ -164,7 +168,7 @@ final class WebhooksTest extends TestCase
         $method = $webhooksReflection->getMethod('validateAuth');
         $method->setAccessible(true);
 
-        $this->assertFalse($method->invoke(null, $request));
+        $method->invoke(null, $request);
     }
 
     public function testValidatesAuthForSignatureSuccess()
@@ -188,11 +192,13 @@ final class WebhooksTest extends TestCase
         $method = $webhooksReflection->getMethod('validateAuth');
         $method->setAccessible(true);
 
-        $this->assertTrue($method->invoke(null, $request));
+        $this->assertInstanceOf(Request::class, $method->invoke(null, $request));
     }
 
     public function testValidatesAuthForSignatureFailure()
     {
+        $this->expectException(HttpException::class);
+
         config([
             'workflows.webhook_auth.method' => 'signature',
             'workflows.webhook_auth.signature.secret' => 'test-secret',
@@ -212,7 +218,43 @@ final class WebhooksTest extends TestCase
         $method = $webhooksReflection->getMethod('validateAuth');
         $method->setAccessible(true);
 
-        $this->assertFalse($method->invoke(null, $request));
+        $method->invoke(null, $request);
+    }
+
+    public function testValidatesAuthForCustomSuccess()
+    {
+        config([
+            'workflows.webhook_auth.method' => 'custom',
+            'workflows.webhook_auth.custom.class' => TestAuthenticator::class,
+        ]);
+
+        $request = Request::create('/webhooks/start/test-webhook-workflow', 'POST', [], [], [], [
+            'HTTP_AUTHORIZATION' => 'valid-token',
+        ]);
+
+        $webhooksReflection = new ReflectionClass(Webhooks::class);
+        $method = $webhooksReflection->getMethod('validateAuth');
+        $method->setAccessible(true);
+
+        $this->assertInstanceOf(Request::class, $method->invoke(null, $request));
+    }
+
+    public function testValidatesAuthForCustomFailure()
+    {
+        $this->expectException(HttpException::class);
+
+        config([
+            'workflows.webhook_auth.method' => 'custom',
+            'workflows.webhook_auth.custom.class' => TestAuthenticator::class,
+        ]);
+
+        $request = Request::create('/webhooks/start/test-webhook-workflow', 'POST');
+
+        $webhooksReflection = new ReflectionClass(Webhooks::class);
+        $method = $webhooksReflection->getMethod('validateAuth');
+        $method->setAccessible(true);
+
+        $method->invoke(null, $request);
     }
 
     public function testResolveNamedParameters()
@@ -236,6 +278,8 @@ final class WebhooksTest extends TestCase
 
     public function testUnauthorizedRequestFails()
     {
+        $this->expectException(HttpException::class);
+
         config([
             'workflows.webhook_auth.method' => 'unsupported',
         ]);
@@ -246,7 +290,7 @@ final class WebhooksTest extends TestCase
         $method = $webhooksReflection->getMethod('validateAuth');
         $method->setAccessible(true);
 
-        $this->assertFalse($method->invoke(null, $request));
+        $method->invoke(null, $request);
     }
 
     public function testResolveNamedParametersUsesDefaults()
@@ -323,7 +367,7 @@ final class WebhooksTest extends TestCase
 
         $response->assertStatus(401);
         $response->assertJson([
-            'error' => 'Unauthorized',
+            'message' => 'Unauthorized',
         ]);
     }
 
@@ -350,7 +394,7 @@ final class WebhooksTest extends TestCase
 
         $response->assertStatus(401);
         $response->assertJson([
-            'error' => 'Unauthorized',
+            'message' => 'Unauthorized',
         ]);
     }
 }

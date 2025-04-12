@@ -8,8 +8,8 @@ use Illuminate\Http\Request;
 
 class NullAuthenticator implements WebhookAuthenticator
 {
-    public function validate(Request $request): bool
+    public function validate(Request $request): Request
     {
-        return true;
+        return $request;
     }
 }

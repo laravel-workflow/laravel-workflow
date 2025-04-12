@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use Tests\Fixtures\NonRetryableTestExceptionWorkflow;
 use Tests\Fixtures\TestExceptionWorkflow;
+use Tests\Fixtures\TestNonRetryableExceptionWorkflow;
 use Tests\TestCase;
 use Workflow\Serializers\Serializer;
 use Workflow\States\WorkflowCompletedStatus;
@@ -34,7 +34,7 @@ final class ExceptionWorkflowTest extends TestCase
 
     public function testNonRetryableException(): void
     {
-        $workflow = WorkflowStub::make(NonRetryableTestExceptionWorkflow::class);
+        $workflow = WorkflowStub::make(TestNonRetryableExceptionWorkflow::class);
 
         $workflow->start();
 
