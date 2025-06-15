@@ -104,7 +104,7 @@ class Webhooks
                         $params = self::resolveNamedParameters(
                             $workflow,
                             $method->getName(),
-                            $request->except('workflow_id')
+                            $request->except('workflowId')
                         );
                         $workflowInstance->{$method->getName()}(...$params);
                         return response()->json([
