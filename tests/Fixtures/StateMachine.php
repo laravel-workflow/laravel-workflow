@@ -44,7 +44,7 @@ class StateMachine
         if (isset($this->transitions[$action]) && $this->transitions[$action]['from'] === $this->currentState) {
             $this->currentState = $this->transitions[$action]['to'];
         } else {
-            throw new Exception('Transition not found,');
+            throw new Exception('Transition not found.');
         }
     }
 }
