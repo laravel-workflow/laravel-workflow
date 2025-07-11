@@ -75,6 +75,7 @@ jobs:
         DB_USERNAME: root
         DB_PASSWORD: password
         QUEUE_CONNECTION: redis
+        QUEUE_FAILED_DRIVER: null
         REDIS_HOST: 127.0.0.1
         REDIS_PASSWORD:
         REDIS_PORT: 6379
@@ -90,6 +91,7 @@ jobs:
         DB_USERNAME: root
         DB_PASSWORD: password
         QUEUE_CONNECTION: redis
+        QUEUE_FAILED_DRIVER: null
         REDIS_HOST: 127.0.0.1
         REDIS_PASSWORD:
         REDIS_PORT: 6379
