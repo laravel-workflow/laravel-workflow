@@ -57,6 +57,8 @@ abstract class TestCase extends BaseTestCase
             '--realpath' => true,
         ]);
 
+        $this->artisan('queue:failed-table');
+
         $this->loadLaravelMigrations();
     }
 

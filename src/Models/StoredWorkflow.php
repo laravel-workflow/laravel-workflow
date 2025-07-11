@@ -86,6 +86,39 @@ class StoredWorkflow extends Model
         )->withPivot(['parent_index', 'parent_now']);
     }
 
+    public function continuedWorkflows(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(
+            config('workflows.stored_workflow_model', self::class),
+            config('workflows.workflow_relationships_table', 'workflow_relationships'),
+            'parent_workflow_id',
+            'child_workflow_id'
+        )->wherePivot('parent_index', -1)
+            ->withPivot(['parent_index', 'parent_now']);
+    }
+
+    public function root(): self
+    {
+        $root = $this;
+
+        while ($parent = $root->parents()->wherePivot('parent_index', -1)->first()) {
+            $root = $parent;
+        }
+
+        return $root;
+    }
+
+    public function active(): self
+    {
+        $active = $this->root();
+
+        while ($next = $active->continuedWorkflows()->first()) {
+            $active = $next;
+        }
+
+        return $active;
+    }
+
     public function prunable(): Builder
     {
         return static::where('status', 'completed')

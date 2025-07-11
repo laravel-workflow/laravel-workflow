@@ -23,6 +23,7 @@ use Workflow\Middleware\WithoutOverlappingMiddleware;
 use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Serializer;
 use Workflow\States\WorkflowCompletedStatus;
+use Workflow\States\WorkflowContinuedStatus;
 use Workflow\States\WorkflowRunningStatus;
 use Workflow\States\WorkflowWaitingStatus;
 use Workflow\Traits\Sagas;
@@ -212,6 +213,11 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
                 $return = $this->coroutine->getReturn();
             } catch (Throwable $th) {
                 throw new Exception('Workflow failed.', 0, $th);
+            }
+
+            if ($return instanceof ContinuedWorkflow) {
+                $this->storedWorkflow->status->transitionTo(WorkflowContinuedStatus::class);
+                return;
             }
 
             $this->storedWorkflow->output = Serializer::serialize($return);
