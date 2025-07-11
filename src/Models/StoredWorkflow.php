@@ -93,7 +93,7 @@ class StoredWorkflow extends Model
             config('workflows.workflow_relationships_table', 'workflow_relationships'),
             'parent_workflow_id',
             'child_workflow_id'
-        )->wherePivot('parent_index', -1)
+        )->wherePivot('parent_index', PHP_INT_MAX)
             ->withPivot(['parent_index', 'parent_now']);
     }
 
@@ -101,7 +101,7 @@ class StoredWorkflow extends Model
     {
         $root = $this;
 
-        while ($parent = $root->parents()->wherePivot('parent_index', -1)->first()) {
+        while ($parent = $root->parents()->wherePivot('parent_index', PHP_INT_MAX)->first()) {
             $root = $parent;
         }
 

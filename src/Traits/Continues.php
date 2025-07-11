@@ -20,7 +20,7 @@ trait Continues
 
             $newWorkflow->storedWorkflow->parents()
                 ->attach($context->storedWorkflow, [
-                    'parent_index' => -1,
+                    'parent_index' => PHP_INT_MAX,
                     'parent_now' => $context->now,
                 ]);
         }
