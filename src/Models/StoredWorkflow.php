@@ -7,6 +7,7 @@ namespace Workflow\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Prunable;
 use Spatie\ModelStates\HasStates;
+use Workflow\States\WorkflowContinuedStatus;
 use Workflow\States\WorkflowStatus;
 use Workflow\WorkflowStub;
 
@@ -103,26 +104,11 @@ class StoredWorkflow extends Model
             ->orderBy('child_workflow_id');
     }
 
-    public function root(): self
-    {
-        $root = $this;
-
-        while ($parent = $root->parents()
-            ->wherePivot('parent_index', self::CONTINUE_PARENT_INDEX)
-            ->orderBy('parent_workflow_id')
-            ->first()
-        ) {
-            $root = $parent;
-        }
-
-        return $root;
-    }
-
     public function active(): self
     {
-        $active = $this->root();
+        $active = $this;
 
-        while ($next = $active->continuedWorkflows()->first()) {
+        while ($active->status::class === WorkflowContinuedStatus::class && ($next = $active->continuedWorkflows()->first())) {
             $active = $next;
         }
 
