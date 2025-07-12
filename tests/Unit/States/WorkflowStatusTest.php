@@ -7,6 +7,7 @@ namespace Tests\Unit\States;
 use Tests\TestCase;
 use Workflow\Models\StoredWorkflow;
 use Workflow\States\WorkflowCompletedStatus;
+use Workflow\States\WorkflowContinuedStatus;
 use Workflow\States\WorkflowCreatedStatus;
 use Workflow\States\WorkflowFailedStatus;
 use Workflow\States\WorkflowPendingStatus;
@@ -20,6 +21,7 @@ final class WorkflowStatusTest extends TestCase
         $config = StoredWorkflow::make()->getStates()->first()->all();
         $this->assertSame([
             WorkflowCompletedStatus::$name,
+            WorkflowContinuedStatus::$name,
             WorkflowCreatedStatus::$name,
             WorkflowFailedStatus::$name,
             WorkflowPendingStatus::$name,

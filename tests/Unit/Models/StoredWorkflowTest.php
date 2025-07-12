@@ -7,6 +7,7 @@ namespace Tests\Unit\Models;
 use Illuminate\Support\Carbon;
 use Tests\TestCase;
 use Workflow\Models\StoredWorkflow;
+use Workflow\States\WorkflowContinuedStatus;
 
 final class StoredWorkflowTest extends TestCase
 {
@@ -69,5 +70,52 @@ final class StoredWorkflowTest extends TestCase
         $this->assertSame(0, $workflow->signals()->count());
         $this->assertSame(0, $workflow->timers()->count());
         $this->assertSame(0, $workflow->children()->count());
+    }
+
+    public function testContinuedWorkflows(): void
+    {
+        $parentWorkflow = StoredWorkflow::create([
+            'class' => 'ParentWorkflow',
+            'status' => 'continued',
+        ]);
+
+        $continuedWorkflow = StoredWorkflow::create([
+            'class' => 'ContinuedWorkflow',
+            'status' => 'completed',
+        ]);
+
+        $continuedWorkflow->parents()
+            ->attach($parentWorkflow, [
+                'parent_index' => StoredWorkflow::CONTINUE_PARENT_INDEX,
+                'parent_now' => now(),
+            ]);
+
+        $result = $parentWorkflow->continuedWorkflows();
+
+        $this->assertSame(1, $parentWorkflow->continuedWorkflows()->count());
+        $this->assertSame($continuedWorkflow->id, $parentWorkflow->continuedWorkflows()->first()->id);
+    }
+
+    public function testActiveWithContinuedWorkflow(): void
+    {
+        $parentWorkflow = StoredWorkflow::create([
+            'class' => 'ParentWorkflow',
+            'status' => WorkflowContinuedStatus::class,
+        ]);
+
+        $continuedWorkflow = StoredWorkflow::create([
+            'class' => 'ContinuedWorkflow',
+            'status' => 'completed',
+        ]);
+
+        $continuedWorkflow->parents()
+            ->attach($parentWorkflow, [
+                'parent_index' => StoredWorkflow::CONTINUE_PARENT_INDEX,
+                'parent_now' => now(),
+            ]);
+
+        $active = $parentWorkflow->active();
+
+        $this->assertSame($continuedWorkflow->id, $active->id);
     }
 }
