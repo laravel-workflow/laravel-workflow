@@ -7,6 +7,7 @@ namespace Workflow\Traits;
 use React\Promise\PromiseInterface;
 use function React\Promise\resolve;
 use Workflow\ContinuedWorkflow;
+use Workflow\Models\StoredWorkflow;
 
 trait Continues
 {
@@ -20,7 +21,7 @@ trait Continues
 
             $newWorkflow->storedWorkflow->parents()
                 ->attach($context->storedWorkflow, [
-                    'parent_index' => PHP_INT_MAX,
+                    'parent_index' => StoredWorkflow::CONTINUE_PARENT_INDEX,
                     'parent_now' => $context->now,
                 ]);
         }

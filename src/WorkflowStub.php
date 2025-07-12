@@ -56,22 +56,22 @@ final class WorkflowStub
             ->map(static fn ($method) => $method->getName())
             ->contains($method)
         ) {
-            $latestWorkflow = $this->storedWorkflow->active();
+            $activeWorkflow = $this->storedWorkflow->active();
 
-            $latestWorkflow->signals()
+            $activeWorkflow->signals()
                 ->create([
                     'method' => $method,
                     'arguments' => Serializer::serialize($arguments),
                 ]);
 
-            $latestWorkflow->toWorkflow();
+            $activeWorkflow->toWorkflow();
 
             if (static::faked()) {
                 $this->resume();
                 return;
             }
 
-            return Signal::dispatch($latestWorkflow, self::connection(), self::queue());
+            return Signal::dispatch($activeWorkflow, self::connection(), self::queue());
         }
 
         if (collect((new ReflectionClass($this->storedWorkflow->class))->getMethods())
@@ -80,11 +80,11 @@ final class WorkflowStub
             ->map(static fn ($method) => $method->getName())
             ->contains($method)
         ) {
-            $latestWorkflow = $this->storedWorkflow->active();
+            $activeWorkflow = $this->storedWorkflow->active();
 
-            return (new $latestWorkflow->class(
-                $latestWorkflow,
-                ...Serializer::unserialize($latestWorkflow->arguments),
+            return (new $activeWorkflow->class(
+                $activeWorkflow,
+                ...Serializer::unserialize($activeWorkflow->arguments),
             ))
                 ->query($method);
         }
@@ -158,13 +158,13 @@ final class WorkflowStub
 
     public function output()
     {
-        $latestWorkflow = $this->storedWorkflow->active();
+        $activeWorkflow = $this->storedWorkflow->active();
 
-        if ($latestWorkflow->fresh()->output === null) {
+        if ($activeWorkflow->fresh()->output === null) {
             return null;
         }
 
-        return Serializer::unserialize($latestWorkflow->fresh()->output);
+        return Serializer::unserialize($activeWorkflow->fresh()->output);
     }
 
     public function completed(): bool

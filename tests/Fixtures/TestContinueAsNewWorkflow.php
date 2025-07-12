@@ -9,7 +9,7 @@ use Workflow\WorkflowStub;
 
 class TestContinueAsNewWorkflow extends Workflow
 {
-    public function execute($count = 0)
+    public function execute(int $count = 0)
     {
         if ($count >= 3) {
             return 'workflow_' . $count;

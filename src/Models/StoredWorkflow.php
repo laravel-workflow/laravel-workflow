@@ -19,6 +19,11 @@ class StoredWorkflow extends Model
     use Prunable;
 
     /**
+     * @var int
+     */
+    public const CONTINUE_PARENT_INDEX = PHP_INT_MAX;
+
+    /**
      * @var string
      */
     protected $table = 'workflows';
@@ -93,15 +98,20 @@ class StoredWorkflow extends Model
             config('workflows.workflow_relationships_table', 'workflow_relationships'),
             'parent_workflow_id',
             'child_workflow_id'
-        )->wherePivot('parent_index', PHP_INT_MAX)
-            ->withPivot(['parent_index', 'parent_now']);
+        )->wherePivot('parent_index', self::CONTINUE_PARENT_INDEX)
+            ->withPivot(['parent_index', 'parent_now'])
+            ->orderBy('child_workflow_id');
     }
 
     public function root(): self
     {
         $root = $this;
 
-        while ($parent = $root->parents()->wherePivot('parent_index', PHP_INT_MAX)->first()) {
+        while ($parent = $root->parents()
+            ->wherePivot('parent_index', self::CONTINUE_PARENT_INDEX)
+            ->orderBy('parent_workflow_id')
+            ->first()
+        ) {
             $root = $parent;
         }
 
