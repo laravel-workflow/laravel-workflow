@@ -106,7 +106,7 @@ class StoredWorkflow extends Model
 
     public function active(): self
     {
-        $active = $this;
+        $active = $this->fresh();
 
         while ($active->status::class === WorkflowContinuedStatus::class && ($next = $active->continuedWorkflows()->first())) {
             $active = $next;

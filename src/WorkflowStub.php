@@ -160,11 +160,11 @@ final class WorkflowStub
     {
         $activeWorkflow = $this->storedWorkflow->active();
 
-        if ($activeWorkflow->fresh()->output === null) {
+        if ($activeWorkflow->output === null) {
             return null;
         }
 
-        return Serializer::unserialize($activeWorkflow->fresh()->output);
+        return Serializer::unserialize($activeWorkflow->output);
     }
 
     public function completed(): bool
@@ -190,7 +190,6 @@ final class WorkflowStub
     public function status(): string|bool
     {
         return $this->storedWorkflow->active()
-            ->fresh()
             ->status::class;
     }
 
