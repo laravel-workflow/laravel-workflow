@@ -4,17 +4,20 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
+use Workflow\ActivityStub;
 use Workflow\Workflow;
 use Workflow\WorkflowStub;
 
 class TestContinueAsNewWorkflow extends Workflow
 {
-    public function execute(int $count = 0)
+    public function execute(int $count = 0, int $totalCount = 3)
     {
-        if ($count >= 3) {
-            return 'workflow_' . $count;
+        $activityResult = yield ActivityStub::make(TestCountActivity::class, $count);
+
+        if ($count >= $totalCount) {
+            return 'workflow_' . $activityResult;
         }
 
-        return yield WorkflowStub::continueAsNew($count + 1);
+        return yield WorkflowStub::continueAsNew($count + 1, $totalCount);
     }
 }

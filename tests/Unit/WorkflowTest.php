@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Event;
 use Tests\Fixtures\TestActivity;
 use Tests\Fixtures\TestChildWorkflow;
 use Tests\Fixtures\TestContinueAsNewWorkflow;
+use Tests\Fixtures\TestCountActivity;
 use Tests\Fixtures\TestOtherActivity;
 use Tests\Fixtures\TestParentWorkflow;
 use Tests\Fixtures\TestThrowOnReturnWorkflow;
@@ -334,9 +335,17 @@ final class WorkflowTest extends TestCase
     {
         $storedWorkflow = StoredWorkflow::create([
             'class' => TestContinueAsNewWorkflow::class,
-            'arguments' => Serializer::serialize([0]),
+            'arguments' => Serializer::serialize([0, 3]),
             'status' => WorkflowPendingStatus::class,
         ]);
+
+        $storedWorkflow->logs()
+            ->create([
+                'index' => 0,
+                'now' => now(),
+                'class' => TestCountActivity::class,
+                'result' => Serializer::serialize(0),
+            ]);
 
         $workflow = new TestContinueAsNewWorkflow($storedWorkflow);
         $workflow->handle();
