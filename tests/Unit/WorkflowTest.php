@@ -9,6 +9,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Event;
 use Tests\Fixtures\TestActivity;
 use Tests\Fixtures\TestChildWorkflow;
+use Tests\Fixtures\TestContinueAsNewWorkflow;
 use Tests\Fixtures\TestOtherActivity;
 use Tests\Fixtures\TestParentWorkflow;
 use Tests\Fixtures\TestThrowOnReturnWorkflow;
@@ -20,6 +21,7 @@ use Workflow\Exception;
 use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Serializer;
 use Workflow\States\WorkflowCompletedStatus;
+use Workflow\States\WorkflowContinuedStatus;
 use Workflow\States\WorkflowFailedStatus;
 use Workflow\States\WorkflowPendingStatus;
 use Workflow\Workflow;
@@ -326,5 +328,21 @@ final class WorkflowTest extends TestCase
 
         $workflow = new TestThrowOnReturnWorkflow($storedWorkflow);
         $workflow->handle();
+    }
+
+    public function testContinueAsNew(): void
+    {
+        $storedWorkflow = StoredWorkflow::create([
+            'class' => TestContinueAsNewWorkflow::class,
+            'arguments' => Serializer::serialize([0]),
+            'status' => WorkflowPendingStatus::class,
+        ]);
+
+        $workflow = new TestContinueAsNewWorkflow($storedWorkflow);
+        $workflow->handle();
+
+        $this->assertInstanceOf(WorkflowContinuedStatus::class, $storedWorkflow->fresh()->status);
+
+        $this->assertSame(1, $storedWorkflow->continuedWorkflows()->count());
     }
 }

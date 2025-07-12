@@ -22,6 +22,7 @@
         "feature": "phpunit --testdox --testsuite feature",
         "unit": "phpunit --testdox --testsuite unit",
         "test": "phpunit --testdox",
+        "coverage": "XDEBUG_MODE=coverage phpunit --testdox --testsuite unit --coverage-clover coverage.xml",
         "post-autoload-dump": [
             "@clear",
             "@prepare"
