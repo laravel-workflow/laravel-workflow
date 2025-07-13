@@ -25,6 +25,11 @@ class StoredWorkflow extends Model
     public const CONTINUE_PARENT_INDEX = PHP_INT_MAX;
 
     /**
+     * @var int
+     */
+    public const ACTIVE_WORKFLOW_INDEX = PHP_INT_MAX - 1;
+
+    /**
      * @var string
      */
     protected $table = 'workflows';
@@ -104,9 +109,26 @@ class StoredWorkflow extends Model
             ->orderBy('child_workflow_id');
     }
 
+    public function activeWorkflow(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(
+            config('workflows.stored_workflow_model', self::class),
+            config('workflows.workflow_relationships_table', 'workflow_relationships'),
+            'parent_workflow_id',
+            'child_workflow_id'
+        )->wherePivot('parent_index', self::ACTIVE_WORKFLOW_INDEX)
+            ->withPivot(['parent_index', 'parent_now'])
+            ->orderBy('child_workflow_id');
+    }
+
     public function active(): self
     {
         $active = $this->fresh();
+
+        if ($active->status::class === WorkflowContinuedStatus::class) {
+            $active = $this->activeWorkflow()
+                ->first() ?: $active;
+        }
 
         while ($active->status::class === WorkflowContinuedStatus::class && ($next = $active->continuedWorkflows()->first())) {
             $active = $next;
