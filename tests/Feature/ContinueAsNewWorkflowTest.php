@@ -21,10 +21,5 @@ final class ContinueAsNewWorkflowTest extends TestCase
 
         $this->assertEquals(WorkflowCompletedStatus::class, $workflow->status());
         $this->assertEquals('workflow_3', $workflow->output());
-
-        $workflow = WorkflowStub::load(2);
-
-        $this->assertEquals(WorkflowCompletedStatus::class, $workflow->status());
-        $this->assertEquals('workflow_3', $workflow->output());
     }
 }

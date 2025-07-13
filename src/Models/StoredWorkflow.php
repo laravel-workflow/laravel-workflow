@@ -6,6 +6,7 @@ namespace Workflow\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Prunable;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Spatie\ModelStates\HasStates;
 use Workflow\States\WorkflowContinuedStatus;
 use Workflow\States\WorkflowStatus;
@@ -77,7 +78,7 @@ class StoredWorkflow extends Model
             ->orderBy('id');
     }
 
-    public function parents(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function parents(): BelongsToMany
     {
         return $this->belongsToMany(
             config('workflows.stored_workflow_model', self::class),
@@ -87,7 +88,7 @@ class StoredWorkflow extends Model
         )->withPivot(['parent_index', 'parent_now']);
     }
 
-    public function children(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function children(): BelongsToMany
     {
         return $this->belongsToMany(
             config('workflows.stored_workflow_model', self::class),
@@ -97,7 +98,7 @@ class StoredWorkflow extends Model
         )->withPivot(['parent_index', 'parent_now']);
     }
 
-    public function continuedWorkflows(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function continuedWorkflows(): BelongsToMany
     {
         return $this->belongsToMany(
             config('workflows.stored_workflow_model', self::class),
@@ -109,7 +110,7 @@ class StoredWorkflow extends Model
             ->orderBy('child_workflow_id');
     }
 
-    public function activeWorkflow(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function activeWorkflow(): BelongsToMany
     {
         return $this->belongsToMany(
             config('workflows.stored_workflow_model', self::class),
