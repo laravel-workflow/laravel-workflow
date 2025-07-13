@@ -38,6 +38,12 @@ trait Continues
                 $rootWorkflow->children()
                     ->wherePivot('parent_index', StoredWorkflow::ACTIVE_WORKFLOW_INDEX)
                     ->detach($context->storedWorkflow);
+            } else {
+                $context->storedWorkflow->children()
+                    ->attach($newWorkflow->storedWorkflow, [
+                        'parent_index' => StoredWorkflow::ACTIVE_WORKFLOW_INDEX,
+                        'parent_now' => $context->now,
+                    ]);
             }
         }
 

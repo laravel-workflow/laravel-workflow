@@ -224,12 +224,6 @@ final class StoredWorkflowTest extends TestCase
             ]);
 
         $rootWorkflow->children()
-            ->attach($intermediateWorkflow, [
-                'parent_index' => StoredWorkflow::ACTIVE_WORKFLOW_INDEX,
-                'parent_now' => now(),
-            ]);
-
-        $intermediateWorkflow->children()
             ->attach($finalWorkflow, [
                 'parent_index' => StoredWorkflow::ACTIVE_WORKFLOW_INDEX,
                 'parent_now' => now(),
