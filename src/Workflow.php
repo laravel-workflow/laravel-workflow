@@ -80,6 +80,8 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
     public function middleware()
     {
         $parentWorkflow = $this->storedWorkflow->parents()
+            ->wherePivot('parent_index', '!=', StoredWorkflow::CONTINUE_PARENT_INDEX)
+            ->wherePivot('parent_index', '!=', StoredWorkflow::ACTIVE_WORKFLOW_INDEX)
             ->first();
 
         if ($parentWorkflow) {
@@ -122,6 +124,8 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
         }
 
         $parentWorkflow = $this->storedWorkflow->parents()
+            ->wherePivot('parent_index', '!=', StoredWorkflow::CONTINUE_PARENT_INDEX)
+            ->wherePivot('parent_index', '!=', StoredWorkflow::ACTIVE_WORKFLOW_INDEX)
             ->first();
 
         $log = $this->storedWorkflow->logs()
