@@ -11,6 +11,29 @@ use Workflow\Events\ActivityCompleted;
 use Workflow\Events\ActivityFailed;
 use Workflow\Events\ActivityStarted;
 
+/**
+ * Class ActivityMiddleware
+ *
+ * This middleware orchestrates the complete lifecycle of activity execution within a workflow.
+ *
+ * Execution Flow:
+ * 1. Dispatch ActivityStarted event with activity details and unique UUID
+ * 2. Allow the activity to execute ($next($job))
+ * 3. Store the activity output/result in the database
+ * 4. Attempt to update the workflow status to "pending" in preparation for continuation
+ * 5. If status transition is valid: Dispatch the parent workflow back to the queue to continue execution
+ * 6. If status transition fails (workflow already "running"): Release this activity back to the queue for retry
+ * 7. Dispatch ActivityCompleted event
+ *
+ * Important: Due to the state transition logic in step 4-6, activities may be completed more than once
+ * if there are timing conflicts with workflow state changes.
+ *
+ * On failure, it captures detailed exception information (including code snippets) and dispatches
+ * ActivityFailed event before re-throwing the exception.
+ *
+ * This middleware acts as the bridge that allows activities to seamlessly hand their results back
+ * to their parent workflow for continued execution, while managing state transitions safely.
+ */
 final class ActivityMiddleware
 {
     public function handle($job, $next): void

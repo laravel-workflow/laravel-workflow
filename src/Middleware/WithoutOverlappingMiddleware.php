@@ -9,6 +9,26 @@ use Illuminate\Contracts\Cache\Repository as Cache;
 use Illuminate\Support\InteractsWithTime;
 use Illuminate\Support\Str;
 
+/**
+ * Class WithoutOverlappingMiddleware
+ *
+ * This middleware ensures mutual exclusion between workflow execution and activity execution for a specific
+ * workflow instance using a semaphore-based locking system.
+ *
+ * Key Behaviors:
+ * - **Workflow Exclusivity**: Only 1 instance of a workflow can run at a time
+ * - **Workflow-Activity Mutual Exclusion**: When a workflow is executing, none of its activities can run simultaneously
+ * - **Activity Concurrency**: When the workflow is NOT executing, multiple activities from that workflow can run simultaneously
+ * - **Per-Workflow Isolation**: This applies per workflow instance (identified by workflowId), not globally
+ *
+ * In simple terms: when a workflow is executing, nothing else for that workflow is running. If the workflow is not
+ * being executed, then children of the workflow can run freely.
+ *
+ * This design prevents race conditions while maximizing concurrency - the workflow logic (the "conductor") has
+ * exclusive control when making decisions, but when it's waiting for work to be done, multiple activities
+ * (the "workers") can execute in parallel without interfering with each other.
+ *
+ */
 class WithoutOverlappingMiddleware
 {
     use InteractsWithTime;

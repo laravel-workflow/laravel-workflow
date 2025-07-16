@@ -27,6 +27,19 @@ use Workflow\States\WorkflowRunningStatus;
 use Workflow\States\WorkflowWaitingStatus;
 use Workflow\Traits\Sagas;
 
+/**
+ * Workflow - A dispatchable job
+ *
+ * This is an abstract class the should be extended by your own workflow classes. This base class represents a
+ * dispatchable job that will be dispatched to a Laravel queue for a worker to process.
+ *
+ * When instantiated and dispatched to a queue, this class receives the following properties:
+ * - $storedWorkflow: The database model representing this workflow.
+ * - ...$arguments: The arguments that will be passed to execute() method of the class that extends this class.
+ *
+ * Note: you should never instantiate this class or its children directly. Instead, you should instantiate it using the
+ * `WorkflowStub::make(YourChildWorkflowClass::class)->start($..$arguments)`.
+ */
 class Workflow implements ShouldBeEncrypted, ShouldQueue
 {
     use Dispatchable;
@@ -78,6 +91,8 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
 
     public function middleware()
     {
+    	// This middleware is used to prevent multiple instances of the same workflow from running at the same time.
+		// @see WithoutOverlappingMiddleware for details on its implementation.
         $parentWorkflow = $this->storedWorkflow->parents()
             ->first();
 
@@ -93,6 +108,8 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
 
     public function failed(Throwable $throwable): void
     {
+		// If an activity is dispatched from a workflow and it fails, the workflow will receive the exception. If the
+		// workflow does not handle the exception, it will be caught here and the workflow will be marked as failed.
         try {
             $this->storedWorkflow->toWorkflow()
                 ->fail($throwable);
