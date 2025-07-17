@@ -42,9 +42,6 @@ use Workflow\Serializers\Serializer;
  *
  * Note: you should never instantiate this class or its children directly. Instead, you should call it from a workflow
  * class using the `ActivityStub::make(YourChildActivityClass::class, ...$arguments)` method.
- *
- *
- * @package Workflow
  */
 class Activity implements ShouldBeEncrypted, ShouldQueue
 {
@@ -108,25 +105,25 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
 
     public function handle()
     {
-		// If the child class does not implement the execute method, throw an exception
+        // If the child class does not implement the execute method, throw an exception
         if (! method_exists($this, 'execute')) {
             throw new BadMethodCallException('Execute method not implemented.');
         }
 
         $this->container = App::make(Container::class);
 
-		// If this activity has already been executed and a return value has been stored in the database, then
-		// return. The middleware will handle dispatching its parent workflow to continue the execution of the
-		// workflow.
+        // If this activity has already been executed and a return value has been stored in the database, then
+        // return. The middleware will handle dispatching its parent workflow to continue the execution of the
+        // workflow.
         if ($this->storedWorkflow->logs()->whereIndex($this->index)->exists()) {
             return;
         }
 
-		// Execute the child class's execute method, passing in the $...arguments that were passed to the
-		// ActivityStub::make() method. If the child class throws an exception, it will be caught here and
-		// the exception will be stored in the database. If the exception is a NonRetryableExceptionContract,
-		// then the workflow will be failed. If the exception is not a NonRetryableExceptionContract, then
-		// the exception will be rethrown, caught by the middleware, and the activity will be retried.
+        // Execute the child class's execute method, passing in the $...arguments that were passed to the
+        // ActivityStub::make() method. If the child class throws an exception, it will be caught here and
+        // the exception will be stored in the database. If the exception is a NonRetryableExceptionContract,
+        // then the workflow will be failed. If the exception is not a NonRetryableExceptionContract, then
+        // the exception will be rethrown, caught by the middleware, and the activity will be retried.
         try {
             return $this->{'execute'}(...$this->resolveClassMethodDependencies($this->arguments, $this, 'execute'));
         } catch (\Throwable $throwable) {
@@ -147,30 +144,29 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
     public function middleware()
     {
         return [
-			// Ensure that this activity cannot run while the workflow is executing
+            // Ensure that this activity cannot run while the workflow is executing
             new WithoutOverlappingMiddleware(
                 $this->storedWorkflow->id,
                 WithoutOverlappingMiddleware::ACTIVITY,
                 0,
                 $this->timeout
             ),
-			// Dispatch activity lifecycle events, execute the activity, and store the activity output in the database
+            // Dispatch activity lifecycle events, execute the activity, and store the activity output in the database
             new ActivityMiddleware(),
         ];
     }
 
-	/**
-	 * This method is called when the activity throws an exception that is a NonRetryableExceptionContract or
-	 * if the activity throws an exception that is not a NonRetryableExceptionContract but the activity is not
-	 * retryable (i.e. it has been released back to the queue more than $tries times).
-	 *
-	 */
+    /**
+     * This method is called when the activity throws an exception that is a NonRetryableExceptionContract or
+     * if the activity throws an exception that is not a NonRetryableExceptionContract but the activity is not
+     * retryable (i.e. it has been released back to the queue more than $tries times).
+     */
     public function failed(Throwable $throwable): void
     {
-		// Instantiate the WorkflowStub class for the workflow from which this activity was dispatched
+        // Instantiate the WorkflowStub class for the workflow from which this activity was dispatched
         $workflow = $this->storedWorkflow->toWorkflow();
 
-		// Build a serializable version of the exception
+        // Build a serializable version of the exception
         $file = new SplFileObject($throwable->getFile());
         $iterator = new LimitIterator($file, max(0, $throwable->getLine() - 4), 7);
 
@@ -186,8 +182,8 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
             'snippet' => array_slice(iterator_to_array($iterator), 0, 7),
         ];
 
-		// Dispatch a job to store the exception in the database and to dispatch the parent workflow to continue
-		// the execution of the workflow.
+        // Dispatch a job to store the exception in the database and to dispatch the parent workflow to continue
+        // the execution of the workflow.
         Exception::dispatch(
             $this->index,
             $this->now,

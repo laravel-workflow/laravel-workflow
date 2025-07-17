@@ -91,8 +91,8 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
 
     public function middleware()
     {
-    	// This middleware is used to prevent multiple instances of the same workflow from running at the same time.
-		// @see WithoutOverlappingMiddleware for details on its implementation.
+        // This middleware is used to prevent multiple instances of the same workflow from running at the same time.
+        // @see WithoutOverlappingMiddleware for details on its implementation.
         $parentWorkflow = $this->storedWorkflow->parents()
             ->first();
 
@@ -108,8 +108,8 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
 
     public function failed(Throwable $throwable): void
     {
-		// If an activity is dispatched from a workflow and it fails, the workflow will receive the exception. If the
-		// workflow does not handle the exception, it will be caught here and the workflow will be marked as failed.
+        // If an activity is dispatched from a workflow and it fails, the workflow will receive the exception. If the
+        // workflow does not handle the exception, it will be caught here and the workflow will be marked as failed.
         try {
             $this->storedWorkflow->toWorkflow()
                 ->fail($throwable);

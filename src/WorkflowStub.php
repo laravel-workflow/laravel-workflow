@@ -217,13 +217,13 @@ final class WorkflowStub
         $this->start(...$arguments);
     }
 
-	/**
-	 * This method is called when a defined workflow job fails (i.e. the workflow does not elegantly handle an exception
-	 * thrown by an activity).
-	 *
-	 * This method will store the exception in the database and transition the workflow to the failed state. It will then
-	 * dispatch the WorkflowFailed event and call the fail method on any parent workflows.
-	 */
+    /**
+     * This method is called when a defined workflow job fails (i.e. the workflow does not elegantly handle an exception
+     * thrown by an activity).
+     *
+     * This method will store the exception in the database and transition the workflow to the failed state. It will then
+     * dispatch the WorkflowFailed event and call the fail method on any parent workflows.
+     */
     public function fail($exception): void
     {
         $this->storedWorkflow->exceptions()
@@ -259,10 +259,10 @@ final class WorkflowStub
             });
     }
 
-	/**
-	 * This method is called from an activity or child workflow with it completes. This method stores the result in the
-	 * database and dispatches the workflow back to the queue so that it can be continued.
-	 */
+    /**
+     * This method is called from an activity or child workflow with it completes. This method stores the result in the
+     * database and dispatches the workflow back to the queue so that it can be continued.
+     */
     public function next($index, $now, $class, $result): void
     {
         try {
@@ -280,11 +280,11 @@ final class WorkflowStub
         $this->dispatch();
     }
 
-	/**
-	 * This method is called when a workflow is started and each time that an activity or child workflow completes.
-	 * This method will update the status field for this workflow in the database to "pending", and will then
-	 * dispatch the workflow to the queue so that it can be continued.
-	 */
+    /**
+     * This method is called when a workflow is started and each time that an activity or child workflow completes.
+     * This method will update the status field for this workflow in the database to "pending", and will then
+     * dispatch the workflow to the queue so that it can be continued.
+     */
     private function dispatch(): void
     {
         if ($this->created()) {

@@ -27,7 +27,6 @@ use Illuminate\Support\Str;
  * This design prevents race conditions while maximizing concurrency - the workflow logic (the "conductor") has
  * exclusive control when making decisions, but when it's waiting for work to be done, multiple activities
  * (the "workers") can execute in parallel without interfering with each other.
- *
  */
 class WithoutOverlappingMiddleware
 {
