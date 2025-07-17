@@ -128,6 +128,19 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
             ->wherePivot('parent_index', '!=', StoredWorkflow::ACTIVE_WORKFLOW_INDEX)
             ->first();
 
+		// If this workflow is a continued workflow that was initiated as a child workflow,
+		// then the parent workflow will be the parent of the parent workflow.
+		if (!$parentWorkflow) {
+			$parentWorkflow = $this->storedWorkflow->active()->parents()
+				->wherePivot('parent_index', '!=', StoredWorkflow::CONTINUE_PARENT_INDEX)
+				->wherePivot('parent_index', '=', StoredWorkflow::ACTIVE_WORKFLOW_INDEX)
+				->first()?->parents()
+				->wherePivot('parent_index', '!=', StoredWorkflow::CONTINUE_PARENT_INDEX)
+				->wherePivot('parent_index', '!=', StoredWorkflow::ACTIVE_WORKFLOW_INDEX)
+				->first()
+			;
+		}
+
         $log = $this->storedWorkflow->logs()
             ->whereIndex($this->index)
             ->first();
