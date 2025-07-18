@@ -354,4 +354,37 @@ final class WorkflowTest extends TestCase
 
         $this->assertSame(1, $storedWorkflow->continuedWorkflows()->count());
     }
+
+    public function testContinueAsNewWithParentWorkflow(): void
+    {
+        $parentWorkflow = WorkflowStub::load(WorkflowStub::make(TestContinueAsNewWorkflow::class)->id());
+        $storedParentWorkflow = StoredWorkflow::findOrFail($parentWorkflow->id());
+        $storedParentWorkflow->arguments = Serializer::serialize([]);
+        $storedParentWorkflow->save();
+
+        $storedWorkflow = StoredWorkflow::create([
+            'class' => TestContinueAsNewWorkflow::class,
+            'arguments' => Serializer::serialize([0, 3]),
+            'status' => WorkflowPendingStatus::class,
+        ]);
+
+        $storedWorkflow->parents()
+            ->attach($storedParentWorkflow, [
+                'parent_index' => 0,
+                'parent_now' => now(),
+            ]);
+
+        $storedWorkflow->logs()
+            ->create([
+                'index' => 0,
+                'now' => now(),
+                'class' => TestCountActivity::class,
+                'result' => Serializer::serialize(0),
+            ]);
+
+        $workflow = new TestContinueAsNewWorkflow($storedWorkflow);
+        $workflow->handle();
+
+        $this->assertSame(1, $storedWorkflow->continuedWorkflows()->count());
+    }
 }
