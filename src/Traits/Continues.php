@@ -16,8 +16,25 @@ trait Continues
         $context = self::$context;
 
         if (! $context->replaying) {
+            $parentWorkflow = $context->storedWorkflow->parents()
+                ->wherePivot('parent_index', '!=', StoredWorkflow::CONTINUE_PARENT_INDEX)
+                ->wherePivot('parent_index', '!=', StoredWorkflow::ACTIVE_WORKFLOW_INDEX)
+                ->withPivot('parent_index')
+                ->first();
+
             $newWorkflow = self::make($context->storedWorkflow->class);
-            $newWorkflow->start(...$arguments);
+
+            if ($parentWorkflow) {
+                $parentWorkflow->children()
+                    ->attach($newWorkflow->storedWorkflow, [
+                        'parent_index' => $parentWorkflow->pivot->parent_index,
+                        'parent_now' => $context->now,
+                    ]);
+
+                $parentWorkflow->children()
+                    ->wherePivot('parent_index', $parentWorkflow->pivot->parent_index)
+                    ->detach($context->storedWorkflow);
+            }
 
             $newWorkflow->storedWorkflow->parents()
                 ->attach($context->storedWorkflow, [
@@ -45,6 +62,8 @@ trait Continues
                         'parent_now' => $context->now,
                     ]);
             }
+
+            $newWorkflow->start(...$arguments);
         }
 
         self::$context = $context;
