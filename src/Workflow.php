@@ -23,6 +23,7 @@ use Workflow\Middleware\WithoutOverlappingMiddleware;
 use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Serializer;
 use Workflow\States\WorkflowCompletedStatus;
+use Workflow\States\WorkflowContinuedStatus;
 use Workflow\States\WorkflowRunningStatus;
 use Workflow\States\WorkflowWaitingStatus;
 use Workflow\Traits\Sagas;
@@ -79,6 +80,8 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
     public function middleware()
     {
         $parentWorkflow = $this->storedWorkflow->parents()
+            ->wherePivot('parent_index', '!=', StoredWorkflow::CONTINUE_PARENT_INDEX)
+            ->wherePivot('parent_index', '!=', StoredWorkflow::ACTIVE_WORKFLOW_INDEX)
             ->first();
 
         if ($parentWorkflow) {
@@ -121,6 +124,8 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
         }
 
         $parentWorkflow = $this->storedWorkflow->parents()
+            ->wherePivot('parent_index', '!=', StoredWorkflow::CONTINUE_PARENT_INDEX)
+            ->wherePivot('parent_index', '!=', StoredWorkflow::ACTIVE_WORKFLOW_INDEX)
             ->first();
 
         $log = $this->storedWorkflow->logs()
@@ -212,6 +217,11 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
                 $return = $this->coroutine->getReturn();
             } catch (Throwable $th) {
                 throw new Exception('Workflow failed.', 0, $th);
+            }
+
+            if ($return instanceof ContinuedWorkflow) {
+                $this->storedWorkflow->status->transitionTo(WorkflowContinuedStatus::class);
+                return;
             }
 
             $this->storedWorkflow->output = Serializer::serialize($return);

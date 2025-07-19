@@ -9,6 +9,8 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Event;
 use Tests\Fixtures\TestActivity;
 use Tests\Fixtures\TestChildWorkflow;
+use Tests\Fixtures\TestContinueAsNewWorkflow;
+use Tests\Fixtures\TestCountActivity;
 use Tests\Fixtures\TestOtherActivity;
 use Tests\Fixtures\TestParentWorkflow;
 use Tests\Fixtures\TestThrowOnReturnWorkflow;
@@ -20,6 +22,7 @@ use Workflow\Exception;
 use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Serializer;
 use Workflow\States\WorkflowCompletedStatus;
+use Workflow\States\WorkflowContinuedStatus;
 use Workflow\States\WorkflowFailedStatus;
 use Workflow\States\WorkflowPendingStatus;
 use Workflow\Workflow;
@@ -326,5 +329,62 @@ final class WorkflowTest extends TestCase
 
         $workflow = new TestThrowOnReturnWorkflow($storedWorkflow);
         $workflow->handle();
+    }
+
+    public function testContinueAsNew(): void
+    {
+        $storedWorkflow = StoredWorkflow::create([
+            'class' => TestContinueAsNewWorkflow::class,
+            'arguments' => Serializer::serialize([0, 3]),
+            'status' => WorkflowPendingStatus::class,
+        ]);
+
+        $storedWorkflow->logs()
+            ->create([
+                'index' => 0,
+                'now' => now(),
+                'class' => TestCountActivity::class,
+                'result' => Serializer::serialize(0),
+            ]);
+
+        $workflow = new TestContinueAsNewWorkflow($storedWorkflow);
+        $workflow->handle();
+
+        $this->assertInstanceOf(WorkflowContinuedStatus::class, $storedWorkflow->fresh()->status);
+
+        $this->assertSame(1, $storedWorkflow->continuedWorkflows()->count());
+    }
+
+    public function testContinueAsNewWithParentWorkflow(): void
+    {
+        $parentWorkflow = WorkflowStub::load(WorkflowStub::make(TestContinueAsNewWorkflow::class)->id());
+        $storedParentWorkflow = StoredWorkflow::findOrFail($parentWorkflow->id());
+        $storedParentWorkflow->arguments = Serializer::serialize([]);
+        $storedParentWorkflow->save();
+
+        $storedWorkflow = StoredWorkflow::create([
+            'class' => TestContinueAsNewWorkflow::class,
+            'arguments' => Serializer::serialize([0, 3]),
+            'status' => WorkflowPendingStatus::class,
+        ]);
+
+        $storedWorkflow->parents()
+            ->attach($storedParentWorkflow, [
+                'parent_index' => 0,
+                'parent_now' => now(),
+            ]);
+
+        $storedWorkflow->logs()
+            ->create([
+                'index' => 0,
+                'now' => now(),
+                'class' => TestCountActivity::class,
+                'result' => Serializer::serialize(0),
+            ]);
+
+        $workflow = new TestContinueAsNewWorkflow($storedWorkflow);
+        $workflow->handle();
+
+        $this->assertSame(1, $storedWorkflow->continuedWorkflows()->count());
     }
 }

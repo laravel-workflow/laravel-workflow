@@ -6,7 +6,9 @@ namespace Workflow\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Prunable;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Spatie\ModelStates\HasStates;
+use Workflow\States\WorkflowContinuedStatus;
 use Workflow\States\WorkflowStatus;
 use Workflow\WorkflowStub;
 
@@ -17,6 +19,16 @@ class StoredWorkflow extends Model
 {
     use HasStates;
     use Prunable;
+
+    /**
+     * @var int
+     */
+    public const CONTINUE_PARENT_INDEX = PHP_INT_MAX;
+
+    /**
+     * @var int
+     */
+    public const ACTIVE_WORKFLOW_INDEX = PHP_INT_MAX - 1;
 
     /**
      * @var string
@@ -66,7 +78,7 @@ class StoredWorkflow extends Model
             ->orderBy('id');
     }
 
-    public function parents(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function parents(): BelongsToMany
     {
         return $this->belongsToMany(
             config('workflows.stored_workflow_model', self::class),
@@ -76,7 +88,7 @@ class StoredWorkflow extends Model
         )->withPivot(['parent_index', 'parent_now']);
     }
 
-    public function children(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function children(): BelongsToMany
     {
         return $this->belongsToMany(
             config('workflows.stored_workflow_model', self::class),
@@ -84,6 +96,42 @@ class StoredWorkflow extends Model
             'parent_workflow_id',
             'child_workflow_id'
         )->withPivot(['parent_index', 'parent_now']);
+    }
+
+    public function continuedWorkflows(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            config('workflows.stored_workflow_model', self::class),
+            config('workflows.workflow_relationships_table', 'workflow_relationships'),
+            'parent_workflow_id',
+            'child_workflow_id'
+        )->wherePivot('parent_index', self::CONTINUE_PARENT_INDEX)
+            ->withPivot(['parent_index', 'parent_now'])
+            ->orderBy('child_workflow_id');
+    }
+
+    public function activeWorkflow(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            config('workflows.stored_workflow_model', self::class),
+            config('workflows.workflow_relationships_table', 'workflow_relationships'),
+            'parent_workflow_id',
+            'child_workflow_id'
+        )->wherePivot('parent_index', self::ACTIVE_WORKFLOW_INDEX)
+            ->withPivot(['parent_index', 'parent_now'])
+            ->orderBy('child_workflow_id');
+    }
+
+    public function active(): self
+    {
+        $active = $this->fresh();
+
+        if ($active->status::class === WorkflowContinuedStatus::class) {
+            $active = $this->activeWorkflow()
+                ->first();
+        }
+
+        return $active;
     }
 
     public function prunable(): Builder

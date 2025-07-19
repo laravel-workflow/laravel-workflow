@@ -20,6 +20,7 @@ use Workflow\States\WorkflowFailedStatus;
 use Workflow\States\WorkflowPendingStatus;
 use Workflow\Traits\Awaits;
 use Workflow\Traits\AwaitWithTimeouts;
+use Workflow\Traits\Continues;
 use Workflow\Traits\Fakes;
 use Workflow\Traits\SideEffects;
 use Workflow\Traits\Timers;
@@ -28,6 +29,7 @@ final class WorkflowStub
 {
     use Awaits;
     use AwaitWithTimeouts;
+    use Continues;
     use Fakes;
     use Macroable;
     use SideEffects;
@@ -54,20 +56,22 @@ final class WorkflowStub
             ->map(static fn ($method) => $method->getName())
             ->contains($method)
         ) {
-            $this->storedWorkflow->signals()
+            $activeWorkflow = $this->storedWorkflow->active();
+
+            $activeWorkflow->signals()
                 ->create([
                     'method' => $method,
                     'arguments' => Serializer::serialize($arguments),
                 ]);
 
-            $this->storedWorkflow->toWorkflow();
+            $activeWorkflow->toWorkflow();
 
             if (static::faked()) {
                 $this->resume();
                 return;
             }
 
-            return Signal::dispatch($this->storedWorkflow, self::connection(), self::queue());
+            return Signal::dispatch($activeWorkflow, self::connection(), self::queue());
         }
 
         if (collect((new ReflectionClass($this->storedWorkflow->class))->getMethods())
@@ -76,9 +80,11 @@ final class WorkflowStub
             ->map(static fn ($method) => $method->getName())
             ->contains($method)
         ) {
-            return (new $this->storedWorkflow->class(
-                $this->storedWorkflow,
-                ...Serializer::unserialize($this->storedWorkflow->arguments),
+            $activeWorkflow = $this->storedWorkflow->active();
+
+            return (new $activeWorkflow->class(
+                $activeWorkflow,
+                ...Serializer::unserialize($activeWorkflow->arguments),
             ))
                 ->query($method);
         }
@@ -140,21 +146,25 @@ final class WorkflowStub
 
     public function logs()
     {
-        return $this->storedWorkflow->logs;
+        return $this->storedWorkflow->active()
+            ->logs;
     }
 
     public function exceptions()
     {
-        return $this->storedWorkflow->exceptions;
+        return $this->storedWorkflow->active()
+            ->exceptions;
     }
 
     public function output()
     {
-        if ($this->storedWorkflow->fresh()->output === null) {
+        $activeWorkflow = $this->storedWorkflow->active();
+
+        if ($activeWorkflow->output === null) {
             return null;
         }
 
-        return Serializer::unserialize($this->storedWorkflow->fresh()->output);
+        return Serializer::unserialize($activeWorkflow->output);
     }
 
     public function completed(): bool
@@ -179,7 +189,7 @@ final class WorkflowStub
 
     public function status(): string|bool
     {
-        return $this->storedWorkflow->fresh()
+        return $this->storedWorkflow->active()
             ->status::class;
     }
 
