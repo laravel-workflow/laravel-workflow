@@ -12,6 +12,7 @@ class TestParentContinueAsNewChildWorkflow extends Workflow
     public function execute()
     {
         $childResult = yield ChildWorkflowStub::make(TestChildContinueAsNewWorkflow::class);
+
         return 'parent_' . $childResult;
     }
 }
