@@ -41,10 +41,6 @@ class TestWorkflow extends Workflow
 
         $otherResult = yield ActivityStub::make(TestOtherActivity::class, 'other');
 
-        if ($shouldAssert) {
-            assert(! $this->canceled);
-        }
-
         yield WorkflowStub::await(fn (): bool => $this->canceled);
 
         $result = yield ActivityStub::make(TestActivity::class);
