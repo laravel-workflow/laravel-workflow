@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Traits;
 
+use Carbon\CarbonInterval;
 use Exception;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -193,5 +194,30 @@ final class TimersTest extends TestCase
         Mockery::close();
 
         $this->assertSame(true, $result);
+    }
+
+    public function testTimerWithCarbonInterval(): void
+    {
+        $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
+        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
+        $storedWorkflow->update([
+            'arguments' => Serializer::serialize([]),
+            'status' => WorkflowPendingStatus::$name,
+        ]);
+
+        $interval = CarbonInterval::minutes(3);
+
+        WorkflowStub::timer($interval)
+            ->then(static function ($value) use (&$result) {
+                $result = $value;
+            });
+
+        $this->assertNull($result);
+        $this->assertSame(0, $workflow->logs()->count());
+        $this->assertDatabaseHas('workflow_timers', [
+            'stored_workflow_id' => $workflow->id(),
+            'index' => 0,
+            'stop_at' => WorkflowStub::now()->addSeconds($interval->totalSeconds),
+        ]);
     }
 }

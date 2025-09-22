@@ -24,12 +24,6 @@ trait AwaitWithTimeouts
             return resolve(Serializer::unserialize($log->result));
         }
 
-        if ($seconds instanceof CarbonInterval) {
-            $seconds = $seconds->totalSeconds;
-        } elseif (is_string($seconds)) {
-            $seconds = CarbonInterval::fromString($seconds)->totalSeconds;
-        }
-
         $result = $condition();
 
         if ($result === true) {
