@@ -4,7 +4,7 @@ return [
     'workflows_folder' => 'Workflows',
 
     'base_model' => env('DB_CONNECTION') === 'mongodb' 
-        ? MongoDB\Laravel\Eloquent\Model::class 
+        ? 'MongoDB\\Laravel\\Eloquent\\Model'
         : Illuminate\Database\Eloquent\Model::class,
 
     'stored_workflow_model' => Workflow\Models\StoredWorkflow::class,
