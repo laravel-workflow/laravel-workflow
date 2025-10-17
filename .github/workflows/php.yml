@@ -28,6 +28,15 @@ jobs:
         ports:
         - 5432:5432
 
+      mongodb:
+        image: mongo:7.0
+        env:
+          MONGO_INITDB_ROOT_USERNAME: root
+          MONGO_INITDB_ROOT_PASSWORD: password
+          MONGO_INITDB_DATABASE: testbench
+        ports:
+        - 27017:27017
+
       redis:
         image: redis
         ports:
@@ -88,6 +97,22 @@ jobs:
         DB_DATABASE: testbench
         DB_HOST: 127.0.0.1
         DB_PORT: 5432
+        DB_USERNAME: root
+        DB_PASSWORD: password
+        QUEUE_CONNECTION: redis
+        QUEUE_FAILED_DRIVER: "null"
+        REDIS_HOST: 127.0.0.1
+        REDIS_PASSWORD:
+        REDIS_PORT: 6379
+
+    - name: Run test suite (MongoDB)
+      run: vendor/bin/phpunit --testdox --testsuite feature
+      env:
+        APP_KEY: base64:i3g6f+dV8FfsIkcxqd7gbiPn2oXk5r00sTmdD6V5utI=
+        DB_CONNECTION: mongodb
+        DB_DATABASE: testbench
+        DB_HOST: 127.0.0.1
+        DB_PORT: 27017
         DB_USERNAME: root
         DB_PASSWORD: password
         QUEUE_CONNECTION: redis

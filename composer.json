@@ -52,6 +52,7 @@
         "react/promise": "^2.9|^3.0"
     },
     "require-dev": {
+        "mongodb/laravel-mongodb": "^4.0",
         "orchestra/testbench": "^8.0",
         "phpstan/phpstan": "^2.0",
         "scrutinizer/ocular": "dev-master",
