@@ -52,16 +52,43 @@ abstract class TestCase extends BaseTestCase
 
     protected function defineDatabaseMigrations()
     {
-        $this->artisan('migrate:fresh', [
-            '--path' => dirname(__DIR__) . '/src/migrations',
-            '--realpath' => true,
-        ]);
+        if (env('DB_CONNECTION') !== 'mongodb') {
+            $this->artisan('migrate:fresh', [
+                '--path' => dirname(__DIR__) . '/src/migrations',
+                '--realpath' => true,
+            ]);
 
-        $this->loadLaravelMigrations();
+            $this->loadLaravelMigrations();
+        }
     }
 
     protected function getPackageProviders($app)
     {
-        return [\Workflow\Providers\WorkflowServiceProvider::class];
+        $providers = [\Workflow\Providers\WorkflowServiceProvider::class];
+
+        if (env('DB_CONNECTION') === 'mongodb' && class_exists(\MongoDB\Laravel\MongoDBServiceProvider::class)) {
+            $providers[] = \MongoDB\Laravel\MongoDBServiceProvider::class;
+        }
+
+        return $providers;
+    }
+
+    protected function defineEnvironment($app)
+    {
+        $app['config']->set('database.connections.mongodb', [
+            'driver' => 'mongodb',
+            'host' => env('DB_HOST', '127.0.0.1'),
+            'port' => env('DB_PORT', 27017),
+            'database' => env('DB_DATABASE', 'testbench'),
+            'username' => env('DB_USERNAME', ''),
+            'password' => env('DB_PASSWORD', ''),
+            'options' => [
+                'database' => env('DB_AUTHENTICATION_DATABASE', 'admin'),
+            ],
+        ]);
+
+        if (env('DB_CONNECTION') === 'mongodb') {
+            $app['config']->set('workflows.base_model', 'MongoDB\\Laravel\\Eloquent\\Model');
+        }
     }
 }

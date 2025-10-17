@@ -25,14 +25,15 @@ trait Continues
             $newWorkflow = self::make($context->storedWorkflow->class);
 
             if ($parentWorkflow) {
+                $parentIndex = StoredWorkflow::getPivotAttribute($parentWorkflow, 'parent_index');
                 $parentWorkflow->children()
                     ->attach($newWorkflow->storedWorkflow, [
-                        'parent_index' => $parentWorkflow->pivot->parent_index,
+                        'parent_index' => $parentIndex,
                         'parent_now' => $context->now,
                     ]);
 
                 $parentWorkflow->children()
-                    ->wherePivot('parent_index', $parentWorkflow->pivot->parent_index)
+                    ->wherePivot('parent_index', $parentIndex)
                     ->detach($context->storedWorkflow);
             }
 

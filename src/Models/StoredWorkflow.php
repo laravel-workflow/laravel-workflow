@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Spatie\ModelStates\HasStates;
 use Workflow\States\WorkflowContinuedStatus;
 use Workflow\States\WorkflowStatus;
+use Workflow\Traits\WorkflowRelationships;
 use Workflow\WorkflowStub;
 
 /**
@@ -19,6 +20,7 @@ class StoredWorkflow extends Model
 {
     use HasStates;
     use Prunable;
+    use WorkflowRelationships;
 
     /**
      * @var int
