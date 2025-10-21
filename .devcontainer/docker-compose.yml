@@ -13,7 +13,7 @@ services:
         PHP_EXTENSION_PGSQL: 1
         PHP_EXTENSION_PDO_PGSQL: 1
         APACHE_DOCUMENT_ROOT: /workspace/public
-  db:
+  pgsql:
     image: postgres:13
     restart: unless-stopped
     ports:
@@ -22,6 +22,29 @@ services:
         POSTGRES_DB: laravel
         POSTGRES_USER: laravel
         POSTGRES_PASSWORD: laravel
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    ports:
+        - 3306:3306
+    environment:
+        MYSQL_ROOT_PASSWORD: laravel
+        MYSQL_DATABASE: laravel
+        MYSQL_USER: laravel
+        MYSQL_PASSWORD: laravel
+    volumes:
+        - mysql_data:/var/lib/mysql
+  mongodb:
+    image: mongo:7.0
+    restart: unless-stopped
+    ports:
+        - 27017:27017
+    environment:
+        MONGO_INITDB_ROOT_USERNAME: laravel
+        MONGO_INITDB_ROOT_PASSWORD: laravel
+        MONGO_INITDB_DATABASE: laravel
+    volumes:
+        - mongodb_data:/data/db
   redis:
     image: redis:6-alpine
     ports:
@@ -30,3 +53,7 @@ services:
     image: mailhog/mailhog
     ports:
       - 8025:8025
+
+volumes:
+  mysql_data:
+  mongodb_data:

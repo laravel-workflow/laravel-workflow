@@ -4,11 +4,15 @@
     "workspaceFolder": "/workspace",
     "service": "app",
     "shutdownAction": "stopCompose",
-    "extensions": [
-    	"editorconfig.editorconfig",
-	],
-    "settings": {
-        "#terminal.integrated.shell.linux": "/bin/bash"
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "editorconfig.editorconfig"
+            ],
+            "settings": {
+                "terminal.integrated.shell.linux": "/bin/bash"
+            }
+        }
     },
-	"postCreateCommand": "composer install",
+    "postCreateCommand": "composer install"
 }
