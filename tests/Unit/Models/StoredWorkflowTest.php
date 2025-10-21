@@ -233,4 +233,20 @@ final class StoredWorkflowTest extends TestCase
 
         $this->assertSame($finalWorkflow->id, $active->id);
     }
+
+    public function testActiveWithContinuedStatusButNoActiveChild(): void
+    {
+        $workflow = StoredWorkflow::create([
+            'class' => 'TestWorkflow',
+            'status' => WorkflowRunningStatus::class,
+            'arguments' => json_encode([]),
+        ]);
+
+        $workflow->status->transitionTo(WorkflowContinuedStatus::class);
+
+        $active = $workflow->active();
+
+        $this->assertNotNull($active);
+        $this->assertSame($workflow->id, $active->id);
+    }
 }
