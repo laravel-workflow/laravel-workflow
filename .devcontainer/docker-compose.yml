@@ -12,6 +12,7 @@ services:
         PHP_EXTENSION_XDEBUG: 1
         PHP_EXTENSION_PGSQL: 1
         PHP_EXTENSION_PDO_PGSQL: 1
+        PHP_EXTENSION_MONGODB: 1
         APACHE_DOCUMENT_ROOT: /workspace/public
   pgsql:
     image: postgres:13
