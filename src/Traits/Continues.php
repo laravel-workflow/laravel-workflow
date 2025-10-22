@@ -25,7 +25,7 @@ trait Continues
             $newWorkflow = self::make($context->storedWorkflow->class);
 
             if ($parentWorkflow) {
-                $parentIndex = StoredWorkflow::getPivotAttribute($parentWorkflow, 'parent_index');
+                $parentIndex = StoredWorkflow::getRelationshipPivotAttribute($parentWorkflow, 'parent_index');
                 $parentWorkflow->children()
                     ->attach($newWorkflow->storedWorkflow, [
                         'parent_index' => $parentIndex,

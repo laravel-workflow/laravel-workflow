@@ -51,11 +51,27 @@ class StoredWorkflow extends Model
      */
     protected $casts = [
         'status' => WorkflowStatus::class,
-        'class' => 'string',
-        'arguments' => 'string',
-        'output' => 'string',
         'id' => 'string',
     ];
+
+    /**
+     * Get the casts array.
+     *
+     * @return array
+     */
+    public function getCasts()
+    {
+        $casts = parent::getCasts();
+        
+        // For MongoDB, ensure these fields are cast as strings to avoid preg_match errors
+        if (config('workflows.base_model') === 'MongoDB\\Laravel\\Eloquent\\Model') {
+            $casts['class'] = 'string';
+            $casts['arguments'] = 'string';
+            $casts['output'] = 'string';
+        }
+        
+        return $casts;
+    }
 
     public function toWorkflow()
     {

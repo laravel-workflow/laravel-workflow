@@ -195,7 +195,45 @@ class MongoDBBelongsToMany extends BelongsToMany
         // Apply the join constraints before executing the query
         $this->setJoin();
         
-        return parent::get($columns);
+        $models = parent::get($columns);
+        
+        // Attach pivot data to each model
+        if ($models->isNotEmpty()) {
+            $this->hydratePivotRelation($models->all());
+        }
+        
+        return $models;
+    }
+    
+    /**
+     * Hydrate the pivot relationship on the models.
+     *
+     * @param  array  $models
+     * @return void
+     */
+    protected function hydratePivotRelation(array $models)
+    {
+        // Get all pivot records for these models
+        $relatedIds = array_map(fn($model) => $model->getKey(), $models);
+        
+        $pivotQuery = WorkflowRelationship::where($this->foreignPivotKey, $this->parent->getKey())
+            ->whereIn($this->relatedPivotKey, $relatedIds);
+        
+        // Apply custom pivot where clauses
+        foreach ($this->customPivotWheres as $whereArgs) {
+            $pivotQuery->where(...$whereArgs);
+        }
+        
+        $pivots = $pivotQuery->get()->keyBy($this->relatedPivotKey);
+        
+        // Attach pivot data to each model
+        foreach ($models as $model) {
+            $pivot = $pivots->get($model->getKey());
+            if ($pivot) {
+                // Set pivot as a relation on the model
+                $model->setRelation('pivot', $pivot);
+            }
+        }
     }
 
     /**
@@ -209,7 +247,14 @@ class MongoDBBelongsToMany extends BelongsToMany
         // Apply the join constraints before executing the query
         $this->setJoin();
         
-        return parent::first($columns);
+        $model = parent::first($columns);
+        
+        // Attach pivot data if model was found
+        if ($model) {
+            $this->hydratePivotRelation([$model]);
+        }
+        
+        return $model;
     }
 
     /**

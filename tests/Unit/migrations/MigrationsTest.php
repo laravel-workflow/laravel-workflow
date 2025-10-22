@@ -11,6 +11,11 @@ final class MigrationsTest extends TestCase
 {
     public function testDownMethodsDropTables(): void
     {
+        // Skip for MongoDB since it doesn't use migrations
+        if (env('DB_CONNECTION') === 'mongodb') {
+            $this->markTestSkipped('MongoDB does not use migrations');
+        }
+        
         $this->assertTrue(Schema::hasTable('workflows'));
         $this->assertTrue(Schema::hasTable('workflow_logs'));
         $this->assertTrue(Schema::hasTable('workflow_signals'));

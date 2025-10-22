@@ -195,7 +195,12 @@ final class WorkflowStub
 
     public function fresh(): static
     {
-        $this->storedWorkflow->refresh();
+        try {
+            $this->storedWorkflow->refresh();
+        } catch (\Illuminate\Database\Eloquent\RelationNotFoundException $e) {
+            // MongoDB: pivot relation not found during refresh, reload without relations
+            $this->storedWorkflow = $this->storedWorkflow->fresh();
+        }
 
         return $this;
     }
@@ -277,7 +282,16 @@ final class WorkflowStub
                     'class' => $class,
                     'result' => Serializer::serialize($result),
                 ]);
-        } catch (\Illuminate\Database\UniqueConstraintViolationException $exception) {
+        } catch (\Throwable $exception) {
+            // Handle duplicate key exceptions from both SQL and MongoDB
+            $isDuplicateKey = $exception instanceof \Illuminate\Database\UniqueConstraintViolationException ||
+                             str_contains(get_class($exception), 'BulkWriteException') ||
+                             str_contains($exception->getMessage(), 'duplicate key') ||
+                             str_contains($exception->getMessage(), 'E11000');
+            
+            if (!$isDuplicateKey) {
+                throw $exception;
+            }
             // already logged
         }
 

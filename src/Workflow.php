@@ -168,7 +168,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
         }
 
         if ($parentWorkflow) {
-            $this->now = Carbon::parse(StoredWorkflow::getPivotAttribute($parentWorkflow, 'parent_now'));
+            $this->now = Carbon::parse(StoredWorkflow::getRelationshipPivotAttribute($parentWorkflow, 'parent_now'));
         } else {
             $this->now = $log ? $log->now : Carbon::now();
         }
@@ -263,7 +263,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
 
             if ($parentWorkflow) {
                 ChildWorkflow::dispatch(
-                    StoredWorkflow::getPivotAttribute($parentWorkflow, 'parent_index'),
+                    StoredWorkflow::getRelationshipPivotAttribute($parentWorkflow, 'parent_index'),
                     $this->now,
                     $this->storedWorkflow,
                     $return,
