@@ -24,8 +24,18 @@ abstract class TestCase extends BaseTestCase
             }
         }
 
+        // Prepare environment variables for workers (filter out non-scalar values)
+        $env = array_filter(
+            array_merge($_SERVER, $_ENV),
+            fn($v) => is_string($v) || is_numeric($v)
+        );
+        
         for ($i = 0; $i < self::NUMBER_OF_WORKERS; $i++) {
-            self::$workers[$i] = new Process(['php', __DIR__ . '/../vendor/bin/testbench', 'queue:work']);
+            self::$workers[$i] = new Process(
+                ['php', __DIR__ . '/../vendor/bin/testbench', 'queue:work'],
+                null,
+                $env
+            );
             self::$workers[$i]->start();
         }
     }
@@ -60,15 +70,7 @@ abstract class TestCase extends BaseTestCase
 
             $this->loadLaravelMigrations();
         } else {
-            // For MongoDB, manually clear collections and recreate indexes
             $this->artisan('db:wipe', ['--database' => 'mongodb']);
-            
-            // Recreate unique indexes after wiping
-            $connection = $this->app->make('db')->connection('mongodb');
-            $connection->getCollection('workflow_logs')->createIndex(
-                ['stored_workflow_id' => 1, 'index' => 1],
-                ['unique' => true]
-            );
         }
     }
 
@@ -85,18 +87,6 @@ abstract class TestCase extends BaseTestCase
 
     protected function defineEnvironment($app)
     {
-        $app['config']->set('database.connections.mongodb', [
-            'driver' => 'mongodb',
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', 27017),
-            'database' => env('DB_DATABASE', 'testbench'),
-            'username' => env('DB_USERNAME', ''),
-            'password' => env('DB_PASSWORD', ''),
-            'options' => [
-                'database' => env('DB_AUTHENTICATION_DATABASE', 'admin'),
-            ],
-        ]);
-
         if (env('DB_CONNECTION') === 'mongodb') {
             $app['config']->set('workflows.base_model', 'MongoDB\\Laravel\\Eloquent\\Model');
         }

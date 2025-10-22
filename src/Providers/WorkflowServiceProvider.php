@@ -12,6 +12,11 @@ use Workflow\Commands\WorkflowMakeCommand;
 
 final class WorkflowServiceProvider extends ServiceProvider
 {
+    public function register(): void
+    {
+        $this->mergeConfigFrom(__DIR__ . '/../config/workflows.php', 'workflows');
+    }
+
     public function boot(): void
     {
         if (! class_exists('Workflow\Models\Model')) {
