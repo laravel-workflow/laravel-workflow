@@ -22,4 +22,9 @@ class StoredWorkflowSignal extends Model
     protected $guarded = [];
 
     protected $dateFormat = 'Y-m-d H:i:s.u';
+
+    protected $casts = [
+        'stored_workflow_id' => 'string',
+        'created_at' => 'datetime:Y-m-d H:i:s.u',
+    ];
 }

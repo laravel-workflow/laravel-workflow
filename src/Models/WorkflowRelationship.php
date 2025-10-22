@@ -6,15 +6,19 @@ namespace Workflow\Models;
 
 /**
  * @extends Illuminate\Database\Eloquent\Model
+ * 
+ * This model represents the pivot table for workflow parent-child relationships.
+ * For MongoDB, this acts as a separate collection to store relationship data with pivot attributes.
  */
-class StoredWorkflowLog extends Model
+class WorkflowRelationship extends Model
 {
     public const UPDATED_AT = null;
+    public const CREATED_AT = null;
 
     /**
      * @var string
      */
-    protected $table = 'workflow_logs';
+    protected $table = 'workflow_relationships';
 
     /**
      * @var mixed[]
@@ -27,9 +31,6 @@ class StoredWorkflowLog extends Model
      * @var array<string, class-string<\datetime>>
      */
     protected $casts = [
-        'now' => 'datetime',
-        'stored_workflow_id' => 'string',
-        'index' => 'integer',
+        'parent_now' => 'datetime:Y-m-d H:i:s.u',
     ];
-
 }

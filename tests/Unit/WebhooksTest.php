@@ -345,14 +345,16 @@ final class WebhooksTest extends TestCase
             'message' => 'Workflow started',
         ]);
 
-        $response = $this->postJson('/webhooks/signal/test-webhook-workflow/1/cancel');
+        $workflowId = StoredWorkflow::first()->id;
+
+        $response = $this->postJson("/webhooks/signal/test-webhook-workflow/{$workflowId}/cancel");
 
         $response->assertStatus(200);
         $response->assertJson([
             'message' => 'Signal sent',
         ]);
 
-        $workflow = \Workflow\WorkflowStub::load(1);
+        $workflow = \Workflow\WorkflowStub::load($workflowId);
 
         $this->assertSame(WorkflowPendingStatus::class, $workflow->status());
     }
@@ -386,11 +388,13 @@ final class WebhooksTest extends TestCase
             'message' => 'Workflow started',
         ]);
 
+        $workflowId = StoredWorkflow::first()->id;
+
         config([
             'workflows.webhook_auth.method' => 'invalid',
         ]);
 
-        $response = $this->postJson('/webhooks/signal/test-webhook-workflow/1/cancel');
+        $response = $this->postJson("/webhooks/signal/test-webhook-workflow/{$workflowId}/cancel");
 
         $response->assertStatus(401);
         $response->assertJson([

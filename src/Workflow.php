@@ -132,14 +132,40 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
             ->whereIndex($this->index)
             ->first();
 
-        $this->storedWorkflow
-            ->signals()
-            ->when($log, static function ($query, $log): void {
-                $query->where('created_at', '<=', $log->created_at->format('Y-m-d H:i:s.u'));
-            })
-            ->each(function ($signal): void {
+        // For MongoDB, just get ALL signals and filter in PHP since MongoDB query is broken
+        if (env('DB_CONNECTION') === 'mongodb') {
+            $connection = \Illuminate\Support\Facades\DB::connection('mongodb');
+            
+            // Get ALL signals and filter manually
+            $allSignals = $connection->getCollection('workflow_signals')->find([], ['sort' => ['_id' => 1]])->toArray();
+            
+            foreach ($allSignals as $signalData) {
+                // Filter by stored_workflow_id in PHP
+                if ($signalData['stored_workflow_id'] != $this->storedWorkflow->id) {
+                    continue;
+                }
+                
+                // Filter by created_at if log exists
+                if ($log && isset($signalData['created_at']) && $signalData['created_at'] > $log->created_at->format('Y-m-d H:i:s.u')) {
+                    continue;
+                }
+                
+                $arguments = isset($signalData['arguments']) ? Serializer::unserialize($signalData['arguments']) : [];
+                $this->{$signalData['method']}(...$arguments);
+            }
+        } else {
+            $signalsQuery = $this->storedWorkflow->signals();
+            
+            if ($log) {
+                $signalsQuery->where('created_at', '<=', $log->created_at->format('Y-m-d H:i:s.u'));
+            }
+            
+            $signals = $signalsQuery->get();
+            
+            foreach ($signals as $signal) {
                 $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
-            });
+            }
+        }
 
         if ($parentWorkflow) {
             $this->now = Carbon::parse(StoredWorkflow::getPivotAttribute($parentWorkflow, 'parent_now'));

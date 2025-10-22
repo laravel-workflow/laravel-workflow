@@ -59,6 +59,16 @@ abstract class TestCase extends BaseTestCase
             ]);
 
             $this->loadLaravelMigrations();
+        } else {
+            // For MongoDB, manually clear collections and recreate indexes
+            $this->artisan('db:wipe', ['--database' => 'mongodb']);
+            
+            // Recreate unique indexes after wiping
+            $connection = $this->app->make('db')->connection('mongodb');
+            $connection->getCollection('workflow_logs')->createIndex(
+                ['stored_workflow_id' => 1, 'index' => 1],
+                ['unique' => true]
+            );
         }
     }
 

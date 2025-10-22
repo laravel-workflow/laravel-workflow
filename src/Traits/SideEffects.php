@@ -33,7 +33,17 @@ trait SideEffects
                         'class' => self::$context->storedWorkflow->class,
                         'result' => Serializer::serialize($result),
                     ]);
-            } catch (QueryException $exception) {
+            } catch (\Throwable $exception) {
+                // Handle duplicate key exceptions from both SQL (QueryException) and MongoDB (BulkWriteException)
+                $isDuplicateKey = $exception instanceof QueryException || 
+                                 str_contains(get_class($exception), 'BulkWriteException') ||
+                                 str_contains($exception->getMessage(), 'duplicate key') ||
+                                 str_contains($exception->getMessage(), 'E11000');
+                
+                if (!$isDuplicateKey) {
+                    throw $exception;
+                }
+                
                 $log = self::$context->storedWorkflow->logs()
                     ->whereIndex(self::$context->index)
                     ->first();

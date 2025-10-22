@@ -39,11 +39,14 @@ final class WorkflowFakerTest extends TestCase
 
         $workflow->cancel();
 
+        $this->assertTrue($workflow->isCanceled());
+
         $this->travel(5)
             ->minutes();
 
         $workflow->resume();
 
+        // Workflow should still be canceled after resume
         $this->assertTrue($workflow->isCanceled());
         $this->assertSame($workflow->output(), 'workflow_activity_other_activity');
 

@@ -253,6 +253,11 @@ final class WorkflowStub
 
         $this->storedWorkflow->parents()
             ->each(static function ($parentWorkflow) use ($exception) {
+                // Skip if parent workflow doesn't exist
+                if ($parentWorkflow === null) {
+                    return;
+                }
+                
                 try {
                     $parentWorkflow->toWorkflow()
                         ->fail($exception);

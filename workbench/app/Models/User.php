@@ -4,11 +4,17 @@ namespace Workbench\App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+// Use MongoDB User class if available and MongoDB is the connection
+if (class_exists(\MongoDB\Laravel\Auth\User::class) && env('DB_CONNECTION') === 'mongodb') {
+    abstract class BaseUser extends \MongoDB\Laravel\Auth\User {}
+} else {
+    abstract class BaseUser extends \Illuminate\Foundation\Auth\User {}
+}
+
+class User extends BaseUser
 {
     use HasFactory, Notifiable;
 

@@ -52,6 +52,12 @@ trait Timers
             }
         }
 
+        if ($timer === null) {
+            ++self::$context->index;
+            $deferred = new Deferred();
+            return $deferred->promise();
+        }
+
         $result = $timer->stop_at
             ->lessThanOrEqualTo(self::$context->now);
 

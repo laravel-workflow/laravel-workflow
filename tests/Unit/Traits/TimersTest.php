@@ -48,11 +48,21 @@ final class TimersTest extends TestCase
 
         $this->assertNull($result);
         $this->assertSame(0, $workflow->logs()->count());
-        $this->assertDatabaseHas('workflow_timers', [
+        
+        $expectedStopAt = WorkflowStub::now()->addMinute();
+        $assertion = [
             'stored_workflow_id' => $workflow->id(),
             'index' => 0,
-            'stop_at' => WorkflowStub::now()->addMinute(),
-        ]);
+        ];
+        
+        // For MongoDB, compare the formatted string since it's stored as string
+        if (env('DB_CONNECTION') === 'mongodb') {
+            $assertion['stop_at'] = $expectedStopAt->format('Y-m-d H:i:s.u');
+        } else {
+            $assertion['stop_at'] = $expectedStopAt;
+        }
+        
+        $this->assertDatabaseHas('workflow_timers', $assertion);
     }
 
     public function testDefersIfNotElapsed(): void
@@ -94,7 +104,7 @@ final class TimersTest extends TestCase
         $storedWorkflow->timers()
             ->create([
                 'index' => 0,
-                'stop_at' => now(),
+                'stop_at' => now()->subSecond(),  // Set to past to ensure it's elapsed
             ]);
 
         WorkflowStub::timer('1 minute')
@@ -119,7 +129,7 @@ final class TimersTest extends TestCase
         $storedWorkflow->timers()
             ->create([
                 'index' => 0,
-                'stop_at' => now(),
+                'stop_at' => now()->subSecond(),
             ]);
         $storedWorkflow->logs()
             ->create([
@@ -151,7 +161,7 @@ final class TimersTest extends TestCase
         $storedWorkflow->timers()
             ->create([
                 'index' => 0,
-                'stop_at' => now(),
+                'stop_at' => now()->subSecond(),
             ]);
         $storedWorkflow->logs()
             ->create([
@@ -214,10 +224,20 @@ final class TimersTest extends TestCase
 
         $this->assertNull($result);
         $this->assertSame(0, $workflow->logs()->count());
-        $this->assertDatabaseHas('workflow_timers', [
+        
+        $expectedStopAt = WorkflowStub::now()->addSeconds($interval->totalSeconds);
+        $assertion = [
             'stored_workflow_id' => $workflow->id(),
             'index' => 0,
-            'stop_at' => WorkflowStub::now()->addSeconds($interval->totalSeconds),
-        ]);
+        ];
+        
+        // For MongoDB, compare the formatted string since it's stored as string
+        if (env('DB_CONNECTION') === 'mongodb') {
+            $assertion['stop_at'] = $expectedStopAt->format('Y-m-d H:i:s.u');
+        } else {
+            $assertion['stop_at'] = $expectedStopAt;
+        }
+        
+        $this->assertDatabaseHas('workflow_timers', $assertion);
     }
 }
