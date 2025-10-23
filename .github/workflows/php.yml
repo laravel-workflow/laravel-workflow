@@ -161,9 +161,6 @@ jobs:
           composer update --prefer-stable --prefer-dist --no-progress --no-interaction --no-scripts
           composer run-script post-autoload-dump --no-interaction || true
 
-      - name: Create SQLite database
-        run: touch testbench.sqlite
-
       - name: Create MySQL database
         run: mysql -e 'CREATE DATABASE IF NOT EXISTS testbench' -h127.0.0.1 -uroot -ppassword -P 3306
 
@@ -198,14 +195,6 @@ jobs:
           REDIS_HOST: 127.0.0.1
           REDIS_PASSWORD:
           REDIS_PORT: 6379
-
-      - name: Run test suite (SQLite)
-        run: vendor/bin/phpunit --testdox
-        env:
-          APP_KEY: base64:i3g6f+dV8FfsIkcxqd7gbiPn2oXk5r00sTmdD6V5utI=
-          DB_CONNECTION: sqlite
-          DB_DATABASE: testbench.sqlite
-          QUEUE_CONNECTION: sync
 
       - name: Upload laravel.log if tests fail
         if: failure()
