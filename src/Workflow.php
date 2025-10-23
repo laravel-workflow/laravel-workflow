@@ -58,6 +58,11 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
         public StoredWorkflow $storedWorkflow,
         ...$arguments
     ) {
+        file_put_contents(
+            'php://stderr',
+            '[Workflow::__construct] ENTERED for workflow class: ' . static::class . ", ID: {$storedWorkflow->id}\n"
+        );
+
         $this->arguments = $arguments;
 
         if (property_exists($this, 'connection')) {
@@ -69,6 +74,8 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
         }
 
         $this->afterCommit = true;
+
+        file_put_contents('php://stderr', "[Workflow::__construct] FINISHED\n");
     }
 
     public function query($method)
@@ -97,6 +104,13 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
 
     public function failed(Throwable $throwable): void
     {
+        file_put_contents(
+            'php://stderr',
+            '[Workflow::failed] Job failed with exception: ' . $throwable->getMessage() . "\n"
+        );
+        file_put_contents('php://stderr', '[Workflow::failed] Exception class: ' . get_class($throwable) . "\n");
+        file_put_contents('php://stderr', '[Workflow::failed] Trace: ' . $throwable->getTraceAsString() . "\n");
+
         try {
             $this->storedWorkflow->toWorkflow()
                 ->fail($throwable);
@@ -107,42 +121,55 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
 
     public function handle(): void
     {
-        if (getenv('GITHUB_ACTIONS') === 'true') {
-            echo "[Workflow::handle] Starting handle() for workflow ID: {$this->storedWorkflow->id}, Class: " . static::class
+        file_put_contents(
+            'php://stderr',
+            "[Workflow::handle] ENTERED for workflow ID: {$this->storedWorkflow->id}, Class: " . static::class . "\n"
+        );
+        echo "[Workflow::handle] ENTERED for workflow ID: {$this->storedWorkflow->id}, Class: " . static::class
 
-             . "\n";
-        }
+         . "\n";
+        flush();
 
         if (! method_exists($this, 'execute')) {
             throw new BadMethodCallException('Execute method not implemented.');
         }
 
+        file_put_contents('php://stderr', "[Workflow::handle] Creating container\n");
         $this->container = App::make(Container::class);
+        file_put_contents('php://stderr', "[Workflow::handle] Container created\n");
 
-        if (getenv('GITHUB_ACTIONS') === 'true') {
-            echo "[Workflow::handle] Transitioning to WorkflowRunningStatus\n";
-        }
+        file_put_contents('php://stderr', "[Workflow::handle] About to transition to WorkflowRunningStatus\n");
 
         try {
             if (! $this->replaying) {
                 $this->storedWorkflow->status->transitionTo(WorkflowRunningStatus::class);
             }
 
-            if (getenv('GITHUB_ACTIONS') === 'true') {
-                echo "[Workflow::handle] Transitioned to WorkflowRunningStatus successfully\n";
-            }
-        } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
-            if (getenv('GITHUB_ACTIONS') === 'true') {
-                echo "[Workflow::handle] TransitionNotFound exception caught\n";
-            }
+            file_put_contents(
+                'php://stderr',
+                "[Workflow::handle] Transitioned to WorkflowRunningStatus successfully\n"
+            );
+        } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound $e) {
+            file_put_contents(
+                'php://stderr',
+                '[Workflow::handle] TransitionNotFound exception caught: ' . $e->getMessage() . "\n"
+            );
 
             if ($this->storedWorkflow->toWorkflow()->running()) {
-                if (getenv('GITHUB_ACTIONS') === 'true') {
-                    echo "[Workflow::handle] Workflow already running, releasing back to queue\n";
-                }
+                file_put_contents(
+                    'php://stderr',
+                    "[Workflow::handle] Workflow already running, releasing back to queue\n"
+                );
                 $this->release();
             }
             return;
+        } catch (\Exception $e) {
+            file_put_contents(
+                'php://stderr',
+                '[Workflow::handle] EXCEPTION during transition: ' . $e->getMessage() . "\n"
+            );
+            file_put_contents('php://stderr', '[Workflow::handle] Exception trace: ' . $e->getTraceAsString() . "\n");
+            throw $e;
         }
 
         $parentWorkflow = $this->storedWorkflow->parents()

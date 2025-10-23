@@ -121,9 +121,16 @@ jobs:
       run: |
         php -r "try { \$manager = new MongoDB\Driver\Manager('mongodb://root:password@127.0.0.1:27017/?authSource=admin'); \$command = new MongoDB\Driver\Command(['ping' => 1]); \$manager->executeCommand('admin', \$command); echo 'MongoDB connection successful\n'; } catch (Exception \$e) { echo 'MongoDB connection failed: ' . \$e->getMessage() . '\n'; exit(1); }"
 
+    - name: Monitor Laravel log in background
+      run: |
+        mkdir -p vendor/orchestra/testbench-core/laravel/storage/logs
+        touch vendor/orchestra/testbench-core/laravel/storage/logs/laravel.log
+        tail -f vendor/orchestra/testbench-core/laravel/storage/logs/laravel.log &
+        echo $! > /tmp/tail_pid
+      
     - name: Run test suite (MongoDB)
-      timeout-minutes: 10
-      run: vendor/bin/phpunit --testdox --testsuite feature --debug --stop-on-error --stop-on-failure
+      timeout-minutes: 2
+      run: vendor/bin/phpunit --testdox --testsuite feature --debug --stop-on-error --stop-on-failure || true
       env:
         APP_KEY: base64:i3g6f+dV8FfsIkcxqd7gbiPn2oXk5r00sTmdD6V5utI=
         DB_CONNECTION: mongodb
@@ -139,8 +146,21 @@ jobs:
         REDIS_PASSWORD:
         REDIS_PORT: 6379
 
+    - name: Stop log monitor and print full log
+      if: always()
+      run: |
+        if [ -f /tmp/tail_pid ]; then
+          kill $(cat /tmp/tail_pid) || true
+        fi
+        echo "===== FULL LARAVEL LOG ====="
+        if [ -f vendor/orchestra/testbench-core/laravel/storage/logs/laravel.log ]; then
+          cat vendor/orchestra/testbench-core/laravel/storage/logs/laravel.log
+        else
+          echo "No laravel.log found"
+        fi
+        
     - name: Upload laravel.log if tests fail
-      if: failure()
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: laravel-log

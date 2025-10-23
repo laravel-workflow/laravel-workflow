@@ -57,7 +57,8 @@ final class AsyncWorkflowTest extends TestCase
         flush();
 
         $iterations = 0;
-        while ($workflow->running()) {
+        $maxIterations = 100; // 10 seconds max
+        while ($workflow->running() && $iterations < $maxIterations) {
             $iterations++;
             if ($iterations === 1) {
                 file_put_contents('php://stderr', "[TEST] First iteration of while loop\n");
@@ -70,6 +71,20 @@ final class AsyncWorkflowTest extends TestCase
                 flush();
             }
             usleep(100000); // 0.1 second
+        }
+
+        if ($iterations >= $maxIterations) {
+            file_put_contents('php://stderr', "[TEST] TIMEOUT! Printing Laravel log:\n");
+            echo "[TEST] TIMEOUT! Checking for errors...\n";
+            $logPath = __DIR__ . '/../../vendor/orchestra/testbench-core/laravel/storage/logs/laravel.log';
+            if (file_exists($logPath)) {
+                $log = file_get_contents($logPath);
+                file_put_contents('php://stderr', "===== LARAVEL LOG =====\n" . $log . "\n=====\n");
+                echo "===== LARAVEL LOG =====\n" . $log . "\n=====\n";
+            } else {
+                file_put_contents('php://stderr', "[TEST] No laravel.log found at {$logPath}\n");
+            }
+            $this->fail('Workflow did not complete within timeout');
         }
 
         file_put_contents('php://stderr', "[TEST] Exited while loop\n");

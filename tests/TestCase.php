@@ -72,6 +72,7 @@ abstract class TestCase extends BaseTestCase
                     '--tries=3',
                     '--timeout=60',
                     '--max-time=300',
+                    '--once',
                     '-vvv',
                 ],
                 null,
