@@ -123,7 +123,7 @@ jobs:
 
     - name: Run test suite (MongoDB)
       timeout-minutes: 10
-      run: vendor/bin/phpunit --testdox --testsuite feature --verbose --debug --stop-on-error --stop-on-failure
+      run: vendor/bin/phpunit --testdox --testsuite feature --debug --stop-on-error --stop-on-failure
       env:
         APP_KEY: base64:i3g6f+dV8FfsIkcxqd7gbiPn2oXk5r00sTmdD6V5utI=
         DB_CONNECTION: mongodb
