@@ -236,11 +236,19 @@ final class WorkflowStub
 
     public function fail($exception): void
     {
-        $this->storedWorkflow->exceptions()
-            ->create([
-                'class' => $this->storedWorkflow->class,
-                'exception' => Serializer::serialize($exception),
-            ]);
+        try {
+            $this->storedWorkflow->exceptions()
+                ->create([
+                    'class' => $this->storedWorkflow->class,
+                    'exception' => Serializer::serialize($exception),
+                ]);
+        } catch (\Throwable $e) {
+            $exceptionHandler = app(\Workflow\Domain\Contracts\ExceptionHandlerInterface::class);
+            // Ignore duplicate key errors - exception already recorded
+            if (! $exceptionHandler->isDuplicateKeyException($e)) {
+                throw $e;
+            }
+        }
 
         $this->storedWorkflow->status->transitionTo(WorkflowFailedStatus::class);
 

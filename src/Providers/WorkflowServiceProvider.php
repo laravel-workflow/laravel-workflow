@@ -182,6 +182,15 @@ final class WorkflowServiceProvider extends ServiceProvider
                     }
                 }
             }
+
+            // Drop the problematic index on workflow_exceptions if it exists
+            // MongoDB auto-creates this index but the 'index' field is not used in exceptions
+            $exceptionCollection = $connection->getCollection('workflow_exceptions');
+            try {
+                $exceptionCollection->dropIndex('stored_workflow_id_1_index_1');
+            } catch (\Exception $e) {
+                // Index might not exist, that's fine
+            }
         } catch (\Exception $e) {
             // MongoDB might not be available yet
         }

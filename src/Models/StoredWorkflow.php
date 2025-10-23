@@ -146,6 +146,10 @@ class StoredWorkflow extends Model
     {
         $active = $this->fresh();
 
+        if ($active === null) {
+            return $this;
+        }
+
         if ($active->status::class === WorkflowContinuedStatus::class) {
             $continued = $this->activeWorkflow()
                 ->first();

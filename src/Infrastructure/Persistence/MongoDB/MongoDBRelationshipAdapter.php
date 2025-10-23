@@ -10,7 +10,7 @@ use Workflow\Domain\Contracts\RelationshipAdapterInterface;
 
 /**
  * MongoDB relationship adapter.
- * 
+ *
  * Uses a custom BelongsToMany implementation to work around MongoDB Laravel's
  * limitations with pivot collections.
  */
@@ -25,7 +25,7 @@ class MongoDBRelationshipAdapter implements RelationshipAdapterInterface
     ): BelongsToMany {
         // Create a new instance of the related model
         $relatedInstance = new $relatedClass();
-        
+
         $relation = new MongoDBBelongsToManyRelation(
             $relatedInstance->newQuery(),
             $parent,
@@ -36,7 +36,7 @@ class MongoDBRelationshipAdapter implements RelationshipAdapterInterface
             $relatedInstance->getKeyName(),
             null
         );
-        
+
         // Add pivot attributes
         return $relation->withPivot(['parent_index', 'parent_now']);
     }
@@ -50,7 +50,7 @@ class MongoDBRelationshipAdapter implements RelationshipAdapterInterface
     ): BelongsToMany {
         // Create a new instance of the related model
         $relatedInstance = new $relatedClass();
-        
+
         $relation = new MongoDBBelongsToManyRelation(
             $relatedInstance->newQuery(),
             $parent,
@@ -61,7 +61,7 @@ class MongoDBRelationshipAdapter implements RelationshipAdapterInterface
             $relatedInstance->getKeyName(),
             null
         );
-        
+
         // Add pivot attributes
         return $relation->withPivot(['parent_index', 'parent_now']);
     }

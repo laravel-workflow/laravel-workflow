@@ -133,13 +133,9 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
             ->whereIndex($this->index)
             ->first();
 
-        // Get signals up to the current log's timestamp using the query adapter
         $queryAdapter = app(QueryAdapterInterface::class);
-        $signals = $queryAdapter->getSignalsUpToTimestamp(
-            $this->storedWorkflow,
-            $log?->created_at
-        );
-        
+        $signals = $queryAdapter->getSignalsUpToTimestamp($this->storedWorkflow, $log?->created_at);
+
         foreach ($signals as $signal) {
             $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
         }
@@ -176,7 +172,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
                     $log->created_at,
                     $nextLog?->created_at
                 );
-                
+
                 foreach ($signals as $signal) {
                     $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
                 }

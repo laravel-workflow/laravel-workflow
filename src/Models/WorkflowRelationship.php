@@ -36,15 +36,15 @@ class WorkflowRelationship extends Model
     public function getCasts()
     {
         $casts = parent::getCasts();
-        
+
         $casts['parent_now'] = 'datetime:Y-m-d H:i:s.u';
-        
+
         // Use the DateTimeAdapter to handle database-specific casting
         if (app()->bound(\Workflow\Domain\Contracts\DateTimeAdapterInterface::class)) {
             $adapter = app(\Workflow\Domain\Contracts\DateTimeAdapterInterface::class);
             return $adapter->getCasts($casts);
         }
-        
+
         return $casts;
     }
 }

@@ -16,7 +16,7 @@ class MongoDBDateTimeAdapter implements DateTimeAdapterInterface
     {
         // MongoDB Laravel handles datetime casts natively, converting UTCDateTime to Carbon
         // We only need to override casts that cause issues with MongoDB's attribute handling
-        
+
         $mongoDbCasts = [];
 
         // Add MongoDB-specific string casts for fields that may have preg_match issues

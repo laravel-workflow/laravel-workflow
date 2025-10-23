@@ -48,10 +48,11 @@ final class TimersTest extends TestCase
 
         $this->assertNull($result);
         $this->assertSame(0, $workflow->logs()->count());
-        
+
         // Verify timer was created with correct stop_at time
         $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
-        $timer = $storedWorkflow->timers()->first();
+        $timer = $storedWorkflow->timers()
+            ->first();
         $this->assertNotNull($timer);
         $this->assertSame(0, $timer->index);
         $this->assertTrue(
@@ -222,10 +223,11 @@ final class TimersTest extends TestCase
 
         $this->assertNull($result);
         $this->assertSame(0, $workflow->logs()->count());
-        
+
         // Verify timer was created with correct stop_at time
         $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
-        $timer = $storedWorkflow->timers()->first();
+        $timer = $storedWorkflow->timers()
+            ->first();
         $this->assertNotNull($timer);
         $this->assertSame(0, $timer->index);
         $this->assertTrue(
