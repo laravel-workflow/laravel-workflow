@@ -31,5 +31,4 @@ class StoredWorkflowLog extends Model
         'stored_workflow_id' => 'string',
         'index' => 'integer',
     ];
-
 }

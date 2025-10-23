@@ -17,6 +17,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\App;
 use React\Promise\PromiseInterface;
 use Throwable;
+use Workflow\Domain\Contracts\QueryAdapterInterface;
 use Workflow\Events\WorkflowCompleted;
 use Workflow\Middleware\WithoutOverlappingMiddleware;
 use Workflow\Models\StoredWorkflow;
@@ -132,43 +133,19 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
             ->whereIndex($this->index)
             ->first();
 
-        // For MongoDB, just get ALL signals and filter in PHP since MongoDB query is broken
-        if (env('DB_CONNECTION') === 'mongodb') {
-            $connection = \Illuminate\Support\Facades\DB::connection('mongodb');
-            
-            // Get ALL signals and filter manually
-            $allSignals = $connection->getCollection('workflow_signals')->find([], ['sort' => ['_id' => 1]])->toArray();
-            
-            foreach ($allSignals as $signalData) {
-                // Filter by stored_workflow_id in PHP
-                if ($signalData['stored_workflow_id'] != $this->storedWorkflow->id) {
-                    continue;
-                }
-                
-                // Filter by created_at if log exists
-                if ($log && isset($signalData['created_at']) && $signalData['created_at'] > $log->created_at->format('Y-m-d H:i:s.u')) {
-                    continue;
-                }
-                
-                $arguments = isset($signalData['arguments']) ? Serializer::unserialize($signalData['arguments']) : [];
-                $this->{$signalData['method']}(...$arguments);
-            }
-        } else {
-            $signalsQuery = $this->storedWorkflow->signals();
-            
-            if ($log) {
-                $signalsQuery->where('created_at', '<=', $log->created_at->format('Y-m-d H:i:s.u'));
-            }
-            
-            $signals = $signalsQuery->get();
-            
-            foreach ($signals as $signal) {
-                $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
-            }
+        // Get signals up to the current log's timestamp using the query adapter
+        $queryAdapter = app(QueryAdapterInterface::class);
+        $signals = $queryAdapter->getSignalsUpToTimestamp(
+            $this->storedWorkflow,
+            $log?->created_at
+        );
+        
+        foreach ($signals as $signal) {
+            $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
         }
 
         if ($parentWorkflow) {
-            $this->now = Carbon::parse(StoredWorkflow::getRelationshipPivotAttribute($parentWorkflow, 'parent_now'));
+            $this->now = Carbon::parse($parentWorkflow->pivot->parent_now);
         } else {
             $this->now = $log ? $log->now : Carbon::now();
         }
@@ -194,15 +171,15 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
                 ->first();
 
             if ($log) {
-                $this->storedWorkflow
-                    ->signals()
-                    ->where('created_at', '>', $log->created_at->format('Y-m-d H:i:s.u'))
-                    ->when($nextLog, static function ($query, $nextLog): void {
-                        $query->where('created_at', '<=', $nextLog->created_at->format('Y-m-d H:i:s.u'));
-                    })
-                    ->each(function ($signal): void {
-                        $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
-                    });
+                $signals = $queryAdapter->getSignalsBetweenTimestamps(
+                    $this->storedWorkflow,
+                    $log->created_at,
+                    $nextLog?->created_at
+                );
+                
+                foreach ($signals as $signal) {
+                    $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
+                }
             }
 
             $log = $nextLog;
@@ -263,7 +240,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
 
             if ($parentWorkflow) {
                 ChildWorkflow::dispatch(
-                    StoredWorkflow::getRelationshipPivotAttribute($parentWorkflow, 'parent_index'),
+                    $parentWorkflow->pivot->parent_index,
                     $this->now,
                     $this->storedWorkflow,
                     $return,

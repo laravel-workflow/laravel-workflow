@@ -8,9 +8,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Prunable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Spatie\ModelStates\HasStates;
+use Workflow\Domain\Contracts\DateTimeAdapterInterface;
+use Workflow\Domain\Contracts\RelationshipAdapterInterface;
+use Workflow\Domain\Contracts\WorkflowRepositoryInterface;
 use Workflow\States\WorkflowContinuedStatus;
 use Workflow\States\WorkflowStatus;
-use Workflow\Traits\WorkflowRelationships;
 use Workflow\WorkflowStub;
 
 /**
@@ -20,7 +22,6 @@ class StoredWorkflow extends Model
 {
     use HasStates;
     use Prunable;
-    use WorkflowRelationships;
 
     /**
      * @var int
@@ -62,15 +63,11 @@ class StoredWorkflow extends Model
     public function getCasts()
     {
         $casts = parent::getCasts();
-        
-        // For MongoDB, ensure these fields are cast as strings to avoid preg_match errors
-        if (config('workflows.base_model') === 'MongoDB\\Laravel\\Eloquent\\Model') {
-            $casts['class'] = 'string';
-            $casts['arguments'] = 'string';
-            $casts['output'] = 'string';
-        }
-        
-        return $casts;
+
+        // Use the DateTimeAdapter to handle database-specific casting
+        $adapter = app(DateTimeAdapterInterface::class);
+
+        return $adapter->getCasts($casts);
     }
 
     public function toWorkflow()
@@ -107,113 +104,42 @@ class StoredWorkflow extends Model
 
     public function parents(): BelongsToMany
     {
-        if ($this->isMongoDBModel()) {
-            return new \Workflow\Relations\MongoDBBelongsToMany(
-                $this->newRelatedInstance(config('workflows.stored_workflow_model', self::class))->newQuery(),
-                $this,
-                config('workflows.workflow_relationships_table', 'workflow_relationships'),
-                'child_workflow_id',
-                'parent_workflow_id',
-                $this->getKeyName(),
-                $this->getRelated(config('workflows.stored_workflow_model', self::class))->getKeyName(),
-                null
-            );
-        }
+        $adapter = app(RelationshipAdapterInterface::class);
 
-        return $this->belongsToMany(
+        return $adapter->createParentsRelation(
+            $this,
             config('workflows.stored_workflow_model', self::class),
             config('workflows.workflow_relationships_table', 'workflow_relationships'),
             'child_workflow_id',
             'parent_workflow_id'
-        )->withPivot(['parent_index', 'parent_now']);
+        );
     }
 
     public function children(): BelongsToMany
     {
-        if ($this->isMongoDBModel()) {
-            return new \Workflow\Relations\MongoDBBelongsToMany(
-                $this->newRelatedInstance(config('workflows.stored_workflow_model', self::class))->newQuery(),
-                $this,
-                config('workflows.workflow_relationships_table', 'workflow_relationships'),
-                'parent_workflow_id',
-                'child_workflow_id',
-                $this->getKeyName(),
-                $this->getRelated(config('workflows.stored_workflow_model', self::class))->getKeyName(),
-                null
-            );
-        }
+        $adapter = app(RelationshipAdapterInterface::class);
 
-        return $this->belongsToMany(
+        return $adapter->createChildrenRelation(
+            $this,
             config('workflows.stored_workflow_model', self::class),
             config('workflows.workflow_relationships_table', 'workflow_relationships'),
             'parent_workflow_id',
             'child_workflow_id'
-        )->withPivot(['parent_index', 'parent_now']);
+        );
     }
 
     public function continuedWorkflows(): BelongsToMany
     {
-        if ($this->isMongoDBModel()) {
-            $relation = new \Workflow\Relations\MongoDBBelongsToMany(
-                $this->newRelatedInstance(config('workflows.stored_workflow_model', self::class))->newQuery(),
-                $this,
-                config('workflows.workflow_relationships_table', 'workflow_relationships'),
-                'parent_workflow_id',
-                'child_workflow_id',
-                $this->getKeyName(),
-                $this->getRelated(config('workflows.stored_workflow_model', self::class))->getKeyName(),
-                null
-            );
-            return $relation->wherePivot('parent_index', self::CONTINUE_PARENT_INDEX)
-                ->orderBy('child_workflow_id');
-        }
-
-        return $this->belongsToMany(
-            config('workflows.stored_workflow_model', self::class),
-            config('workflows.workflow_relationships_table', 'workflow_relationships'),
-            'parent_workflow_id',
-            'child_workflow_id'
-        )->wherePivot('parent_index', self::CONTINUE_PARENT_INDEX)
-            ->withPivot(['parent_index', 'parent_now'])
+        return $this->children()
+            ->wherePivot('parent_index', self::CONTINUE_PARENT_INDEX)
             ->orderBy('child_workflow_id');
     }
 
     public function activeWorkflow(): BelongsToMany
     {
-        if ($this->isMongoDBModel()) {
-            $relation = new \Workflow\Relations\MongoDBBelongsToMany(
-                $this->newRelatedInstance(config('workflows.stored_workflow_model', self::class))->newQuery(),
-                $this,
-                config('workflows.workflow_relationships_table', 'workflow_relationships'),
-                'parent_workflow_id',
-                'child_workflow_id',
-                $this->getKeyName(),
-                $this->getRelated(config('workflows.stored_workflow_model', self::class))->getKeyName(),
-                null
-            );
-            return $relation->wherePivot('parent_index', self::ACTIVE_WORKFLOW_INDEX)
-                ->orderBy('child_workflow_id');
-        }
-
-        return $this->belongsToMany(
-            config('workflows.stored_workflow_model', self::class),
-            config('workflows.workflow_relationships_table', 'workflow_relationships'),
-            'parent_workflow_id',
-            'child_workflow_id'
-        )->wherePivot('parent_index', self::ACTIVE_WORKFLOW_INDEX)
-            ->withPivot(['parent_index', 'parent_now'])
+        return $this->children()
+            ->wherePivot('parent_index', self::ACTIVE_WORKFLOW_INDEX)
             ->orderBy('child_workflow_id');
-    }
-
-    protected function isMongoDBModel(): bool
-    {
-        return config('workflows.base_model') === 'MongoDB\\Laravel\\Eloquent\\Model' ||
-            $this instanceof \MongoDB\Laravel\Eloquent\Model;
-    }
-
-    protected function getRelated(string $class)
-    {
-        return new $class();
     }
 
     public function active(): self
@@ -221,8 +147,12 @@ class StoredWorkflow extends Model
         $active = $this->fresh();
 
         if ($active->status::class === WorkflowContinuedStatus::class) {
-            $active = $this->activeWorkflow()
+            $continued = $this->activeWorkflow()
                 ->first();
+
+            if ($continued !== null) {
+                $active = $continued;
+            }
         }
 
         return $active;
@@ -230,22 +160,9 @@ class StoredWorkflow extends Model
 
     public function prunable(): Builder
     {
-        $query = static::where('status', 'completed')
-            ->where('created_at', '<=', now()->sub(config('workflows.prune_age', '1 month')));
-        
-        // For MongoDB, we need to manually check if parents exist
-        if (config('workflows.base_model') === 'MongoDB\\Laravel\\Eloquent\\Model') {
-            // Get all child workflow IDs that have parents
-            $childIds = \Workflow\Models\WorkflowRelationship::distinct('child_workflow_id')->pluck('child_workflow_id')->filter()->all();
-            
-            if (!empty($childIds)) {
-                $query->whereNotIn('_id', $childIds);
-            }
-        } else {
-            $query->whereDoesntHave('parents');
-        }
-        
-        return $query;
+        $repository = app(WorkflowRepositoryInterface::class);
+
+        return $repository->getPrunableWorkflows();
     }
 
     protected function pruning(): void
@@ -256,11 +173,12 @@ class StoredWorkflow extends Model
     protected function recursivePrune(self $workflow): void
     {
         // Get children before detaching
-        $children = $workflow->children()->get();
-        
+        $children = $workflow->children()
+            ->get();
+
         $children->each(function ($child) {
-                $this->recursivePrune($child);
-            });
+            $this->recursivePrune($child);
+        });
 
         $workflow->parents()
             ->detach();

@@ -2,19 +2,28 @@
 
 declare(strict_types=1);
 
-namespace Workflow\Relations;
+namespace Workflow\Infrastructure\Persistence\MongoDB;
 
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Workflow\Models\WorkflowRelationship;
 
 /**
- * A MongoDB-compatible BelongsToMany relationship that uses an actual pivot collection
- * instead of embedded arrays, allowing us to store and query pivot attributes.
+ * MongoDB BelongsToMany Workaround
+ *
+ * This is an unfortunate necessity due to MongoDB Laravel's limitations with pivot tables.
+ * MongoDB Laravel doesn't properly support pivot collections with custom attributes
+ * (like parent_index, parent_now), so we need this custom implementation.
+ *
+ * This class:
+ * - Uses an actual pivot collection (workflow_relationships) instead of embedded arrays
+ * - Supports wherePivot() and withPivot() for custom pivot attributes
+ * - Works around MongoDB Laravel's lack of join support
+ *
+ * @internal This is an infrastructure concern and should not be used directly.
+ *           Use the RelationshipAdapterInterface instead.
  */
-class MongoDBBelongsToMany extends BelongsToMany
+class MongoDBBelongsToManyRelation extends BelongsToMany
 {
     /**
      * The pivot where clauses that have been set on this relationship.
@@ -34,9 +43,7 @@ class MongoDBBelongsToMany extends BelongsToMany
      * Attach a model to the parent using a pivot collection.
      *
      * @param mixed $id
-     * @param array $attributes
      * @param bool $touch
-     * @return void
      */
     public function attach($id, array $attributes = [], $touch = true)
     {
@@ -52,7 +59,7 @@ class MongoDBBelongsToMany extends BelongsToMany
 
         foreach ($ids as $relatedId) {
             // Always create the relationship record (multiple relationships between same entities are allowed with different pivot data)
-            WorkflowRelationship::create(array_merge([
+            MongoDBWorkflowRelationship::create(array_merge([
                 $this->foreignPivotKey => $this->parent->getKey(),
                 $this->relatedPivotKey => $relatedId,
             ], $attributes));
@@ -80,7 +87,7 @@ class MongoDBBelongsToMany extends BelongsToMany
             $ids = $ids->modelKeys();
         }
 
-        $query = WorkflowRelationship::where($this->foreignPivotKey, $this->parent->getKey());
+        $query = MongoDBWorkflowRelationship::where($this->foreignPivotKey, $this->parent->getKey());
 
         if ($ids !== null) {
             $query->whereIn($this->relatedPivotKey, (array) $ids);
@@ -108,8 +115,6 @@ class MongoDBBelongsToMany extends BelongsToMany
 
     /**
      * Add the constraints for a relationship query.
-     *
-     * @return void
      */
     public function addConstraints()
     {
@@ -134,57 +139,6 @@ class MongoDBBelongsToMany extends BelongsToMany
     }
 
     /**
-     * Set the join clause for the relation query.
-     *
-     * @param \Illuminate\Database\Eloquent\Builder|null $query
-     * @return $this
-     */
-    protected function setJoin($query = null)
-    {
-        // Only apply join constraints once
-        if ($this->joinApplied) {
-            return $this;
-        }
-        
-        $this->joinApplied = true;
-        $query = $query ?: $this->query;
-
-        // Get pivot IDs that match our parent
-        $parentKey = $this->parent->getKey();
-        
-        if ($parentKey === null) {
-            // Parent doesn't have a key yet, return empty result
-            $query->where('_id', '=', '__MONGODB_NO_RESULTS__');
-            return $this;
-        }
-        
-        $pivotQuery = WorkflowRelationship::where($this->foreignPivotKey, $parentKey);
-        
-        // Apply custom pivot where clauses
-        foreach ($this->customPivotWheres as $whereArgs) {
-            [$column, $operator, $value] = array_pad($whereArgs, 3, null);
-            if ($value === null) {
-                $value = $operator;
-                $operator = '=';
-            }
-            $pivotQuery->where($column, $operator, $value);
-        }
-
-        $pivotRecords = $pivotQuery->get();
-        $relatedIds = $pivotRecords->pluck($this->relatedPivotKey)->filter()->values()->all();
-
-        if (empty($relatedIds)) {
-            // No related records, so return empty result using a condition that's always false
-            $query->where('_id', '=', '__MONGODB_NO_RESULTS__');
-        } else {
-            // Use _id for MongoDB - ensure we select all columns
-            $query->whereIn('_id', $relatedIds)->select('*');
-        }
-
-        return $this;
-    }
-
-    /**
      * Execute the query as a "select" statement.
      *
      * @param  array  $columns
@@ -194,46 +148,15 @@ class MongoDBBelongsToMany extends BelongsToMany
     {
         // Apply the join constraints before executing the query
         $this->setJoin();
-        
+
         $models = parent::get($columns);
-        
+
         // Attach pivot data to each model
         if ($models->isNotEmpty()) {
             $this->hydratePivotRelation($models->all());
         }
-        
+
         return $models;
-    }
-    
-    /**
-     * Hydrate the pivot relationship on the models.
-     *
-     * @param  array  $models
-     * @return void
-     */
-    protected function hydratePivotRelation(array $models)
-    {
-        // Get all pivot records for these models
-        $relatedIds = array_map(fn($model) => $model->getKey(), $models);
-        
-        $pivotQuery = WorkflowRelationship::where($this->foreignPivotKey, $this->parent->getKey())
-            ->whereIn($this->relatedPivotKey, $relatedIds);
-        
-        // Apply custom pivot where clauses
-        foreach ($this->customPivotWheres as $whereArgs) {
-            $pivotQuery->where(...$whereArgs);
-        }
-        
-        $pivots = $pivotQuery->get()->keyBy($this->relatedPivotKey);
-        
-        // Attach pivot data to each model
-        foreach ($models as $model) {
-            $pivot = $pivots->get($model->getKey());
-            if ($pivot) {
-                // Set pivot as a relation on the model
-                $model->setRelation('pivot', $pivot);
-            }
-        }
     }
 
     /**
@@ -246,28 +169,27 @@ class MongoDBBelongsToMany extends BelongsToMany
     {
         // Apply the join constraints before executing the query
         $this->setJoin();
-        
+
         $model = parent::first($columns);
-        
+
         // Attach pivot data if model was found
         if ($model) {
             $this->hydratePivotRelation([$model]);
         }
-        
+
         return $model;
     }
 
     /**
      * Execute the query and get the first result.
      *
-     * @param  array  $columns
      * @return \Illuminate\Database\Eloquent\Model|static|null
      */
     public function count()
     {
         // Apply the join constraints before executing the query
         $this->setJoin();
-        
+
         return parent::count();
     }
 
@@ -275,21 +197,19 @@ class MongoDBBelongsToMany extends BelongsToMany
      * Chunk the results of the query.
      *
      * @param  int  $count
-     * @param  callable  $callback
      * @return bool
      */
     public function chunk($count, callable $callback)
     {
         // Apply the join constraints before executing the query
         $this->setJoin();
-        
+
         return parent::chunk($count, $callback);
     }
 
     /**
      * Execute a callback over each item while chunking.
      *
-     * @param  callable  $callback
      * @param  int  $count
      * @return bool
      */
@@ -297,29 +217,8 @@ class MongoDBBelongsToMany extends BelongsToMany
     {
         // Apply the join constraints before executing the query
         $this->setJoin();
-        
+
         return parent::each($callback, $count);
-    }
-
-    /**
-     * Set the where clause for the relation query.
-     *
-     * @return $this
-     */
-    protected function setWhere()
-    {
-        // Already handled in setJoin
-        return $this;
-    }
-
-    /**
-     * Get the pivot columns for the relation.
-     *
-     * @return array
-     */
-    protected function aliasedPivotColumns()
-    {
-        return [];
     }
 
     /**
@@ -360,5 +259,110 @@ class MongoDBBelongsToMany extends BelongsToMany
     public function getQualifiedParentKeyName()
     {
         return $this->parent->getQualifiedKeyName();
+    }
+
+    /**
+     * Set the join clause for the relation query.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder|null $query
+     * @return $this
+     */
+    protected function setJoin($query = null)
+    {
+        // Only apply join constraints once
+        if ($this->joinApplied) {
+            return $this;
+        }
+
+        $this->joinApplied = true;
+        $query = $query ?: $this->query;
+
+        // Get pivot IDs that match our parent
+        $parentKey = $this->parent->getKey();
+
+        if ($parentKey === null) {
+            // Parent doesn't have a key yet, return empty result
+            $query->where('_id', '=', '__MONGODB_NO_RESULTS__');
+            return $this;
+        }
+
+        $pivotQuery = MongoDBWorkflowRelationship::where($this->foreignPivotKey, $parentKey);
+
+        // Apply custom pivot where clauses
+        foreach ($this->customPivotWheres as $whereArgs) {
+            [$column, $operator, $value] = array_pad($whereArgs, 3, null);
+            if ($value === null) {
+                $value = $operator;
+                $operator = '=';
+            }
+            $pivotQuery->where($column, $operator, $value);
+        }
+
+        $pivotRecords = $pivotQuery->get();
+        $relatedIds = $pivotRecords->pluck($this->relatedPivotKey)
+            ->filter()
+            ->values()
+            ->all();
+
+        if (empty($relatedIds)) {
+            // No related records, so return empty result using a condition that's always false
+            $query->where('_id', '=', '__MONGODB_NO_RESULTS__');
+        } else {
+            // Use _id for MongoDB - ensure we select all columns
+            $query->whereIn('_id', $relatedIds)
+                ->select('*');
+        }
+
+        return $this;
+    }
+
+    /**
+     * Hydrate the pivot relationship on the models.
+     */
+    protected function hydratePivotRelation(array $models)
+    {
+        // Get all pivot records for these models
+        $relatedIds = array_map(static fn ($model) => $model->getKey(), $models);
+
+        $pivotQuery = MongoDBWorkflowRelationship::where($this->foreignPivotKey, $this->parent->getKey())
+            ->whereIn($this->relatedPivotKey, $relatedIds);
+
+        // Apply custom pivot where clauses
+        foreach ($this->customPivotWheres as $whereArgs) {
+            $pivotQuery->where(...$whereArgs);
+        }
+
+        $pivots = $pivotQuery->get()
+            ->keyBy($this->relatedPivotKey);
+
+        // Attach pivot data to each model
+        foreach ($models as $model) {
+            $pivot = $pivots->get($model->getKey());
+            if ($pivot) {
+                // Set pivot as a relation on the model
+                $model->setRelation('pivot', $pivot);
+            }
+        }
+    }
+
+    /**
+     * Set the where clause for the relation query.
+     *
+     * @return $this
+     */
+    protected function setWhere()
+    {
+        // Already handled in setJoin
+        return $this;
+    }
+
+    /**
+     * Get the pivot columns for the relation.
+     *
+     * @return array
+     */
+    protected function aliasedPivotColumns()
+    {
+        return [];
     }
 }

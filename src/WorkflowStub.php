@@ -10,6 +10,7 @@ use Illuminate\Support\Traits\Macroable;
 use LimitIterator;
 use ReflectionClass;
 use SplFileObject;
+use Workflow\Domain\Contracts\ExceptionHandlerInterface;
 use Workflow\Events\WorkflowFailed;
 use Workflow\Events\WorkflowStarted;
 use Workflow\Models\StoredWorkflow;
@@ -198,7 +199,8 @@ final class WorkflowStub
         try {
             $this->storedWorkflow->refresh();
         } catch (\Illuminate\Database\Eloquent\RelationNotFoundException $e) {
-            // MongoDB: pivot relation not found during refresh, reload without relations
+            // Pivot relation not found during refresh - reload without relations
+            // This can happen with certain database backends when eager loading
             $this->storedWorkflow = $this->storedWorkflow->fresh();
         }
 
@@ -262,7 +264,7 @@ final class WorkflowStub
                 if ($parentWorkflow === null) {
                     return;
                 }
-                
+
                 try {
                     $parentWorkflow->toWorkflow()
                         ->fail($exception);
@@ -283,16 +285,12 @@ final class WorkflowStub
                     'result' => Serializer::serialize($result),
                 ]);
         } catch (\Throwable $exception) {
-            // Handle duplicate key exceptions from both SQL and MongoDB
-            $isDuplicateKey = $exception instanceof \Illuminate\Database\UniqueConstraintViolationException ||
-                             str_contains(get_class($exception), 'BulkWriteException') ||
-                             str_contains($exception->getMessage(), 'duplicate key') ||
-                             str_contains($exception->getMessage(), 'E11000');
-            
-            if (!$isDuplicateKey) {
+            $exceptionHandler = app(ExceptionHandlerInterface::class);
+
+            if (! $exceptionHandler->isDuplicateKeyException($exception)) {
                 throw $exception;
             }
-            // already logged
+            // Already logged - duplicate key is expected in replay scenarios
         }
 
         $this->dispatch();

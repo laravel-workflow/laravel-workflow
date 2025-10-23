@@ -25,11 +25,8 @@ abstract class TestCase extends BaseTestCase
         }
 
         // Prepare environment variables for workers (filter out non-scalar values)
-        $env = array_filter(
-            array_merge($_SERVER, $_ENV),
-            fn($v) => is_string($v) || is_numeric($v)
-        );
-        
+        $env = array_filter(array_merge($_SERVER, $_ENV), static fn ($v) => is_string($v) || is_numeric($v));
+
         for ($i = 0; $i < self::NUMBER_OF_WORKERS; $i++) {
             self::$workers[$i] = new Process(
                 ['php', __DIR__ . '/../vendor/bin/testbench', 'queue:work'],
@@ -70,8 +67,45 @@ abstract class TestCase extends BaseTestCase
 
             $this->loadLaravelMigrations();
         } else {
-            $this->artisan('db:wipe', ['--database' => 'mongodb']);
+            $this->artisan('db:wipe', [
+                '--database' => 'mongodb',
+            ]);
+
+            // Create unique indexes for MongoDB
+            $this->createMongoDBIndexes();
         }
+    }
+
+    /**
+     * Create required indexes for MongoDB.
+     */
+    protected function createMongoDBIndexes(): void
+    {
+        $db = app('db')->connection('mongodb');
+
+        // workflow_logs: unique index on stored_workflow_id + index
+        $db->getCollection('workflow_logs')->createIndex(
+            ['stored_workflow_id' => 1, 'index' => 1],
+            ['unique' => true]
+        );
+
+        // workflow_signals: unique index on stored_workflow_id + index (partial: only when index exists and is not null)
+        $db->getCollection('workflow_signals')->createIndex(
+            ['stored_workflow_id' => 1, 'index' => 1],
+            ['unique' => true, 'partialFilterExpression' => ['index' => ['$type' => 'number']]]
+        );
+
+        // workflow_timers: unique index on stored_workflow_id + index
+        $db->getCollection('workflow_timers')->createIndex(
+            ['stored_workflow_id' => 1, 'index' => 1],
+            ['unique' => true]
+        );
+
+        // workflow_exceptions: unique index on stored_workflow_id + index
+        $db->getCollection('workflow_exceptions')->createIndex(
+            ['stored_workflow_id' => 1, 'index' => 1],
+            ['unique' => true]
+        );
     }
 
     protected function getPackageProviders($app)

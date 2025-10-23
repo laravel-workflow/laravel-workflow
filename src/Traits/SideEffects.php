@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Workflow\Traits;
 
-use Illuminate\Database\QueryException;
 use React\Promise\PromiseInterface;
 use function React\Promise\resolve;
+use Workflow\Domain\Contracts\ExceptionHandlerInterface;
 use Workflow\Serializers\Serializer;
 
 trait SideEffects
@@ -34,16 +34,12 @@ trait SideEffects
                         'result' => Serializer::serialize($result),
                     ]);
             } catch (\Throwable $exception) {
-                // Handle duplicate key exceptions from both SQL (QueryException) and MongoDB (BulkWriteException)
-                $isDuplicateKey = $exception instanceof QueryException || 
-                                 str_contains(get_class($exception), 'BulkWriteException') ||
-                                 str_contains($exception->getMessage(), 'duplicate key') ||
-                                 str_contains($exception->getMessage(), 'E11000');
-                
-                if (!$isDuplicateKey) {
+                $exceptionHandler = app(ExceptionHandlerInterface::class);
+
+                if (! $exceptionHandler->isDuplicateKeyException($exception)) {
                     throw $exception;
                 }
-                
+
                 $log = self::$context->storedWorkflow->logs()
                     ->whereIndex(self::$context->index)
                     ->first();
