@@ -353,15 +353,20 @@ final class WorkflowStub
 
     private function dispatch(): void
     {
-        if (getenv('GITHUB_ACTIONS') === 'true') {
-            echo "[WorkflowStub::dispatch] Entered dispatch()\n";
-            echo '[WorkflowStub::dispatch] Status: ' . $this->status() . "\n";
-        }
+        file_put_contents('php://stderr', "[WorkflowStub::dispatch] ENTERED\n");
+        echo "[WorkflowStub::dispatch] ENTERED\n";
+        flush();
 
+        file_put_contents('php://stderr', "[WorkflowStub::dispatch] Getting status\n");
+        $status = $this->status();
+        file_put_contents('php://stderr', "[WorkflowStub::dispatch] Status: {$status}\n");
+
+        file_put_contents('php://stderr', "[WorkflowStub::dispatch] Checking if created()\n");
         if ($this->created()) {
-            if (getenv('GITHUB_ACTIONS') === 'true') {
-                echo "[WorkflowStub::dispatch] Dispatching WorkflowStarted event\n";
-            }
+            file_put_contents(
+                'php://stderr',
+                "[WorkflowStub::dispatch] Workflow is created, dispatching WorkflowStarted event\n"
+            );
 
             WorkflowStarted::dispatch(
                 $this->storedWorkflow->id,
@@ -371,35 +376,31 @@ final class WorkflowStub
                     ->format('Y-m-d\TH:i:s.u\Z')
             );
 
-            if (getenv('GITHUB_ACTIONS') === 'true') {
-                echo "[WorkflowStub::dispatch] WorkflowStarted event dispatched\n";
-            }
+            file_put_contents('php://stderr', "[WorkflowStub::dispatch] WorkflowStarted event dispatched\n");
         }
 
-        if (getenv('GITHUB_ACTIONS') === 'true') {
-            echo "[WorkflowStub::dispatch] Transitioning to WorkflowPendingStatus\n";
-        }
+        file_put_contents('php://stderr', "[WorkflowStub::dispatch] Transitioning to WorkflowPendingStatus\n");
 
         $this->storedWorkflow->status->transitionTo(WorkflowPendingStatus::class);
 
-        if (getenv('GITHUB_ACTIONS') === 'true') {
-            echo "[WorkflowStub::dispatch] Status transitioned\n";
-        }
+        file_put_contents('php://stderr', "[WorkflowStub::dispatch] Status transitioned\n");
 
         $dispatch = static::faked() ? 'dispatchSync' : 'dispatch';
 
-        if (getenv('GITHUB_ACTIONS') === 'true') {
-            echo "[WorkflowStub::dispatch] Dispatch method: {$dispatch}\n";
-            echo "[WorkflowStub::dispatch] Dispatching workflow class: {$this->storedWorkflow->class}\n";
-        }
+        file_put_contents('php://stderr', "[WorkflowStub::dispatch] Dispatch method: {$dispatch}\n");
+        file_put_contents(
+            'php://stderr',
+            "[WorkflowStub::dispatch] About to dispatch workflow class: {$this->storedWorkflow->class}\n"
+        );
+        flush();
 
         $this->storedWorkflow->class::$dispatch(
             $this->storedWorkflow,
             ...Serializer::unserialize($this->storedWorkflow->arguments)
         );
 
-        if (getenv('GITHUB_ACTIONS') === 'true') {
-            echo "[WorkflowStub::dispatch] Workflow dispatched, exiting dispatch()\n";
-        }
+        file_put_contents('php://stderr', "[WorkflowStub::dispatch] Workflow class dispatched\n");
+        echo "[WorkflowStub::dispatch] Workflow class dispatched\n";
+        flush();
     }
 }

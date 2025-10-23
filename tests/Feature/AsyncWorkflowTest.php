@@ -52,18 +52,27 @@ final class AsyncWorkflowTest extends TestCase
         echo "[TEST] workflow->start() returned\n";
         flush();
 
-        echo "[TEST] Waiting for workflow to complete\n";
+        file_put_contents('php://stderr', "[TEST] About to enter while loop, checking workflow->running()\n");
+        echo "[TEST] About to enter while loop, checking workflow->running()\n";
         flush();
 
         $iterations = 0;
         while ($workflow->running()) {
             $iterations++;
+            if ($iterations === 1) {
+                file_put_contents('php://stderr', "[TEST] First iteration of while loop\n");
+                echo "[TEST] First iteration of while loop\n";
+                flush();
+            }
             if ($iterations % 10 === 0) {
+                file_put_contents('php://stderr', "[TEST] Still waiting... (iteration {$iterations})\n");
                 echo "[TEST] Still waiting... (iteration {$iterations})\n";
                 flush();
             }
             usleep(100000); // 0.1 second
         }
+
+        file_put_contents('php://stderr', "[TEST] Exited while loop\n");
 
         echo "[TEST] Workflow completed after {$iterations} iterations\n";
         flush();
