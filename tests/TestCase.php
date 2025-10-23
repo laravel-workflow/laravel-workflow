@@ -29,7 +29,14 @@ abstract class TestCase extends BaseTestCase
 
         for ($i = 0; $i < self::NUMBER_OF_WORKERS; $i++) {
             self::$workers[$i] = new Process(
-                ['php', __DIR__ . '/../vendor/bin/testbench', 'queue:work', '--tries=3', '--timeout=60', '--max-time=300'],
+                [
+                    'php',
+                    __DIR__ . '/../vendor/bin/testbench',
+                    'queue:work',
+                    '--tries=3',
+                    '--timeout=60',
+                    '--max-time=300',
+                ],
                 null,
                 $env,
                 null,
@@ -42,8 +49,8 @@ abstract class TestCase extends BaseTestCase
                 usleep(500000); // 0.5 second delay
                 if (! self::$workers[$i]->isRunning()) {
                     echo "Warning: Worker {$i} failed to start or exited immediately\n";
-                    echo "Output: " . self::$workers[$i]->getOutput() . "\n";
-                    echo "Error: " . self::$workers[$i]->getErrorOutput() . "\n";
+                    echo 'Output: ' . self::$workers[$i]->getOutput() . "\n";
+                    echo 'Error: ' . self::$workers[$i]->getErrorOutput() . "\n";
                 }
             }
         }
