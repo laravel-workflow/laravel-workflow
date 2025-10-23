@@ -32,12 +32,14 @@ final class AsyncWorkflowTest extends TestCase
         echo "\n\n[TEST] ==================== TEST METHOD STARTED ====================\n";
         flush();
 
-        echo "[TEST] Creating workflow stub\n";
+        file_put_contents('php://stderr', "[TEST] About to call WorkflowStub::make\n");
+        echo "[TEST] About to call WorkflowStub::make\n";
         flush();
 
         $workflow = WorkflowStub::make(TestAsyncWorkflow::class);
 
-        echo "[TEST] Workflow stub created\n";
+        file_put_contents('php://stderr', "[TEST] WorkflowStub::make returned\n");
+        echo "[TEST] WorkflowStub::make returned\n";
         flush();
 
         echo "[TEST] Starting workflow\n";

@@ -106,18 +106,29 @@ final class WorkflowStub
 
     public static function make($class): static
     {
-        if (getenv('GITHUB_ACTIONS') === 'true') {
-            echo "[WorkflowStub::make] Creating workflow for class: {$class}\n";
-        }
+        file_put_contents('php://stderr', "[WorkflowStub::make] ENTERED for class: {$class}\n");
+        echo "[WorkflowStub::make] ENTERED for class: {$class}\n";
+        flush();
 
-        $storedWorkflow = config('workflows.stored_workflow_model', StoredWorkflow::class)::create([
+        file_put_contents('php://stderr', "[WorkflowStub::make] Getting config for stored_workflow_model\n");
+        $modelClass = config('workflows.stored_workflow_model', StoredWorkflow::class);
+        file_put_contents('php://stderr', "[WorkflowStub::make] Model class: {$modelClass}\n");
+
+        file_put_contents('php://stderr', "[WorkflowStub::make] About to call {$modelClass}::create()\n");
+        flush();
+
+        $storedWorkflow = $modelClass::create([
             'class' => $class,
         ]);
 
-        if (getenv('GITHUB_ACTIONS') === 'true') {
-            echo "[WorkflowStub::make] Created stored workflow with ID: {$storedWorkflow->id}\n";
-        }
+        file_put_contents(
+            'php://stderr',
+            "[WorkflowStub::make] Created stored workflow with ID: {$storedWorkflow->id}\n"
+        );
+        echo "[WorkflowStub::make] Created stored workflow with ID: {$storedWorkflow->id}\n";
+        flush();
 
+        file_put_contents('php://stderr', "[WorkflowStub::make] About to return new self\n");
         return new self($storedWorkflow);
     }
 
