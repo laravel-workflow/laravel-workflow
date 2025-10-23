@@ -346,6 +346,24 @@ abstract class TestCase extends BaseTestCase
 
     protected function defineEnvironment($app)
     {
+        // Configure queue connection - must come first before database config
+        $app['config']->set('queue.default', env('QUEUE_CONNECTION', 'redis'));
+        $app['config']->set('queue.connections.redis', [
+            'driver' => 'redis',
+            'connection' => 'default',
+            'queue' => env('REDIS_QUEUE', 'default'),
+            'retry_after' => 90,
+            'block_for' => null,
+        ]);
+
+        // Configure Redis connection
+        $app['config']->set('database.redis.default', [
+            'host' => env('REDIS_HOST', '127.0.0.1'),
+            'password' => env('REDIS_PASSWORD', null),
+            'port' => env('REDIS_PORT', 6379),
+            'database' => 0,
+        ]);
+
         if (env('DB_CONNECTION') === 'mongodb') {
             $app['config']->set('workflows.base_model', 'MongoDB\\Laravel\\Eloquent\\Model');
 
