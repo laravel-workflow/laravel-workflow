@@ -396,7 +396,20 @@ final class WorkflowStub
             'php://stderr',
             "[WorkflowStub::dispatch] About to dispatch workflow class: {$this->storedWorkflow->class}\n"
         );
+        file_put_contents('php://stderr', "[WorkflowStub::dispatch] Using dispatch method: {$dispatch}\n");
         flush();
+
+        // Log queue manager state before dispatch
+        $queueManager = app('queue');
+        $connection = $queueManager->connection();
+        file_put_contents(
+            'php://stderr',
+            '[WorkflowStub::dispatch] Queue manager connection class: ' . get_class($connection) . "\n"
+        );
+        file_put_contents(
+            'php://stderr',
+            '[WorkflowStub::dispatch] Queue connection name: ' . $connection->getConnectionName() . "\n"
+        );
 
         $this->storedWorkflow->class::$dispatch(
             $this->storedWorkflow,
@@ -405,6 +418,22 @@ final class WorkflowStub
 
         file_put_contents('php://stderr', "[WorkflowStub::dispatch] Workflow class dispatched\n");
 
+        // Check if there are pending transactions
+        try {
+            $dbConnection = app('db')
+                ->connection();
+            $transactionLevel = $dbConnection->transactionLevel();
+            file_put_contents(
+                'php://stderr',
+                "[WorkflowStub::dispatch] Database transaction level: {$transactionLevel}\n"
+            );
+        } catch (\Exception $e) {
+            file_put_contents(
+                'php://stderr',
+                '[WorkflowStub::dispatch] Could not check transaction level: ' . $e->getMessage() . "\n"
+            );
+        }
+
         // Check Redis queue to verify job was queued
         try {
             $redis = new \Redis();
@@ -412,12 +441,21 @@ final class WorkflowStub
                 config('database.redis.default.host', '127.0.0.1'),
                 (int) config('database.redis.default.port', 6379)
             );
-            $queueName = 'queues:default';
-            $queueSize = $redis->lLen($queueName);
+            // Check multiple possible queue key patterns
+            $patterns = ['queues:default', 'laravel_database_queues:default', 'laravel:queues:default'];
+
+            foreach ($patterns as $pattern) {
+                $size = $redis->lLen($pattern);
+                file_put_contents('php://stderr', "[WorkflowStub::dispatch] Redis queue '{$pattern}' size: {$size}\n");
+            }
+
+            // List all keys to see what's actually in Redis
+            $allKeys = $redis->keys('*');
             file_put_contents(
                 'php://stderr',
-                "[WorkflowStub::dispatch] Redis queue '{$queueName}' size: {$queueSize}\n"
+                '[WorkflowStub::dispatch] All Redis keys: ' . implode(', ', $allKeys) . "\n"
             );
+
             $redis->close();
         } catch (\Exception $e) {
             file_put_contents(

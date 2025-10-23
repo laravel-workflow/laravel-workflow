@@ -66,14 +66,26 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
         $this->arguments = $arguments;
 
         if (property_exists($this, 'connection')) {
+            file_put_contents('php://stderr', "[Workflow::__construct] Setting connection: {$this->connection}\n");
             $this->onConnection($this->connection);
+        } else {
+            file_put_contents('php://stderr', "[Workflow::__construct] No connection property found\n");
         }
 
         if (property_exists($this, 'queue')) {
+            file_put_contents('php://stderr', "[Workflow::__construct] Setting queue: {$this->queue}\n");
             $this->onQueue($this->queue);
+        } else {
+            file_put_contents('php://stderr', "[Workflow::__construct] No queue property found\n");
         }
 
         $this->afterCommit = true;
+        file_put_contents('php://stderr', "[Workflow::__construct] afterCommit set to true\n");
+        file_put_contents(
+            'php://stderr',
+            '[Workflow::__construct] Current connection: ' . ($this->connection ?? 'NULL') . "\n"
+        );
+        file_put_contents('php://stderr', '[Workflow::__construct] Current queue: ' . ($this->queue ?? 'NULL') . "\n");
 
         file_put_contents('php://stderr', "[Workflow::__construct] FINISHED\n");
     }
