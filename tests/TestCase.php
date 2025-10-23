@@ -16,7 +16,9 @@ abstract class TestCase extends BaseTestCase
 
     public static function setUpBeforeClass(): void
     {
+        file_put_contents('php://stderr', "[DEBUG] setUpBeforeClass started\n");
         echo "[DEBUG] setUpBeforeClass started\n";
+        flush();
 
         if (getenv('GITHUB_ACTIONS') !== 'true') {
             if (TestSuiteSubscriber::getCurrentSuite() === 'feature') {
@@ -26,12 +28,17 @@ abstract class TestCase extends BaseTestCase
             }
         }
 
+        file_put_contents('php://stderr', "[DEBUG] Starting queue workers\n");
         echo "[DEBUG] Starting queue workers\n";
+        flush();
 
         // Prepare environment variables for workers (filter out non-scalar values)
         $env = array_filter(array_merge($_SERVER, $_ENV), static fn ($v) => is_string($v) || is_numeric($v));
 
+        file_put_contents('php://stderr', '[DEBUG] About to start ' . self::NUMBER_OF_WORKERS . " workers\n");
+
         for ($i = 0; $i < self::NUMBER_OF_WORKERS; $i++) {
+            file_put_contents('php://stderr', "[DEBUG] Starting worker {$i}\n");
             echo "[DEBUG] Starting worker {$i}\n";
             flush();
             self::$workers[$i] = new Process(
@@ -52,10 +59,12 @@ abstract class TestCase extends BaseTestCase
 
             // Redirect worker output to stdout for debugging
             self::$workers[$i]->start(static function ($type, $buffer) use ($i) {
+                file_put_contents('php://stderr', "[WORKER-{$i}] {$buffer}");
                 echo "[WORKER-{$i}] {$buffer}";
                 flush();
             });
 
+            file_put_contents('php://stderr', "[DEBUG] Worker {$i} started\n");
             echo "[DEBUG] Worker {$i} started\n";
             flush();
 
@@ -63,16 +72,21 @@ abstract class TestCase extends BaseTestCase
             if (getenv('GITHUB_ACTIONS') === 'true') {
                 usleep(500000); // 0.5 second delay
                 if (! self::$workers[$i]->isRunning()) {
-                    echo "Warning: Worker {$i} failed to start or exited immediately\n";
-                    echo 'Output: ' . self::$workers[$i]->getOutput() . "\n";
-                    echo 'Error: ' . self::$workers[$i]->getErrorOutput() . "\n";
+                    $msg = "Warning: Worker {$i} failed to start or exited immediately\n";
+                    $msg .= 'Output: ' . self::$workers[$i]->getOutput() . "\n";
+                    $msg .= 'Error: ' . self::$workers[$i]->getErrorOutput() . "\n";
+                    file_put_contents('php://stderr', $msg);
+                    echo $msg;
                 } else {
+                    file_put_contents('php://stderr', "[DEBUG] Worker {$i} is running\n");
                     echo "[DEBUG] Worker {$i} is running\n";
                 }
             }
         }
 
+        file_put_contents('php://stderr', "[DEBUG] setUpBeforeClass finished\n");
         echo "[DEBUG] setUpBeforeClass finished\n";
+        flush();
     }
 
     public static function tearDownAfterClass(): void
@@ -84,6 +98,7 @@ abstract class TestCase extends BaseTestCase
 
     protected function setUp(): void
     {
+        file_put_contents('php://stderr', "[DEBUG] TestCase::setUp() ENTERED\n");
         echo "[DEBUG] TestCase::setUp() ENTERED\n";
         flush();
 
@@ -95,17 +110,20 @@ abstract class TestCase extends BaseTestCase
             }
         }
 
+        file_put_contents('php://stderr', "[DEBUG] TestCase::setUp() calling parent::setUp()\n");
         echo "[DEBUG] TestCase::setUp() calling parent::setUp()\n";
         flush();
 
         parent::setUp();
 
+        file_put_contents('php://stderr', "[DEBUG] TestCase::setUp() FINISHED\n");
         echo "[DEBUG] TestCase::setUp() FINISHED\n";
         flush();
     }
 
     protected function defineDatabaseMigrations()
     {
+        file_put_contents('php://stderr', "[DEBUG] defineDatabaseMigrations() ENTERED\n");
         echo "[DEBUG] defineDatabaseMigrations() ENTERED\n";
         flush();
 
@@ -120,9 +138,11 @@ abstract class TestCase extends BaseTestCase
 
             $this->loadLaravelMigrations();
         } else {
+            file_put_contents('php://stderr', "[DEBUG] Using MongoDB connection\n");
             echo "[DEBUG] Using MongoDB connection\n";
             flush();
 
+            file_put_contents('php://stderr', "[DEBUG] Running db:wipe for MongoDB...\n");
             echo "[DEBUG] Running db:wipe for MongoDB...\n";
             flush();
 
@@ -130,19 +150,23 @@ abstract class TestCase extends BaseTestCase
                 '--database' => 'mongodb',
             ]);
 
+            file_put_contents('php://stderr', "[DEBUG] db:wipe completed\n");
             echo "[DEBUG] db:wipe completed\n";
             flush();
 
+            file_put_contents('php://stderr', "[DEBUG] Creating MongoDB indexes...\n");
             echo "[DEBUG] Creating MongoDB indexes...\n";
             flush();
 
             // Create unique indexes for MongoDB
             $this->createMongoDBIndexes();
 
+            file_put_contents('php://stderr', "[DEBUG] MongoDB indexes created\n");
             echo "[DEBUG] MongoDB indexes created\n";
             flush();
         }
 
+        file_put_contents('php://stderr', "[DEBUG] defineDatabaseMigrations() FINISHED\n");
         echo "[DEBUG] defineDatabaseMigrations() FINISHED\n";
         flush();
     }

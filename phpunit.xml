@@ -10,6 +10,8 @@
   </testsuites>
   <php>
     <ini name="memory_limit" value="-1"/>
+    <ini name="output_buffering" value="0"/>
+    <ini name="implicit_flush" value="1"/>
   </php>
   <source>
     <include>

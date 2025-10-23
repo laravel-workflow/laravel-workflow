@@ -12,8 +12,23 @@ use Workflow\WorkflowStub;
 
 final class AsyncWorkflowTest extends TestCase
 {
+    public function __construct()
+    {
+        file_put_contents('php://stderr', "[TEST-CONSTRUCT] AsyncWorkflowTest::__construct() called\n");
+        parent::__construct(...func_get_args());
+        file_put_contents('php://stderr', "[TEST-CONSTRUCT] AsyncWorkflowTest::__construct() finished\n");
+    }
+
+    protected function setUp(): void
+    {
+        file_put_contents('php://stderr', "[TEST-SETUP] AsyncWorkflowTest::setUp() ENTERED\n");
+        parent::setUp();
+        file_put_contents('php://stderr', "[TEST-SETUP] AsyncWorkflowTest::setUp() FINISHED\n");
+    }
+
     public function testAsyncWorkflow(): void
     {
+        file_put_contents('php://stderr', "\n\n[TEST] ==================== TEST METHOD STARTED ====================\n");
         echo "\n\n[TEST] ==================== TEST METHOD STARTED ====================\n";
         flush();
 
