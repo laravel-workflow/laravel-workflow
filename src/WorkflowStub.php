@@ -410,7 +410,7 @@ final class WorkflowStub
             $redis = new \Redis();
             $redis->connect(
                 config('database.redis.default.host', '127.0.0.1'),
-                config('database.redis.default.port', 6379)
+                (int) config('database.redis.default.port', 6379)
             );
             $queueName = 'queues:default';
             $queueSize = $redis->lLen($queueName);
