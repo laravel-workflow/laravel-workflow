@@ -107,18 +107,39 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
 
     public function handle(): void
     {
+        if (getenv('GITHUB_ACTIONS') === 'true') {
+            echo "[Workflow::handle] Starting handle() for workflow ID: {$this->storedWorkflow->id}, Class: " . static::class
+
+             . "\n";
+        }
+
         if (! method_exists($this, 'execute')) {
             throw new BadMethodCallException('Execute method not implemented.');
         }
 
         $this->container = App::make(Container::class);
 
+        if (getenv('GITHUB_ACTIONS') === 'true') {
+            echo "[Workflow::handle] Transitioning to WorkflowRunningStatus\n";
+        }
+
         try {
             if (! $this->replaying) {
                 $this->storedWorkflow->status->transitionTo(WorkflowRunningStatus::class);
             }
+
+            if (getenv('GITHUB_ACTIONS') === 'true') {
+                echo "[Workflow::handle] Transitioned to WorkflowRunningStatus successfully\n";
+            }
         } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
+            if (getenv('GITHUB_ACTIONS') === 'true') {
+                echo "[Workflow::handle] TransitionNotFound exception caught\n";
+            }
+
             if ($this->storedWorkflow->toWorkflow()->running()) {
+                if (getenv('GITHUB_ACTIONS') === 'true') {
+                    echo "[Workflow::handle] Workflow already running, releasing back to queue\n";
+                }
                 $this->release();
             }
             return;

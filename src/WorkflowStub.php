@@ -106,9 +106,17 @@ final class WorkflowStub
 
     public static function make($class): static
     {
+        if (getenv('GITHUB_ACTIONS') === 'true') {
+            echo "[WorkflowStub::make] Creating workflow for class: {$class}\n";
+        }
+
         $storedWorkflow = config('workflows.stored_workflow_model', StoredWorkflow::class)::create([
             'class' => $class,
         ]);
+
+        if (getenv('GITHUB_ACTIONS') === 'true') {
+            echo "[WorkflowStub::make] Created stored workflow with ID: {$storedWorkflow->id}\n";
+        }
 
         return new self($storedWorkflow);
     }
@@ -185,7 +193,18 @@ final class WorkflowStub
 
     public function running(): bool
     {
-        return ! in_array($this->status(), [WorkflowCompletedStatus::class, WorkflowFailedStatus::class], true);
+        $status = $this->status();
+        $isRunning = ! in_array($status, [WorkflowCompletedStatus::class, WorkflowFailedStatus::class], true);
+
+        if (getenv('GITHUB_ACTIONS') === 'true') {
+            static $logCount = 0;
+            if ($logCount % 50 === 0) {
+                echo "[WorkflowStub::running] Check #{$logCount} - Status: {$status}, Running: " . ($isRunning ? 'true' : 'false') . "\n";
+            }
+            $logCount++;
+        }
+
+        return $isRunning;
     }
 
     public function status(): string|bool
@@ -215,9 +234,21 @@ final class WorkflowStub
 
     public function start(...$arguments): void
     {
+        if (getenv('GITHUB_ACTIONS') === 'true') {
+            echo "[WorkflowStub::start] Starting workflow ID: {$this->storedWorkflow->id}\n";
+        }
+
         $this->storedWorkflow->arguments = Serializer::serialize($arguments);
 
+        if (getenv('GITHUB_ACTIONS') === 'true') {
+            echo "[WorkflowStub::start] Calling dispatch()\n";
+        }
+
         $this->dispatch();
+
+        if (getenv('GITHUB_ACTIONS') === 'true') {
+            echo "[WorkflowStub::start] Dispatch completed\n";
+        }
     }
 
     public function startAsChild(StoredWorkflow $parentWorkflow, int $index, $now, ...$arguments): void
@@ -306,7 +337,16 @@ final class WorkflowStub
 
     private function dispatch(): void
     {
+        if (getenv('GITHUB_ACTIONS') === 'true') {
+            echo "[WorkflowStub::dispatch] Entered dispatch()\n";
+            echo '[WorkflowStub::dispatch] Status: ' . $this->status() . "\n";
+        }
+
         if ($this->created()) {
+            if (getenv('GITHUB_ACTIONS') === 'true') {
+                echo "[WorkflowStub::dispatch] Dispatching WorkflowStarted event\n";
+            }
+
             WorkflowStarted::dispatch(
                 $this->storedWorkflow->id,
                 $this->storedWorkflow->class,
@@ -314,15 +354,36 @@ final class WorkflowStub
                 now()
                     ->format('Y-m-d\TH:i:s.u\Z')
             );
+
+            if (getenv('GITHUB_ACTIONS') === 'true') {
+                echo "[WorkflowStub::dispatch] WorkflowStarted event dispatched\n";
+            }
+        }
+
+        if (getenv('GITHUB_ACTIONS') === 'true') {
+            echo "[WorkflowStub::dispatch] Transitioning to WorkflowPendingStatus\n";
         }
 
         $this->storedWorkflow->status->transitionTo(WorkflowPendingStatus::class);
 
+        if (getenv('GITHUB_ACTIONS') === 'true') {
+            echo "[WorkflowStub::dispatch] Status transitioned\n";
+        }
+
         $dispatch = static::faked() ? 'dispatchSync' : 'dispatch';
+
+        if (getenv('GITHUB_ACTIONS') === 'true') {
+            echo "[WorkflowStub::dispatch] Dispatch method: {$dispatch}\n";
+            echo "[WorkflowStub::dispatch] Dispatching workflow class: {$this->storedWorkflow->class}\n";
+        }
 
         $this->storedWorkflow->class::$dispatch(
             $this->storedWorkflow,
             ...Serializer::unserialize($this->storedWorkflow->arguments)
         );
+
+        if (getenv('GITHUB_ACTIONS') === 'true') {
+            echo "[WorkflowStub::dispatch] Workflow dispatched, exiting dispatch()\n";
+        }
     }
 }
