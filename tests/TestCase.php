@@ -144,6 +144,21 @@ abstract class TestCase extends BaseTestCase
     {
         if (env('DB_CONNECTION') === 'mongodb') {
             $app['config']->set('workflows.base_model', 'MongoDB\\Laravel\\Eloquent\\Model');
+            
+            // Configure MongoDB database connection
+            $app['config']->set('database.connections.mongodb', [
+                'driver' => 'mongodb',
+                'host' => env('DB_HOST', '127.0.0.1'),
+                'port' => env('DB_PORT', 27017),
+                'database' => env('DB_DATABASE', 'testbench'),
+                'username' => env('DB_USERNAME', ''),
+                'password' => env('DB_PASSWORD', ''),
+                'options' => [
+                    'database' => env('DB_AUTHENTICATION_DATABASE', 'admin'),
+                ],
+            ]);
+            
+            $app['config']->set('database.default', 'mongodb');
         }
     }
 }
