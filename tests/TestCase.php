@@ -17,7 +17,7 @@ abstract class TestCase extends BaseTestCase
     public static function setUpBeforeClass(): void
     {
         echo "[DEBUG] setUpBeforeClass started\n";
-        
+
         if (getenv('GITHUB_ACTIONS') !== 'true') {
             if (TestSuiteSubscriber::getCurrentSuite() === 'feature') {
                 Dotenv::createImmutable(__DIR__, '.env.feature')->safeLoad();
@@ -27,7 +27,7 @@ abstract class TestCase extends BaseTestCase
         }
 
         echo "[DEBUG] Starting queue workers\n";
-        
+
         // Prepare environment variables for workers (filter out non-scalar values)
         $env = array_filter(array_merge($_SERVER, $_ENV), static fn ($v) => is_string($v) || is_numeric($v));
 
@@ -62,7 +62,7 @@ abstract class TestCase extends BaseTestCase
                 }
             }
         }
-        
+
         echo "[DEBUG] setUpBeforeClass finished\n";
     }
 
