@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Workflow\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Prunable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Spatie\ModelStates\HasStates;
@@ -12,9 +13,6 @@ use Workflow\States\WorkflowContinuedStatus;
 use Workflow\States\WorkflowStatus;
 use Workflow\WorkflowStub;
 
-/**
- * @extends Illuminate\Database\Eloquent\Model
- */
 class StoredWorkflow extends Model
 {
     use HasStates;
