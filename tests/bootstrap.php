@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use PHPUnit\Event\Facade;
-use Tests\TestSuiteSubscriber;
-
-$subscriber = new TestSuiteSubscriber();
-Facade::instance()->registerSubscribers($subscriber);
+if (getenv('GITHUB_ACTIONS') !== 'true') {
+    $subscriber = new Tests\TestSuiteSubscriber();
+    PHPUnit\Event\Facade::instance()->registerSubscribers($subscriber);
+}
