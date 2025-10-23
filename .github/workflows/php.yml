@@ -112,8 +112,19 @@ jobs:
     #     REDIS_PASSWORD:
     #     REDIS_PORT: 6379
 
+    - name: Check MongoDB connection
+      run: |
+        timeout 10 bash -c 'until nc -z 127.0.0.1 27017; do sleep 1; done' || (echo "MongoDB not reachable" && exit 1)
+        echo "MongoDB is up and running"
+
+    - name: Test MongoDB connectivity
+      run: |
+        composer require --dev mongodb/mongodb --with-all-dependencies || true
+        php -r "try { \$client = new MongoDB\Client('mongodb://root:password@127.0.0.1:27017/?authSource=admin'); var_dump(\$client->listDatabases()); echo 'MongoDB connection successful\n'; } catch (Exception \$e) { echo 'MongoDB connection failed: ' . \$e->getMessage() . '\n'; exit(1); }"
+
     - name: Run test suite (MongoDB)
-      run: vendor/bin/phpunit --testdox --testsuite feature
+      timeout-minutes: 10
+      run: vendor/bin/phpunit --testdox --testsuite feature --verbose --debug --stop-on-error --stop-on-failure
       env:
         APP_KEY: base64:i3g6f+dV8FfsIkcxqd7gbiPn2oXk5r00sTmdD6V5utI=
         DB_CONNECTION: mongodb
