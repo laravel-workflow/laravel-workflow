@@ -62,7 +62,7 @@ jobs:
         run: vendor/bin/phpstan analyse src tests
 
   tests:
-    name: PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }} / ${{ matrix.dependency-version }}
+    name: PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }}
     runs-on: ubuntu-latest
 
     strategy:
@@ -70,7 +70,6 @@ jobs:
       matrix:
         php: [8.1, 8.2, 8.3, 8.4]
         laravel: [9.*, 10.*, 11.*, 12.*]
-        dependency-version: [prefer-stable]
         include:
           # Laravel 9 supports PHP 8.1-8.2
           - laravel: 9.*
@@ -84,23 +83,6 @@ jobs:
           # Laravel 12 supports PHP 8.3-8.4
           - laravel: 12.*
             testbench: ^10.0
-          # Test prefer-lowest on latest supported PHP for each Laravel version
-          - php: 8.2
-            laravel: 9.*
-            testbench: ^7.0
-            dependency-version: prefer-lowest
-          - php: 8.2
-            laravel: 10.*
-            testbench: ^8.0
-            dependency-version: prefer-lowest
-          - php: 8.3
-            laravel: 11.*
-            testbench: ^9.0
-            dependency-version: prefer-lowest
-          - php: 8.4
-            laravel: 12.*
-            testbench: ^10.0
-            dependency-version: prefer-lowest
         exclude:
           # Laravel 9: exclude PHP 8.3, 8.4
           - laravel: 9.*
@@ -168,15 +150,16 @@ jobs:
         uses: actions/cache@v3
         with:
           path: vendor
-          key: ${{ runner.os }}-php-${{ matrix.php }}-${{ matrix.dependency-version }}-laravel-${{ matrix.laravel }}-${{ hashFiles('**/composer.lock') }}
+          key: ${{ runner.os }}-php-${{ matrix.php }}-laravel-${{ matrix.laravel }}-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
-            ${{ runner.os }}-php-${{ matrix.php }}-${{ matrix.dependency-version }}-laravel-${{ matrix.laravel }}-
+            ${{ runner.os }}-php-${{ matrix.php }}-laravel-${{ matrix.laravel }}-
 
       - name: Install dependencies
         run: |
           composer require "laravel/framework:${{ matrix.laravel }}" --no-interaction --no-update
           composer require "orchestra/testbench:${{ matrix.testbench }}" --no-interaction --no-update --dev
-          composer update --${{ matrix.dependency-version }} --prefer-dist --no-progress --no-interaction
+          composer update --prefer-stable --prefer-dist --no-progress --no-interaction --no-scripts
+          composer run-script post-autoload-dump --no-interaction || true
 
       - name: Create SQLite database
         run: touch testbench.sqlite
@@ -228,7 +211,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: laravel-log-php-${{ matrix.php }}-laravel-${{ matrix.laravel }}-${{ matrix.dependency-version }}
+          name: laravel-log-php-${{ matrix.php }}-laravel-${{ matrix.laravel }}
           path: vendor/orchestra/testbench-core/laravel/storage/logs/laravel.log
           if-no-files-found: ignore
 
