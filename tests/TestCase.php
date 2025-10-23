@@ -178,6 +178,31 @@ abstract class TestCase extends BaseTestCase
             echo "[DEBUG] db:wipe completed\n";
             flush();
 
+            file_put_contents('php://stderr', "[DEBUG] Flushing Redis queue...\n");
+            echo "[DEBUG] Flushing Redis queue...\n";
+            flush();
+
+            // Flush Redis to clear any pending jobs
+            $this->artisan('queue:flush');
+
+            file_put_contents('php://stderr', "[DEBUG] Redis queue flushed\n");
+            echo "[DEBUG] Redis queue flushed\n";
+            flush();
+
+            file_put_contents('php://stderr', "[DEBUG] Clearing Laravel logs...\n");
+            echo "[DEBUG] Clearing Laravel logs...\n";
+            flush();
+
+            // Clear Laravel logs
+            $logPath = dirname(__DIR__) . '/vendor/orchestra/testbench-core/laravel/storage/logs/laravel.log';
+            if (file_exists($logPath)) {
+                file_put_contents($logPath, '');
+            }
+
+            file_put_contents('php://stderr', "[DEBUG] Laravel logs cleared\n");
+            echo "[DEBUG] Laravel logs cleared\n";
+            flush();
+
             file_put_contents('php://stderr', "[DEBUG] Creating MongoDB indexes...\n");
             echo "[DEBUG] Creating MongoDB indexes...\n";
             flush();
