@@ -70,7 +70,7 @@ jobs:
       matrix:
         php: [8.1, 8.2, 8.3, 8.4]
         laravel: [9.*, 10.*, 11.*, 12.*]
-        dependency-version: [prefer-lowest, prefer-stable]
+        dependency-version: [prefer-stable]
         include:
           # Laravel 9 supports PHP 8.1-8.2
           - laravel: 9.*
@@ -84,6 +84,23 @@ jobs:
           # Laravel 12 supports PHP 8.3-8.4
           - laravel: 12.*
             testbench: ^10.0
+          # Test prefer-lowest on latest supported PHP for each Laravel version
+          - php: 8.2
+            laravel: 9.*
+            testbench: ^7.0
+            dependency-version: prefer-lowest
+          - php: 8.2
+            laravel: 10.*
+            testbench: ^8.0
+            dependency-version: prefer-lowest
+          - php: 8.3
+            laravel: 11.*
+            testbench: ^9.0
+            dependency-version: prefer-lowest
+          - php: 8.4
+            laravel: 12.*
+            testbench: ^10.0
+            dependency-version: prefer-lowest
         exclude:
           # Laravel 9: exclude PHP 8.3, 8.4
           - laravel: 9.*
