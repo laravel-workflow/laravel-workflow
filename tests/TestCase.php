@@ -33,6 +33,7 @@ abstract class TestCase extends BaseTestCase
 
         for ($i = 0; $i < self::NUMBER_OF_WORKERS; $i++) {
             echo "[DEBUG] Starting worker {$i}\n";
+            flush();
             self::$workers[$i] = new Process(
                 [
                     'php',
@@ -41,14 +42,22 @@ abstract class TestCase extends BaseTestCase
                     '--tries=3',
                     '--timeout=60',
                     '--max-time=300',
+                    '-vvv',
                 ],
                 null,
                 $env,
                 null,
                 300 // Timeout after 5 minutes
             );
-            self::$workers[$i]->start();
+
+            // Redirect worker output to stdout for debugging
+            self::$workers[$i]->start(static function ($type, $buffer) use ($i) {
+                echo "[WORKER-{$i}] {$buffer}";
+                flush();
+            });
+
             echo "[DEBUG] Worker {$i} started\n";
+            flush();
 
             // In GitHub Actions, add a small delay and check if worker started
             if (getenv('GITHUB_ACTIONS') === 'true') {
@@ -75,6 +84,9 @@ abstract class TestCase extends BaseTestCase
 
     protected function setUp(): void
     {
+        echo "[DEBUG] TestCase::setUp() ENTERED\n";
+        flush();
+
         if (getenv('GITHUB_ACTIONS') !== 'true') {
             if (TestSuiteSubscriber::getCurrentSuite() === 'feature') {
                 Dotenv::createImmutable(__DIR__, '.env.feature')->safeLoad();
@@ -83,24 +95,24 @@ abstract class TestCase extends BaseTestCase
             }
         }
 
-        if (getenv('GITHUB_ACTIONS') === 'true') {
-            echo "Starting setUp...\n";
-        }
+        echo "[DEBUG] TestCase::setUp() calling parent::setUp()\n";
+        flush();
 
         parent::setUp();
 
-        if (getenv('GITHUB_ACTIONS') === 'true') {
-            echo "Finished setUp\n";
-        }
+        echo "[DEBUG] TestCase::setUp() FINISHED\n";
+        flush();
     }
 
     protected function defineDatabaseMigrations()
     {
-        if (getenv('GITHUB_ACTIONS') === 'true') {
-            echo "Starting defineDatabaseMigrations...\n";
-        }
+        echo "[DEBUG] defineDatabaseMigrations() ENTERED\n";
+        flush();
 
         if (env('DB_CONNECTION') !== 'mongodb') {
+            echo "[DEBUG] Using non-MongoDB connection\n";
+            flush();
+
             $this->artisan('migrate:fresh', [
                 '--path' => dirname(__DIR__) . '/src/migrations',
                 '--realpath' => true,
@@ -108,29 +120,31 @@ abstract class TestCase extends BaseTestCase
 
             $this->loadLaravelMigrations();
         } else {
-            if (getenv('GITHUB_ACTIONS') === 'true') {
-                echo "Running db:wipe for MongoDB...\n";
-            }
+            echo "[DEBUG] Using MongoDB connection\n";
+            flush();
+
+            echo "[DEBUG] Running db:wipe for MongoDB...\n";
+            flush();
 
             $this->artisan('db:wipe', [
                 '--database' => 'mongodb',
             ]);
 
-            if (getenv('GITHUB_ACTIONS') === 'true') {
-                echo "Creating MongoDB indexes...\n";
-            }
+            echo "[DEBUG] db:wipe completed\n";
+            flush();
+
+            echo "[DEBUG] Creating MongoDB indexes...\n";
+            flush();
 
             // Create unique indexes for MongoDB
             $this->createMongoDBIndexes();
 
-            if (getenv('GITHUB_ACTIONS') === 'true') {
-                echo "Finished creating MongoDB indexes\n";
-            }
+            echo "[DEBUG] MongoDB indexes created\n";
+            flush();
         }
 
-        if (getenv('GITHUB_ACTIONS') === 'true') {
-            echo "Finished defineDatabaseMigrations\n";
-        }
+        echo "[DEBUG] defineDatabaseMigrations() FINISHED\n";
+        flush();
     }
 
     /**
@@ -138,10 +152,22 @@ abstract class TestCase extends BaseTestCase
      */
     protected function createMongoDBIndexes(): void
     {
+        echo "[DEBUG] createMongoDBIndexes() ENTERED\n";
+        flush();
+
+        echo "[DEBUG] Getting MongoDB connection\n";
+        flush();
+
         $db = app('db')
             ->connection('mongodb');
 
+        echo "[DEBUG] MongoDB connection obtained\n";
+        flush();
+
         // workflow_logs: unique index on stored_workflow_id + index
+        echo "[DEBUG] Creating workflow_logs index\n";
+        flush();
+
         $db->getCollection('workflow_logs')
             ->createIndex([
                 'stored_workflow_id' => 1,
@@ -150,7 +176,13 @@ abstract class TestCase extends BaseTestCase
                 'unique' => true,
             ]);
 
+        echo "[DEBUG] workflow_logs index created\n";
+        flush();
+
         // workflow_signals: unique index on stored_workflow_id + index (partial: only when index exists and is not null)
+        echo "[DEBUG] Creating workflow_signals index\n";
+        flush();
+
         $db->getCollection('workflow_signals')
             ->createIndex(
                 [
@@ -167,7 +199,13 @@ abstract class TestCase extends BaseTestCase
                 ]
             );
 
+        echo "[DEBUG] workflow_signals index created\n";
+        flush();
+
         // workflow_timers: unique index on stored_workflow_id + index
+        echo "[DEBUG] Creating workflow_timers index\n";
+        flush();
+
         $db->getCollection('workflow_timers')
             ->createIndex([
                 'stored_workflow_id' => 1,
@@ -176,7 +214,13 @@ abstract class TestCase extends BaseTestCase
                 'unique' => true,
             ]);
 
+        echo "[DEBUG] workflow_timers index created\n";
+        flush();
+
         // workflow_exceptions: unique index on stored_workflow_id + index
+        echo "[DEBUG] Creating workflow_exceptions index\n";
+        flush();
+
         $db->getCollection('workflow_exceptions')
             ->createIndex([
                 'stored_workflow_id' => 1,
@@ -184,6 +228,12 @@ abstract class TestCase extends BaseTestCase
             ], [
                 'unique' => true,
             ]);
+
+        echo "[DEBUG] workflow_exceptions index created\n";
+        flush();
+
+        echo "[DEBUG] createMongoDBIndexes() FINISHED\n";
+        flush();
     }
 
     protected function getPackageProviders($app)
