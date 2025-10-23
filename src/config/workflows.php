@@ -5,8 +5,6 @@ declare(strict_types=1);
 return [
     'workflows_folder' => 'Workflows',
 
-    'base_model' => Illuminate\Database\Eloquent\Model::class,
-
     'stored_workflow_model' => Workflow\Models\StoredWorkflow::class,
 
     'stored_workflow_exception_model' => Workflow\Models\StoredWorkflowException::class,
