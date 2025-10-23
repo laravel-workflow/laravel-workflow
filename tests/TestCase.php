@@ -87,11 +87,11 @@ abstract class TestCase extends BaseTestCase
         // workflow_logs: unique index on stored_workflow_id + index
         $db->getCollection('workflow_logs')
             ->createIndex([
-                    'stored_workflow_id' => 1,
-                    'index' => 1,
-                ], [
-                    'unique' => true,
-                ]);
+                'stored_workflow_id' => 1,
+                'index' => 1,
+            ], [
+                'unique' => true,
+            ]);
 
         // workflow_signals: unique index on stored_workflow_id + index (partial: only when index exists and is not null)
         $db->getCollection('workflow_signals')
@@ -113,20 +113,20 @@ abstract class TestCase extends BaseTestCase
         // workflow_timers: unique index on stored_workflow_id + index
         $db->getCollection('workflow_timers')
             ->createIndex([
-                    'stored_workflow_id' => 1,
-                    'index' => 1,
-                ], [
-                    'unique' => true,
-                ]);
+                'stored_workflow_id' => 1,
+                'index' => 1,
+            ], [
+                'unique' => true,
+            ]);
 
         // workflow_exceptions: unique index on stored_workflow_id + index
         $db->getCollection('workflow_exceptions')
             ->createIndex([
-                    'stored_workflow_id' => 1,
-                    'index' => 1,
-                ], [
-                    'unique' => true,
-                ]);
+                'stored_workflow_id' => 1,
+                'index' => 1,
+            ], [
+                'unique' => true,
+            ]);
     }
 
     protected function getPackageProviders($app)
