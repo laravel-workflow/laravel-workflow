@@ -16,6 +16,8 @@ abstract class TestCase extends BaseTestCase
 
     public static function setUpBeforeClass(): void
     {
+        echo "[DEBUG] setUpBeforeClass started\n";
+        
         if (getenv('GITHUB_ACTIONS') !== 'true') {
             if (TestSuiteSubscriber::getCurrentSuite() === 'feature') {
                 Dotenv::createImmutable(__DIR__, '.env.feature')->safeLoad();
@@ -24,10 +26,13 @@ abstract class TestCase extends BaseTestCase
             }
         }
 
+        echo "[DEBUG] Starting queue workers\n";
+        
         // Prepare environment variables for workers (filter out non-scalar values)
         $env = array_filter(array_merge($_SERVER, $_ENV), static fn ($v) => is_string($v) || is_numeric($v));
 
         for ($i = 0; $i < self::NUMBER_OF_WORKERS; $i++) {
+            echo "[DEBUG] Starting worker {$i}\n";
             self::$workers[$i] = new Process(
                 [
                     'php',
@@ -43,6 +48,7 @@ abstract class TestCase extends BaseTestCase
                 300 // Timeout after 5 minutes
             );
             self::$workers[$i]->start();
+            echo "[DEBUG] Worker {$i} started\n";
 
             // In GitHub Actions, add a small delay and check if worker started
             if (getenv('GITHUB_ACTIONS') === 'true') {
@@ -51,9 +57,13 @@ abstract class TestCase extends BaseTestCase
                     echo "Warning: Worker {$i} failed to start or exited immediately\n";
                     echo 'Output: ' . self::$workers[$i]->getOutput() . "\n";
                     echo 'Error: ' . self::$workers[$i]->getErrorOutput() . "\n";
+                } else {
+                    echo "[DEBUG] Worker {$i} is running\n";
                 }
             }
         }
+        
+        echo "[DEBUG] setUpBeforeClass finished\n";
     }
 
     public static function tearDownAfterClass(): void
@@ -73,11 +83,23 @@ abstract class TestCase extends BaseTestCase
             }
         }
 
+        if (getenv('GITHUB_ACTIONS') === 'true') {
+            echo "Starting setUp...\n";
+        }
+
         parent::setUp();
+
+        if (getenv('GITHUB_ACTIONS') === 'true') {
+            echo "Finished setUp\n";
+        }
     }
 
     protected function defineDatabaseMigrations()
     {
+        if (getenv('GITHUB_ACTIONS') === 'true') {
+            echo "Starting defineDatabaseMigrations...\n";
+        }
+
         if (env('DB_CONNECTION') !== 'mongodb') {
             $this->artisan('migrate:fresh', [
                 '--path' => dirname(__DIR__) . '/src/migrations',
@@ -86,12 +108,28 @@ abstract class TestCase extends BaseTestCase
 
             $this->loadLaravelMigrations();
         } else {
+            if (getenv('GITHUB_ACTIONS') === 'true') {
+                echo "Running db:wipe for MongoDB...\n";
+            }
+
             $this->artisan('db:wipe', [
                 '--database' => 'mongodb',
             ]);
 
+            if (getenv('GITHUB_ACTIONS') === 'true') {
+                echo "Creating MongoDB indexes...\n";
+            }
+
             // Create unique indexes for MongoDB
             $this->createMongoDBIndexes();
+
+            if (getenv('GITHUB_ACTIONS') === 'true') {
+                echo "Finished creating MongoDB indexes\n";
+            }
+        }
+
+        if (getenv('GITHUB_ACTIONS') === 'true') {
+            echo "Finished defineDatabaseMigrations\n";
         }
     }
 
