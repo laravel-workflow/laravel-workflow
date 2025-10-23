@@ -35,6 +35,29 @@ abstract class TestCase extends BaseTestCase
         // Prepare environment variables for workers (filter out non-scalar values)
         $env = array_filter(array_merge($_SERVER, $_ENV), static fn ($v) => is_string($v) || is_numeric($v));
 
+        // Explicitly add GitHub Actions env vars for workers
+        if (getenv('GITHUB_ACTIONS') === 'true') {
+            $env['GITHUB_ACTIONS'] = 'true';
+            file_put_contents(
+                'php://stderr',
+                '[DEBUG] Worker env DB_CONNECTION: ' . ($env['DB_CONNECTION'] ?? 'NOT SET') . "\n"
+            );
+            file_put_contents('php://stderr', '[DEBUG] Worker env DB_HOST: ' . ($env['DB_HOST'] ?? 'NOT SET') . "\n");
+            file_put_contents('php://stderr', '[DEBUG] Worker env DB_PORT: ' . ($env['DB_PORT'] ?? 'NOT SET') . "\n");
+            file_put_contents(
+                'php://stderr',
+                '[DEBUG] Worker env DB_DATABASE: ' . ($env['DB_DATABASE'] ?? 'NOT SET') . "\n"
+            );
+            file_put_contents(
+                'php://stderr',
+                '[DEBUG] Worker env DB_USERNAME: ' . ($env['DB_USERNAME'] ?? 'NOT SET') . "\n"
+            );
+            file_put_contents(
+                'php://stderr',
+                '[DEBUG] Worker env DB_AUTHENTICATION_DATABASE: ' . ($env['DB_AUTHENTICATION_DATABASE'] ?? 'NOT SET') . "\n"
+            );
+        }
+
         file_put_contents('php://stderr', '[DEBUG] About to start ' . self::NUMBER_OF_WORKERS . " workers\n");
 
         for ($i = 0; $i < self::NUMBER_OF_WORKERS; $i++) {
