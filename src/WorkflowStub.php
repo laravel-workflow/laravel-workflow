@@ -245,21 +245,26 @@ final class WorkflowStub
 
     public function start(...$arguments): void
     {
-        if (getenv('GITHUB_ACTIONS') === 'true') {
-            echo "[WorkflowStub::start] Starting workflow ID: {$this->storedWorkflow->id}\n";
-        }
+        file_put_contents(
+            'php://stderr',
+            "[WorkflowStub::start] ENTERED for workflow ID: {$this->storedWorkflow->id}\n"
+        );
+        echo "[WorkflowStub::start] ENTERED for workflow ID: {$this->storedWorkflow->id}\n";
+        flush();
 
+        file_put_contents('php://stderr', "[WorkflowStub::start] Serializing arguments\n");
         $this->storedWorkflow->arguments = Serializer::serialize($arguments);
+        file_put_contents('php://stderr', "[WorkflowStub::start] Arguments serialized\n");
 
-        if (getenv('GITHUB_ACTIONS') === 'true') {
-            echo "[WorkflowStub::start] Calling dispatch()\n";
-        }
+        file_put_contents('php://stderr', "[WorkflowStub::start] About to call dispatch()\n");
+        echo "[WorkflowStub::start] About to call dispatch()\n";
+        flush();
 
         $this->dispatch();
 
-        if (getenv('GITHUB_ACTIONS') === 'true') {
-            echo "[WorkflowStub::start] Dispatch completed\n";
-        }
+        file_put_contents('php://stderr', "[WorkflowStub::start] dispatch() returned\n");
+        echo "[WorkflowStub::start] dispatch() returned\n";
+        flush();
     }
 
     public function startAsChild(StoredWorkflow $parentWorkflow, int $index, $now, ...$arguments): void
