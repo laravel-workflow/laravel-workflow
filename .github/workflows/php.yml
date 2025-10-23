@@ -216,7 +216,7 @@ jobs:
           REDIS_PASSWORD:
           REDIS_PORT: 6379
 
-      - name: Run test suite (SQLite - all platforms)
+      - name: Run test suite (SQLite)
         run: vendor/bin/phpunit --testdox
         env:
           APP_KEY: base64:i3g6f+dV8FfsIkcxqd7gbiPn2oXk5r00sTmdD6V5utI=
