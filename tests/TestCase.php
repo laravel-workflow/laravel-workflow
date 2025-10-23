@@ -93,6 +93,7 @@ abstract class TestCase extends BaseTestCase
                     'php',
                     __DIR__ . '/../vendor/bin/testbench',
                     'queue:work',
+                    'redis',  // Explicitly specify the redis connection
                     '--tries=3',
                     '--timeout=60',
                     '--max-time=300',
@@ -362,6 +363,7 @@ abstract class TestCase extends BaseTestCase
             'password' => env('REDIS_PASSWORD', null),
             'port' => env('REDIS_PORT', 6379),
             'database' => 0,
+            'prefix' => env('REDIS_PREFIX', 'laravel_database_'),
         ]);
 
         if (env('DB_CONNECTION') === 'mongodb') {
