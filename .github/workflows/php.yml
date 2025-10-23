@@ -276,6 +276,3 @@ jobs:
           REDIS_HOST: 127.0.0.1
           REDIS_PASSWORD:
           REDIS_PORT: 6379
-
-      - name: Upload coverage to Scrutinizer
-        run: vendor/bin/ocular code-coverage:upload --format=php-clover coverage.clover
