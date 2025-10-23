@@ -69,6 +69,27 @@ final class AsyncWorkflowTest extends TestCase
                 file_put_contents('php://stderr', "[TEST] Still waiting... (iteration {$iterations})\n");
                 echo "[TEST] Still waiting... (iteration {$iterations})\n";
                 flush();
+
+                // Check worker status every 10 iterations
+                if (getenv('GITHUB_ACTIONS') === 'true') {
+                    foreach (TestCase::$workers as $i => $worker) {
+                        if ($worker && $worker->isRunning()) {
+                            $output = $worker->getIncrementalOutput();
+                            $errorOutput = $worker->getIncrementalErrorOutput();
+                            if ($output) {
+                                file_put_contents('php://stderr', "[TEST] Worker {$i} output: {$output}\n");
+                            }
+                            if ($errorOutput) {
+                                file_put_contents('php://stderr', "[TEST] Worker {$i} error: {$errorOutput}\n");
+                            }
+                        } elseif ($worker) {
+                            file_put_contents(
+                                'php://stderr',
+                                "[TEST] Worker {$i} is NOT running! Exit code: " . $worker->getExitCode() . "\n"
+                            );
+                        }
+                    }
+                }
             }
             usleep(100000); // 0.1 second
         }

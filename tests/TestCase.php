@@ -84,6 +84,25 @@ abstract class TestCase extends BaseTestCase
 
         file_put_contents('php://stderr', '[DEBUG] About to start ' . self::NUMBER_OF_WORKERS . " workers\n");
 
+        // Test if we can manually check Redis queue before starting workers
+        if (getenv('GITHUB_ACTIONS') === 'true') {
+            try {
+                $redis = new \Redis();
+                $redis->connect(getenv('REDIS_HOST') ?: '127.0.0.1', (int) (getenv('REDIS_PORT') ?: 6379));
+                $allKeys = $redis->keys('*');
+                file_put_contents(
+                    'php://stderr',
+                    '[DEBUG] Redis keys before workers start: ' . implode(', ', $allKeys) . "\n"
+                );
+                $redis->close();
+            } catch (\Exception $e) {
+                file_put_contents(
+                    'php://stderr',
+                    '[DEBUG] Redis check before workers failed: ' . $e->getMessage() . "\n"
+                );
+            }
+        }
+
         for ($i = 0; $i < self::NUMBER_OF_WORKERS; $i++) {
             file_put_contents('php://stderr', "[DEBUG] Starting worker {$i}\n");
             echo "[DEBUG] Starting worker {$i}\n";
@@ -129,6 +148,16 @@ abstract class TestCase extends BaseTestCase
                 } else {
                     file_put_contents('php://stderr', "[DEBUG] Worker {$i} is running\n");
                     echo "[DEBUG] Worker {$i} is running\n";
+
+                    // Get any output the worker has produced so far
+                    $output = self::$workers[$i]->getOutput();
+                    $errorOutput = self::$workers[$i]->getErrorOutput();
+                    if ($output) {
+                        file_put_contents('php://stderr', "[DEBUG] Worker {$i} initial output: {$output}\n");
+                    }
+                    if ($errorOutput) {
+                        file_put_contents('php://stderr', "[DEBUG] Worker {$i} initial error output: {$errorOutput}\n");
+                    }
                 }
             }
         }
