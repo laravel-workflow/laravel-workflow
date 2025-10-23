@@ -119,8 +119,7 @@ jobs:
 
     - name: Test MongoDB connectivity
       run: |
-        composer require --dev mongodb/mongodb --with-all-dependencies || true
-        php -r "try { \$client = new MongoDB\Client('mongodb://root:password@127.0.0.1:27017/?authSource=admin'); var_dump(\$client->listDatabases()); echo 'MongoDB connection successful\n'; } catch (Exception \$e) { echo 'MongoDB connection failed: ' . \$e->getMessage() . '\n'; exit(1); }"
+        php -r "try { \$manager = new MongoDB\Driver\Manager('mongodb://root:password@127.0.0.1:27017/?authSource=admin'); \$command = new MongoDB\Driver\Command(['ping' => 1]); \$manager->executeCommand('admin', \$command); echo 'MongoDB connection successful\n'; } catch (Exception \$e) { echo 'MongoDB connection failed: ' . \$e->getMessage() . '\n'; exit(1); }"
 
     - name: Run test suite (MongoDB)
       timeout-minutes: 10
