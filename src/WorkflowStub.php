@@ -390,6 +390,10 @@ final class WorkflowStub
         file_put_contents('php://stderr', "[WorkflowStub::dispatch] Dispatch method: {$dispatch}\n");
         file_put_contents(
             'php://stderr',
+            '[WorkflowStub::dispatch] Queue connection: ' . config('queue.default') . "\n"
+        );
+        file_put_contents(
+            'php://stderr',
             "[WorkflowStub::dispatch] About to dispatch workflow class: {$this->storedWorkflow->class}\n"
         );
         flush();
@@ -400,6 +404,28 @@ final class WorkflowStub
         );
 
         file_put_contents('php://stderr', "[WorkflowStub::dispatch] Workflow class dispatched\n");
+
+        // Check Redis queue to verify job was queued
+        try {
+            $redis = new \Redis();
+            $redis->connect(
+                config('database.redis.default.host', '127.0.0.1'),
+                config('database.redis.default.port', 6379)
+            );
+            $queueName = 'queues:default';
+            $queueSize = $redis->lLen($queueName);
+            file_put_contents(
+                'php://stderr',
+                "[WorkflowStub::dispatch] Redis queue '{$queueName}' size: {$queueSize}\n"
+            );
+            $redis->close();
+        } catch (\Exception $e) {
+            file_put_contents(
+                'php://stderr',
+                '[WorkflowStub::dispatch] Redis check failed: ' . $e->getMessage() . "\n"
+            );
+        }
+
         echo "[WorkflowStub::dispatch] Workflow class dispatched\n";
         flush();
     }

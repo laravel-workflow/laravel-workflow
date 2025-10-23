@@ -32,6 +32,18 @@ abstract class TestCase extends BaseTestCase
         echo "[DEBUG] Starting queue workers\n";
         flush();
 
+        // Test Redis connection first
+        if (getenv('GITHUB_ACTIONS') === 'true') {
+            try {
+                $redis = new \Redis();
+                $redis->connect(getenv('REDIS_HOST') ?: '127.0.0.1', (int) (getenv('REDIS_PORT') ?: 6379));
+                file_put_contents('php://stderr', "[DEBUG] Redis connection test SUCCESSFUL\n");
+                $redis->close();
+            } catch (\Exception $e) {
+                file_put_contents('php://stderr', '[DEBUG] Redis connection test FAILED: ' . $e->getMessage() . "\n");
+            }
+        }
+
         // Prepare environment variables for workers (filter out non-scalar values)
         $env = array_filter(array_merge($_SERVER, $_ENV), static fn ($v) => is_string($v) || is_numeric($v));
 
@@ -55,6 +67,18 @@ abstract class TestCase extends BaseTestCase
             file_put_contents(
                 'php://stderr',
                 '[DEBUG] Worker env DB_AUTHENTICATION_DATABASE: ' . ($env['DB_AUTHENTICATION_DATABASE'] ?? 'NOT SET') . "\n"
+            );
+            file_put_contents(
+                'php://stderr',
+                '[DEBUG] Worker env QUEUE_CONNECTION: ' . ($env['QUEUE_CONNECTION'] ?? 'NOT SET') . "\n"
+            );
+            file_put_contents(
+                'php://stderr',
+                '[DEBUG] Worker env REDIS_HOST: ' . ($env['REDIS_HOST'] ?? 'NOT SET') . "\n"
+            );
+            file_put_contents(
+                'php://stderr',
+                '[DEBUG] Worker env REDIS_PORT: ' . ($env['REDIS_PORT'] ?? 'NOT SET') . "\n"
             );
         }
 
