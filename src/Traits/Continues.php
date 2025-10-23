@@ -32,7 +32,7 @@ trait Continues
                     ]);
 
                 $parentWorkflow->children()
-                    ->wherePivot('parent_index', $parentIndex)
+                    ->wherePivot('parent_index', $parentWorkflow->pivot->parent_index)
                     ->detach($context->storedWorkflow);
             }
 
