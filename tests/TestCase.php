@@ -144,7 +144,7 @@ abstract class TestCase extends BaseTestCase
     {
         if (env('DB_CONNECTION') === 'mongodb') {
             $app['config']->set('workflows.base_model', 'MongoDB\\Laravel\\Eloquent\\Model');
-            
+
             // Configure MongoDB database connection
             $app['config']->set('database.connections.mongodb', [
                 'driver' => 'mongodb',
@@ -157,7 +157,7 @@ abstract class TestCase extends BaseTestCase
                     'database' => env('DB_AUTHENTICATION_DATABASE', 'admin'),
                 ],
             ]);
-            
+
             $app['config']->set('database.default', 'mongodb');
         }
     }
