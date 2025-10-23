@@ -40,12 +40,15 @@ services:
     restart: unless-stopped
     ports:
         - 27017:27017
-    environment:
-        MONGO_INITDB_ROOT_USERNAME: laravel
-        MONGO_INITDB_ROOT_PASSWORD: laravel
-        MONGO_INITDB_DATABASE: laravel
     volumes:
         - mongodb_data:/data/db
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
   redis:
     image: redis:6-alpine
     ports:
