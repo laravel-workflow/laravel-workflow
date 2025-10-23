@@ -47,6 +47,13 @@ jobs:
       with:
           fetch-depth: 10
 
+    - name: Setup PHP with MongoDB extension
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.3'
+        extensions: mongodb
+        coverage: xdebug
+
     - name: Validate composer.json and composer.lock
       run: composer validate --strict
 
@@ -115,6 +122,7 @@ jobs:
         DB_PORT: 27017
         DB_USERNAME: root
         DB_PASSWORD: password
+        DB_AUTHENTICATION_DATABASE: admin
         QUEUE_CONNECTION: redis
         QUEUE_FAILED_DRIVER: "null"
         REDIS_HOST: 127.0.0.1
