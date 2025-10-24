@@ -54,7 +54,6 @@
     "require-dev": {
         "orchestra/testbench": "^8.0",
         "phpstan/phpstan": "^2.0",
-        "scrutinizer/ocular": "dev-master",
         "symplify/easy-coding-standard": "^11.0"
     },
     "extra": {

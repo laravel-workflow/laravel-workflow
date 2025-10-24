@@ -105,11 +105,17 @@ jobs:
 
     - name: Code Coverage
       run: |
-        vendor/bin/phpunit --testdox --coverage-clover=coverage.clover --testsuite unit
-        vendor/bin/ocular code-coverage:upload --format=php-clover coverage.clover
+        vendor/bin/phpunit --testdox --coverage-clover=coverage.xml --testsuite unit
       env:
         APP_KEY: base64:i3g6f+dV8FfsIkcxqd7gbiPn2oXk5r00sTmdD6V5utI=
         DB_CONNECTION: sqlite
         DB_DATABASE: testbench.sqlite
         QUEUE_CONNECTION: sync
         XDEBUG_MODE: coverage
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        files: ./coverage.xml
+        fail_ci_if_error: false
+        token: ${{ secrets.CODECOV_TOKEN }}
