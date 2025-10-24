@@ -113,25 +113,9 @@ jobs:
         QUEUE_CONNECTION: sync
         XDEBUG_MODE: coverage
 
-    - name: Generate Coverage Badge
-      uses: timkrase/phpunit-coverage-badge@v1.2.1
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v5
       with:
-        coverage_badge_path: .github/badges/coverage.svg
-        push_badge: false
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        report: coverage.xml
-
-    - name: Log Coverage Percentage
-      run: |
-        if [ -f .github/badges/coverage.svg ]; then
-          COVERAGE=$(grep -oP '\d+%' .github/badges/coverage.svg | head -1)
-          echo "Code Coverage: $COVERAGE"
-        fi
-
-    - name: Commit and Push Badge
-      run: |
-        git config --local user.email "github-actions[bot]@users.noreply.github.com"
-        git config --local user.name "github-actions[bot]"
-        git add .github/badges/coverage.svg || true
-        git diff --staged --quiet || git commit -m "Update coverage badge [skip ci]"
-        git push
+        files: ./coverage.xml
+        fail_ci_if_error: false
+        token: ${{ secrets.CODECOV_TOKEN }}
