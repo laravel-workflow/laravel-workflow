@@ -129,7 +129,6 @@ jobs:
         fi
 
     - name: Commit and Push Badge
-      if: github.event_name == 'push'
       run: |
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
