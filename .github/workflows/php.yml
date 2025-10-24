@@ -119,6 +119,7 @@ jobs:
         coverage_badge_path: .github/badges/coverage.svg
         push_badge: false
         repo_token: ${{ secrets.GITHUB_TOKEN }}
+        report: coverage.xml
 
     - name: Log Coverage Percentage
       run: |
