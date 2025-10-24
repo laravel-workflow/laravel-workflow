@@ -105,11 +105,41 @@ jobs:
 
     - name: Code Coverage
       run: |
-        vendor/bin/phpunit --testdox --coverage-clover=coverage.clover --testsuite unit
-        vendor/bin/ocular code-coverage:upload --format=php-clover coverage.clover
+        vendor/bin/phpunit --testdox --coverage-clover=coverage.xml --testsuite unit
       env:
         APP_KEY: base64:i3g6f+dV8FfsIkcxqd7gbiPn2oXk5r00sTmdD6V5utI=
         DB_CONNECTION: sqlite
         DB_DATABASE: testbench.sqlite
         QUEUE_CONNECTION: sync
         XDEBUG_MODE: coverage
+
+    - name: Generate Coverage Badge
+      uses: cicirello/jacoco-badge-generator@v2
+      with:
+        badges-directory: .github/badges
+        generate-branches-badge: false
+        generate-summary: true
+        coverage-badge-filename: coverage.svg
+        coverage-label: coverage
+
+    - name: Log Coverage Percentage
+      run: |
+        if [ -f .github/badges/coverage.svg ]; then
+          COVERAGE=$(grep -oP 'coverage: \K[0-9.]+' .github/badges/coverage.svg || echo "unknown")
+          echo "Coverage: $COVERAGE%"
+        fi
+
+    - name: Commit Badge
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git add .github/badges/coverage.svg || true
+        git diff --staged --quiet || git commit -m "Update coverage badge [skip ci]"
+
+    - name: Push Badge
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: ${{ github.ref }}
