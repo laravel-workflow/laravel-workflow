@@ -17,6 +17,7 @@ use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Serializer;
 use Workflow\States\WorkflowCreatedStatus;
 use Workflow\States\WorkflowFailedStatus;
+use Workflow\Webhooks;
 use Workflow\WorkflowStub;
 
 final class ActivityTest extends TestCase
@@ -125,12 +126,14 @@ final class ActivityTest extends TestCase
 
     public function testWebhookUrl(): void
     {
+        Webhooks::routes('Tests\\Fixtures', __DIR__ . '/../Fixtures');
+
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $activity = new TestOtherActivity(0, now()->toDateTimeString(), StoredWorkflow::findOrFail($workflow->id()), [
             'other',
         ]);
 
-        $this->assertSame('http://localhost/webhooks/test-workflow', $activity->webhookUrl());
-        $this->assertSame('http://localhost/webhooks/signal/test-workflow/1/other', $activity->webhookUrl('other'));
+        $this->assertSame('http://localhost/webhooks/start/test-workflow', $activity->webhookUrl());
+        $this->assertSame('http://localhost/webhooks/signal/test-workflow/1/cancel', $activity->webhookUrl('cancel'));
     }
 }

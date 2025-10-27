@@ -8,9 +8,11 @@ use Illuminate\Contracts\Foundation\Application;
 use Workflow\ActivityStub;
 use Workflow\QueryMethod;
 use Workflow\SignalMethod;
+use Workflow\Webhook;
 use Workflow\Workflow;
 use Workflow\WorkflowStub;
 
+#[Webhook]
 class TestWorkflow extends Workflow
 {
     public $connection = 'redis';
@@ -20,6 +22,7 @@ class TestWorkflow extends Workflow
     private bool $canceled = false;
 
     #[SignalMethod]
+    #[Webhook]
     public function cancel(): void
     {
         $this->canceled = true;
