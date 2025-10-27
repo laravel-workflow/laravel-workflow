@@ -76,15 +76,16 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
 
     public function webhookUrl(string $signalMethod = ''): string
     {
-        $basePath = config('workflows.webhooks_route', '/webhooks');
         $workflow = Str::kebab(class_basename($this->storedWorkflow->class));
 
         if ($signalMethod === '') {
-            return url("{$basePath}/{$workflow}");
+            return route("workflows.start.{$workflow}");
         }
 
         $signal = Str::kebab($signalMethod);
-        return url("{$basePath}/signal/{$workflow}/{$this->storedWorkflow->id}/{$signal}");
+        return route("workflows.signal.{$workflow}.{$signal}", [
+            'workflowId' => $this->storedWorkflow->id,
+        ]);
     }
 
     public function handle()
