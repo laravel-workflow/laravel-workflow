@@ -131,6 +131,6 @@ final class ActivityTest extends TestCase
         ]);
 
         $this->assertSame('http://localhost/webhooks/test-workflow', $activity->webhookUrl());
-        $this->assertSame('http://localhost/webhooks/signal/1/other', $activity->webhookUrl('other'));
+        $this->assertSame('http://localhost/webhooks/signal/test-workflow/1/other', $activity->webhookUrl('other'));
     }
 }
