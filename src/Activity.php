@@ -84,7 +84,7 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
 
         $signal = Str::kebab($signalMethod);
         return route("workflows.signal.{$workflow}.{$signal}", [
-            'workflowId' => $this->storedWorkflow->id
+            'workflowId' => $this->storedWorkflow->id,
         ]);
     }
 

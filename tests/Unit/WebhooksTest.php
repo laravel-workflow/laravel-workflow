@@ -314,7 +314,8 @@ final class WebhooksTest extends TestCase
     public function testWebhookRegistration()
     {
         $routeMock = Mockery::mock();
-        $routeMock->shouldReceive('name')->andReturnSelf();
+        $routeMock->shouldReceive('name')
+            ->andReturnSelf();
 
         Route::shouldReceive('post')
             ->times(4)
