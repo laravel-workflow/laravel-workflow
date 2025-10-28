@@ -7,6 +7,7 @@ namespace Tests\Feature;
 use Tests\Fixtures\TestActivity;
 use Tests\Fixtures\TestOtherActivity;
 use Tests\Fixtures\TestWorkflow;
+use Tests\Fixtures\MyWorkflow;
 use Tests\TestCase;
 use Workflow\Signal;
 use Workflow\States\WorkflowCompletedStatus;
@@ -54,5 +55,37 @@ final class WorkflowTest extends TestCase
             ->sort()
             ->values()
             ->toArray());
+    }
+
+    public function testMyWorkflowPass(): void
+    {
+        $workflow = WorkflowStub::make(MyWorkflow::class);
+
+        $workflow->start(['test' => 'data']);
+
+        sleep(1);
+
+        $workflow->shouldRetry();
+
+        while ($workflow->running());
+
+        $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
+        $this->assertTrue($workflow->output());
+    }
+
+    public function testMyWorkflowFail(): void
+    {
+        $workflow = WorkflowStub::make(MyWorkflow::class);
+
+        $workflow->start(['test' => 'data']);
+
+        sleep(3);
+
+        $workflow->shouldRetry();
+
+        while ($workflow->running());
+
+        $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
+        $this->assertTrue($workflow->output());
     }
 }
