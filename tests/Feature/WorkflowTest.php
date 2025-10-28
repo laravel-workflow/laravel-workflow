@@ -6,6 +6,8 @@ namespace Tests\Feature;
 
 use Tests\Fixtures\TestActivity;
 use Tests\Fixtures\TestOtherActivity;
+use Tests\Fixtures\TestSignalExceptionWorkflow;
+use Tests\Fixtures\TestSignalExceptionWorkflowLeader;
 use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
 use Workflow\Signal;
@@ -54,5 +56,77 @@ final class WorkflowTest extends TestCase
             ->sort()
             ->values()
             ->toArray());
+    }
+
+    public function testTestSignalExceptionWorkflowEarly(): void
+    {
+        $workflow = WorkflowStub::make(TestSignalExceptionWorkflow::class);
+
+        $workflow->start([
+            'test' => 'data',
+        ]);
+
+        sleep(1);
+
+        $workflow->shouldRetry();
+
+        while ($workflow->running());
+
+        $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
+        $this->assertTrue($workflow->output());
+    }
+
+    public function testTestSignalExceptionWorkflowLate(): void
+    {
+        $workflow = WorkflowStub::make(TestSignalExceptionWorkflow::class);
+
+        $workflow->start([
+            'test' => 'data',
+        ]);
+
+        sleep(3);
+
+        $workflow->shouldRetry();
+
+        while ($workflow->running());
+
+        $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
+        $this->assertTrue($workflow->output());
+    }
+
+    public function testTestSignalExceptionWorkflowLeaderEarly(): void
+    {
+        $workflow = WorkflowStub::make(TestSignalExceptionWorkflowLeader::class);
+
+        $workflow->start([
+            'test' => 'data',
+        ]);
+
+        sleep(1);
+
+        $workflow->shouldRetry();
+
+        while ($workflow->running());
+
+        $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
+        $this->assertTrue($workflow->output());
+    }
+
+    public function testTestSignalExceptionWorkflowLeaderLate(): void
+    {
+        $workflow = WorkflowStub::make(TestSignalExceptionWorkflowLeader::class);
+
+        $workflow->start([
+            'test' => 'data',
+        ]);
+
+        sleep(3);
+
+        $workflow->shouldRetry();
+
+        while ($workflow->running());
+
+        $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
+        $this->assertTrue($workflow->output());
     }
 }

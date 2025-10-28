@@ -128,14 +128,20 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
             ->wherePivot('parent_index', '!=', StoredWorkflow::ACTIVE_WORKFLOW_INDEX)
             ->first();
 
-        $log = $this->storedWorkflow->logs()
-            ->whereIndex($this->index)
+        $logs = $this->storedWorkflow->logs()
+            ->whereIn('index', [$this->index, $this->index + 1])
+            ->get();
+
+        $log = $logs->where('index', $this->index)
+            ->first();
+
+        $nextLog = $logs->where('index', $this->index + 1)
             ->first();
 
         $this->storedWorkflow
             ->signals()
-            ->when($log, static function ($query, $log): void {
-                $query->where('created_at', '<=', $log->created_at->format('Y-m-d H:i:s.u'));
+            ->when($nextLog, static function ($query, $nextLog): void {
+                $query->where('created_at', '<=', $nextLog->created_at->format('Y-m-d H:i:s.u'));
             })
             ->each(function ($signal): void {
                 $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
@@ -163,8 +169,14 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
         while ($this->coroutine->valid()) {
             $this->index = WorkflowStub::getContext()->index;
 
-            $nextLog = $this->storedWorkflow->logs()
-                ->whereIndex($this->index)
+            $logs = $this->storedWorkflow->logs()
+                ->whereIn('index', [$this->index, $this->index + 1])
+                ->get();
+
+            $log = $logs->where('index', $this->index)
+                ->first();
+
+            $nextLog = $logs->where('index', $this->index + 1)
                 ->first();
 
             if ($log) {
@@ -178,8 +190,6 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
                         $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
                     });
             }
-
-            $log = $nextLog;
 
             $this->now = $log ? $log->now : Carbon::now();
 
