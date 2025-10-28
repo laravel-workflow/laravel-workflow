@@ -255,6 +255,14 @@ final class WorkflowTest extends TestCase
                 'result' => Serializer::serialize('activity'),
             ]);
 
+        $storedParentWorkflow->signals()
+            ->create([
+                'method' => 'ping',
+                'arguments' => Serializer::serialize([]),
+                'created_at' => now()
+                    ->addSeconds(1),
+            ]);
+
         $childWorkflow = WorkflowStub::load(WorkflowStub::make(TestChildWorkflow::class)->id());
 
         $storedChildWorkflow = StoredWorkflow::findOrFail($childWorkflow->id());
