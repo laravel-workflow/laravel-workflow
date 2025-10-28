@@ -128,12 +128,14 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
             ->wherePivot('parent_index', '!=', StoredWorkflow::ACTIVE_WORKFLOW_INDEX)
             ->first();
 
-        $log = $this->storedWorkflow->logs()
-            ->whereIndex($this->index)
+        $logs = $this->storedWorkflow->logs()
+            ->whereIn('index', [$this->index, $this->index + 1])
+            ->get();
+
+        $log = $logs->where('index', $this->index)
             ->first();
 
-        $nextLog = $this->storedWorkflow->logs()
-            ->whereIndex($this->index + 1)
+        $nextLog = $logs->where('index', $this->index + 1)
             ->first();
 
         $this->storedWorkflow
@@ -167,12 +169,14 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
         while ($this->coroutine->valid()) {
             $this->index = WorkflowStub::getContext()->index;
 
-            $log = $this->storedWorkflow->logs()
-                ->whereIndex($this->index)
+            $logs = $this->storedWorkflow->logs()
+                ->whereIn('index', [$this->index, $this->index + 1])
+                ->get();
+
+            $log = $logs->where('index', $this->index)
                 ->first();
 
-            $nextLog = $this->storedWorkflow->logs()
-                ->whereIndex($this->index + 1)
+            $nextLog = $logs->where('index', $this->index + 1)
                 ->first();
 
             if ($log) {
