@@ -7,7 +7,8 @@ namespace Tests\Feature;
 use Tests\Fixtures\TestActivity;
 use Tests\Fixtures\TestOtherActivity;
 use Tests\Fixtures\TestWorkflow;
-use Tests\Fixtures\MyWorkflow;
+use Tests\Fixtures\TestSignalExceptionWorkflow;
+use Tests\Fixtures\TestSignalExceptionWorkflowLeader;
 use Tests\TestCase;
 use Workflow\Signal;
 use Workflow\States\WorkflowCompletedStatus;
@@ -57,9 +58,9 @@ final class WorkflowTest extends TestCase
             ->toArray());
     }
 
-    public function testMyWorkflowPass(): void
+    public function testTestSignalExceptionWorkflowPass(): void
     {
-        $workflow = WorkflowStub::make(MyWorkflow::class);
+        $workflow = WorkflowStub::make(TestSignalExceptionWorkflow::class);
 
         $workflow->start(['test' => 'data']);
 
@@ -73,9 +74,41 @@ final class WorkflowTest extends TestCase
         $this->assertTrue($workflow->output());
     }
 
-    public function testMyWorkflowFail(): void
+    public function testTestSignalExceptionWorkflowFail(): void
     {
-        $workflow = WorkflowStub::make(MyWorkflow::class);
+        $workflow = WorkflowStub::make(TestSignalExceptionWorkflow::class);
+
+        $workflow->start(['test' => 'data']);
+
+        sleep(3);
+
+        $workflow->shouldRetry();
+
+        while ($workflow->running());
+
+        $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
+        $this->assertTrue($workflow->output());
+    }
+
+    public function testTestSignalExceptionWorkflowLeaderPass(): void
+    {
+        $workflow = WorkflowStub::make(TestSignalExceptionWorkflowLeader::class);
+
+        $workflow->start(['test' => 'data']);
+
+        sleep(1);
+
+        $workflow->shouldRetry();
+
+        while ($workflow->running());
+
+        $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
+        $this->assertTrue($workflow->output());
+    }
+
+    public function testTestSignalExceptionWorkflowLeaderFail(): void
+    {
+        $workflow = WorkflowStub::make(TestSignalExceptionWorkflowLeader::class);
 
         $workflow->start(['test' => 'data']);
 

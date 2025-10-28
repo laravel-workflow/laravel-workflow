@@ -7,11 +7,13 @@ namespace Tests\Fixtures;
 use Exception;
 use Workflow\Activity;
 
-final class TestExceptionActivity extends Activity
+final class TestSingleTryExceptionActivity extends Activity
 {
-    public function execute()
+    public $tries = 1;
+
+    public function execute($shouldThrow)
     {
-        if ($this->attempts() === 1) {
+        if ($shouldThrow) {
             throw new Exception('failed');
         }
 
