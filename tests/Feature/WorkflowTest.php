@@ -6,9 +6,9 @@ namespace Tests\Feature;
 
 use Tests\Fixtures\TestActivity;
 use Tests\Fixtures\TestOtherActivity;
-use Tests\Fixtures\TestWorkflow;
 use Tests\Fixtures\TestSignalExceptionWorkflow;
 use Tests\Fixtures\TestSignalExceptionWorkflowLeader;
+use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
 use Workflow\Signal;
 use Workflow\States\WorkflowCompletedStatus;
@@ -62,7 +62,9 @@ final class WorkflowTest extends TestCase
     {
         $workflow = WorkflowStub::make(TestSignalExceptionWorkflow::class);
 
-        $workflow->start(['test' => 'data']);
+        $workflow->start([
+            'test' => 'data',
+        ]);
 
         sleep(1);
 
@@ -78,7 +80,9 @@ final class WorkflowTest extends TestCase
     {
         $workflow = WorkflowStub::make(TestSignalExceptionWorkflow::class);
 
-        $workflow->start(['test' => 'data']);
+        $workflow->start([
+            'test' => 'data',
+        ]);
 
         sleep(3);
 
@@ -94,7 +98,9 @@ final class WorkflowTest extends TestCase
     {
         $workflow = WorkflowStub::make(TestSignalExceptionWorkflowLeader::class);
 
-        $workflow->start(['test' => 'data']);
+        $workflow->start([
+            'test' => 'data',
+        ]);
 
         sleep(1);
 
@@ -110,7 +116,9 @@ final class WorkflowTest extends TestCase
     {
         $workflow = WorkflowStub::make(TestSignalExceptionWorkflowLeader::class);
 
-        $workflow->start(['test' => 'data']);
+        $workflow->start([
+            'test' => 'data',
+        ]);
 
         sleep(3);
 

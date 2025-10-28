@@ -12,8 +12,8 @@ class ActivityOne extends Activity
 
     public function execute($retried = false)
     {
-        if (!$retried) {
-            throw new \Exception("Intentional failure in ActivityOne");
+        if (! $retried) {
+            throw new \Exception('Intentional failure in ActivityOne');
         }
 
         return 'one';
