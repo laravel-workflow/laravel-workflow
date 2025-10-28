@@ -58,7 +58,7 @@ final class WorkflowTest extends TestCase
             ->toArray());
     }
 
-    public function testTestSignalExceptionWorkflowPass(): void
+    public function testTestSignalExceptionWorkflowEarly(): void
     {
         $workflow = WorkflowStub::make(TestSignalExceptionWorkflow::class);
 
@@ -76,7 +76,7 @@ final class WorkflowTest extends TestCase
         $this->assertTrue($workflow->output());
     }
 
-    public function testTestSignalExceptionWorkflowFail(): void
+    public function testTestSignalExceptionWorkflowLate(): void
     {
         $workflow = WorkflowStub::make(TestSignalExceptionWorkflow::class);
 
@@ -94,7 +94,7 @@ final class WorkflowTest extends TestCase
         $this->assertTrue($workflow->output());
     }
 
-    public function testTestSignalExceptionWorkflowLeaderPass(): void
+    public function testTestSignalExceptionWorkflowLeaderEarly(): void
     {
         $workflow = WorkflowStub::make(TestSignalExceptionWorkflowLeader::class);
 
@@ -112,7 +112,7 @@ final class WorkflowTest extends TestCase
         $this->assertTrue($workflow->output());
     }
 
-    public function testTestSignalExceptionWorkflowLeaderFail(): void
+    public function testTestSignalExceptionWorkflowLeaderLate(): void
     {
         $workflow = WorkflowStub::make(TestSignalExceptionWorkflowLeader::class);
 
