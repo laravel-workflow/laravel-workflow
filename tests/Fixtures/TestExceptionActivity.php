@@ -9,11 +9,9 @@ use Workflow\Activity;
 
 final class TestExceptionActivity extends Activity
 {
-    public $tries = 1;
-
-    public function execute($shouldThrow)
+    public function execute()
     {
-        if ($shouldThrow) {
+        if ($this->attempts() === 1) {
             throw new Exception('failed');
         }
 
