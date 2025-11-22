@@ -8,6 +8,7 @@ use BadMethodCallException;
 use Illuminate\Bus\Queueable;
 use Illuminate\Container\Container;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -25,7 +26,7 @@ use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Serializer;
 use Workflow\Traits\SerializesModels;
 
-class Activity implements ShouldBeEncrypted, ShouldQueue
+class Activity implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
@@ -67,6 +68,11 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
     public function backoff()
     {
         return [1, 2, 5, 10, 15, 30, 60, 120];
+    }
+
+    public function uniqueId()
+    {
+        return $this->storedWorkflow->id . ':' . $this->index;
     }
 
     public function workflowId()
