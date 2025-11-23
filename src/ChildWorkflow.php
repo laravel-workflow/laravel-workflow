@@ -6,6 +6,7 @@ namespace Workflow;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -13,7 +14,7 @@ use Illuminate\Queue\SerializesModels;
 use Workflow\Middleware\WithoutOverlappingMiddleware;
 use Workflow\Models\StoredWorkflow;
 
-final class ChildWorkflow implements ShouldBeEncrypted, ShouldQueue
+final class ChildWorkflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
@@ -39,6 +40,11 @@ final class ChildWorkflow implements ShouldBeEncrypted, ShouldQueue
         $queue = $queue ?? config('queue.connections.' . $connection . '.queue', 'default');
         $this->onConnection($connection);
         $this->onQueue($queue);
+    }
+
+    public function uniqueId()
+    {
+        return $this->parentWorkflow->id . ':' . $this->index;
     }
 
     public function handle()
