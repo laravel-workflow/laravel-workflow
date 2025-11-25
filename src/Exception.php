@@ -20,6 +20,8 @@ final class Exception implements ShouldBeEncrypted, ShouldQueue
     use Queueable;
     use SerializesModels;
 
+    public ?string $key = null;
+    
     public $tries = PHP_INT_MAX;
 
     public $maxExceptions = PHP_INT_MAX;

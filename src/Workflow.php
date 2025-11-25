@@ -38,6 +38,8 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
     use Sagas;
     use SerializesModels;
 
+    public ?string $key = null;
+
     public int $tries = 0;
 
     public int $maxExceptions = 0;
