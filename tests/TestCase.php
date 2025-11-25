@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests;
 
 use Dotenv\Dotenv;
+use Illuminate\Support\Facades\Cache;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 use Symfony\Component\Process\Process;
 
@@ -48,6 +49,8 @@ abstract class TestCase extends BaseTestCase
         }
 
         parent::setUp();
+
+        Cache::flush();
     }
 
     protected function defineDatabaseMigrations()
