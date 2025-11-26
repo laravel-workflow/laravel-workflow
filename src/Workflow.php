@@ -17,6 +17,7 @@ use Illuminate\Routing\RouteDependencyResolverTrait;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\App;
 use React\Promise\PromiseInterface;
+use ReflectionClass;
 use Throwable;
 use Workflow\Events\WorkflowCompleted;
 use Workflow\Middleware\WithoutOverlappingMiddleware;
@@ -254,12 +255,18 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
             );
 
             if ($parentWorkflow) {
+                $properties = (new ReflectionClass($parentWorkflow->class))->getDefaultProperties();
+                $connection = $properties['connection'] ?? config('queue.default');
+                $queue = $properties['queue'] ?? config('queue.connections.' . $connection . '.queue', 'default');
+
                 ChildWorkflow::dispatch(
                     $parentWorkflow->pivot->parent_index,
                     $this->now,
                     $this->storedWorkflow,
                     $return,
-                    $parentWorkflow
+                    $parentWorkflow,
+                    $connection,
+                    $queue
                 );
             }
         }
