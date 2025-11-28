@@ -73,6 +73,11 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
         $this->afterCommit = true;
     }
 
+    public function uniqueId()
+    {
+        return $this->storedWorkflow->id;
+    }
+
     public function query($method)
     {
         $this->replaying = true;
@@ -143,9 +148,6 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
 
         $this->storedWorkflow
             ->signals()
-            ->when($nextLog, static function ($query, $nextLog): void {
-                $query->where('created_at', '<=', $nextLog->created_at->format('Y-m-d H:i:s.u'));
-            })
             ->each(function ($signal): void {
                 $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
             });
@@ -168,8 +170,6 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
             $this,
             'execute'
         ));
-
-        $previousLog = $log;
 
         while ($this->coroutine->valid()) {
             $this->index = WorkflowStub::getContext()->index;
@@ -194,16 +194,7 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
                     ->each(function ($signal): void {
                         $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
                     });
-            } elseif ($previousLog) {
-                $this->storedWorkflow
-                    ->signals()
-                    ->where('created_at', '>', $previousLog->created_at->format('Y-m-d H:i:s.u'))
-                    ->each(function ($signal): void {
-                        $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
-                    });
             }
-
-            $previousLog = $log ?? $previousLog;
 
             $this->now = $log ? $log->now : Carbon::now();
 
