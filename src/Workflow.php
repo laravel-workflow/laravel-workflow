@@ -175,6 +175,8 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
             'execute'
         ));
 
+        $previousLog = $log;
+
         while ($this->coroutine->valid()) {
             $this->index = WorkflowStub::getContext()->index;
 
@@ -198,7 +200,16 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
                     ->each(function ($signal): void {
                         $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
                     });
+            } elseif ($previousLog) {
+                $this->storedWorkflow
+                    ->signals()
+                    ->where('created_at', '>', $previousLog->created_at->format('Y-m-d H:i:s.u'))
+                    ->each(function ($signal): void {
+                        $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
+                    });
             }
+
+            $previousLog = $log ?? $previousLog;
 
             $this->now = $log ? $log->now : Carbon::now();
 
