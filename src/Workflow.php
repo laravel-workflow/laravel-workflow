@@ -9,7 +9,6 @@ use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Container\Container;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -30,7 +29,7 @@ use Workflow\States\WorkflowWaitingStatus;
 use Workflow\Traits\Sagas;
 use Workflow\Traits\SerializesModels;
 
-class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
+class Workflow implements ShouldBeEncrypted, ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
@@ -72,11 +71,6 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
         }
 
         $this->afterCommit = true;
-    }
-
-    public function uniqueId()
-    {
-        return $this->storedWorkflow->id;
     }
 
     public function query($method)
