@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature;
+namespace Tests\Fixtures;
 
 use Tests\Fixtures\TestActivity;
 use Workflow\ActivityStub;
@@ -16,6 +16,7 @@ use Workflow\WorkflowStub;
 final class TestActivityAwaitActivityAwaitWorkflow extends Workflow
 {
     public bool $firstApproved = false;
+
     public bool $secondApproved = false;
 
     #[SignalMethod]

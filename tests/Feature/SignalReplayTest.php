@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use Tests\Fixtures\TestActivityAwaitActivityAwaitWorkflow;
+use Tests\Fixtures\TestActivityThenAwaitWorkflow;
+use Tests\Fixtures\TestActivityThrowsAwaitRetryWorkflow;
+use Tests\Fixtures\TestMultipleAwaitsWorkflow;
+use Tests\Fixtures\TestPureAwaitWorkflow;
 use Tests\TestCase;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\WorkflowStub;
@@ -88,7 +93,7 @@ final class SignalReplayTest extends TestCase
     public function testSignalsSentBeforeProcessing(): void
     {
         $workflow = WorkflowStub::make(TestMultipleAwaitsWorkflow::class);
-        
+
         // Send signals immediately after start, before any processing
         $workflow->start();
         $workflow->approveFirst(true);

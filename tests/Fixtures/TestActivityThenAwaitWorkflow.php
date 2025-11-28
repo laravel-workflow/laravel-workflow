@@ -2,16 +2,18 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature;
+namespace Tests\Fixtures;
 
+use Tests\Fixtures\TestActivity;
+use Workflow\ActivityStub;
 use Workflow\SignalMethod;
 use Workflow\Workflow;
 use Workflow\WorkflowStub;
 
 /**
- * Case 1: Pure await - no activities, just signal
+ * Case 2: Activity then await
  */
-final class TestPureAwaitWorkflow extends Workflow
+final class TestActivityThenAwaitWorkflow extends Workflow
 {
     public bool $approved = false;
 
@@ -23,6 +25,8 @@ final class TestPureAwaitWorkflow extends Workflow
 
     public function execute()
     {
+        yield ActivityStub::make(TestActivity::class);
+
         yield WorkflowStub::await(fn () => $this->approved);
 
         return 'approved';

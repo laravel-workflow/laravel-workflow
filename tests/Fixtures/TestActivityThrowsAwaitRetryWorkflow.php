@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature;
+namespace Tests\Fixtures;
 
 use Tests\Fixtures\TestSingleTryExceptionActivity;
 use Throwable;

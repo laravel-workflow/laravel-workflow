@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature;
+namespace Tests\Fixtures;
 
 use Workflow\SignalMethod;
 use Workflow\Workflow;
@@ -14,6 +14,7 @@ use Workflow\WorkflowStub;
 final class TestMultipleAwaitsWorkflow extends Workflow
 {
     public bool $firstApproved = false;
+
     public bool $secondApproved = false;
 
     #[SignalMethod]
