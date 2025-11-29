@@ -45,6 +45,8 @@ trait AwaitWithTimeouts
                         ++self::$context->index;
                         return resolve(Serializer::unserialize($log->result));
                     }
+
+                    throw $exception;
                 }
             }
             ++self::$context->index;
