@@ -147,6 +147,8 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
         $nextLog = $logs->where('index', $this->index + 1)
             ->first();
 
+        $initialSignalBound = $nextLog ? $nextLog->created_at : null;
+
         $this->storedWorkflow
             ->signals()
             ->when($nextLog, static function ($query, $nextLog): void {
@@ -188,6 +190,11 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
             $nextLog = $logs->where('index', $this->index + 1)
                 ->first();
 
+            $latestLogBeforeCurrent = $this->storedWorkflow->logs()
+                ->where('index', '<', $this->index)
+                ->orderByDesc('index')
+                ->first();
+
             if ($log) {
                 $this->storedWorkflow
                     ->signals()
@@ -195,6 +202,13 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
                     ->when($nextLog, static function ($query, $nextLog): void {
                         $query->where('created_at', '<=', $nextLog->created_at->format('Y-m-d H:i:s.u'));
                     })
+                    ->each(function ($signal): void {
+                        $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
+                    });
+            } elseif ($latestLogBeforeCurrent && $initialSignalBound !== null) {
+                $this->storedWorkflow
+                    ->signals()
+                    ->where('created_at', '>', $latestLogBeforeCurrent->created_at->format('Y-m-d H:i:s.u'))
                     ->each(function ($signal): void {
                         $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
                     });
