@@ -49,6 +49,10 @@ trait Timers
                         'index' => self::$context->index,
                         'stop_at' => $when,
                     ]);
+            } else {
+                ++self::$context->index;
+                $deferred = new Deferred();
+                return $deferred->promise();
             }
         }
 
