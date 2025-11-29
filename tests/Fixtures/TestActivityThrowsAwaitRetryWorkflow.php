@@ -10,9 +10,6 @@ use Workflow\SignalMethod;
 use Workflow\Workflow;
 use Workflow\WorkflowStub;
 
-/**
- * Case 6: Activity throws -> await -> retry pattern
- */
 final class TestActivityThrowsAwaitRetryWorkflow extends Workflow
 {
     public $connection = 'redis';

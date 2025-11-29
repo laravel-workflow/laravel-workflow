@@ -8,9 +8,6 @@ use Workflow\SignalMethod;
 use Workflow\Workflow;
 use Workflow\WorkflowStub;
 
-/**
- * Case 3: Multiple sequential awaits
- */
 final class TestMultipleAwaitsWorkflow extends Workflow
 {
     public bool $firstApproved = false;

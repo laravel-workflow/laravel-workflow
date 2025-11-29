@@ -9,9 +9,6 @@ use Workflow\SignalMethod;
 use Workflow\Workflow;
 use Workflow\WorkflowStub;
 
-/**
- * Case 2: Activity then await
- */
 final class TestActivityThenAwaitWorkflow extends Workflow
 {
     public bool $approved = false;

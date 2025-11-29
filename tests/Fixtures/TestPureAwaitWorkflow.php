@@ -8,9 +8,6 @@ use Workflow\SignalMethod;
 use Workflow\Workflow;
 use Workflow\WorkflowStub;
 
-/**
- * Case 1: Pure await - no activities, just signal
- */
 final class TestPureAwaitWorkflow extends Workflow
 {
     public bool $approved = false;

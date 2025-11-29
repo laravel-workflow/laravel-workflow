@@ -80,7 +80,6 @@ final class SignalReplayTest extends TestCase
     {
         $workflow = WorkflowStub::make(TestMultipleAwaitsWorkflow::class);
 
-        // Send signals immediately after start, before any processing
         $workflow->start();
         $workflow->approveFirst(true);
         $workflow->approveSecond(true);

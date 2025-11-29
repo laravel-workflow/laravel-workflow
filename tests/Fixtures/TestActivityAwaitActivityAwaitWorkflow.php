@@ -9,9 +9,6 @@ use Workflow\SignalMethod;
 use Workflow\Workflow;
 use Workflow\WorkflowStub;
 
-/**
- * Case 4: Activity -> await -> activity -> await pattern
- */
 final class TestActivityAwaitActivityAwaitWorkflow extends Workflow
 {
     public bool $firstApproved = false;
