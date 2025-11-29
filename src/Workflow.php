@@ -180,12 +180,14 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
         while ($this->coroutine->valid()) {
             $this->index = WorkflowStub::getContext()->index;
 
-            $log = $this->storedWorkflow->logs()
-                ->where('index', $this->index)
+            $logs = $this->storedWorkflow->logs()
+                ->whereIn('index', [$this->index, $this->index + 1])
+                ->get();
+
+            $log = $logs->where('index', $this->index)
                 ->first();
 
-            $nextLog = $this->storedWorkflow->logs()
-                ->where('index', $this->index + 1)
+            $nextLog = $logs->where('index', $this->index + 1)
                 ->first();
 
             $latestLogBeforeCurrent = $this->storedWorkflow->logs()
