@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
-use Tests\Fixtures\TestSingleTryExceptionActivity;
 use Throwable;
 use Workflow\ActivityStub;
 use Workflow\SignalMethod;

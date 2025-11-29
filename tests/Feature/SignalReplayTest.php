@@ -8,6 +8,7 @@ use Tests\Fixtures\TestActivityAwaitActivityAwaitWorkflow;
 use Tests\Fixtures\TestActivityThenAwaitWorkflow;
 use Tests\Fixtures\TestActivityThrowsAwaitRetryWorkflow;
 use Tests\Fixtures\TestMultipleAwaitsWorkflow;
+use Tests\Fixtures\TestMultiStageApprovalWorkflow;
 use Tests\Fixtures\TestPureAwaitWorkflow;
 use Tests\TestCase;
 use Workflow\States\WorkflowCompletedStatus;
@@ -15,9 +16,6 @@ use Workflow\WorkflowStub;
 
 final class SignalReplayTest extends TestCase
 {
-    /**
-     * Case 1: Pure await workflow - no activities, just await signal
-     */
     public function testPureAwait(): void
     {
         $workflow = WorkflowStub::make(TestPureAwaitWorkflow::class);
@@ -32,9 +30,6 @@ final class SignalReplayTest extends TestCase
         $this->assertSame('approved', $workflow->output());
     }
 
-    /**
-     * Case 2: Activity then await - signal comes after activity completes
-     */
     public function testActivityThenAwait(): void
     {
         $workflow = WorkflowStub::make(TestActivityThenAwaitWorkflow::class);
@@ -49,9 +44,6 @@ final class SignalReplayTest extends TestCase
         $this->assertSame('approved', $workflow->output());
     }
 
-    /**
-     * Case 3: Multiple sequential awaits - signals sent with delays
-     */
     public function testMultipleAwaitsWithDelays(): void
     {
         $workflow = WorkflowStub::make(TestMultipleAwaitsWorkflow::class);
@@ -68,9 +60,6 @@ final class SignalReplayTest extends TestCase
         $this->assertSame('both_approved', $workflow->output());
     }
 
-    /**
-     * Case 4: Activity -> await -> activity -> await pattern
-     */
     public function testActivityAwaitActivityAwait(): void
     {
         $workflow = WorkflowStub::make(TestActivityAwaitActivityAwaitWorkflow::class);
@@ -87,9 +76,6 @@ final class SignalReplayTest extends TestCase
         $this->assertSame('completed', $workflow->output());
     }
 
-    /**
-     * Case 5: All signals sent before workflow even starts processing
-     */
     public function testSignalsSentBeforeProcessing(): void
     {
         $workflow = WorkflowStub::make(TestMultipleAwaitsWorkflow::class);
@@ -105,9 +91,6 @@ final class SignalReplayTest extends TestCase
         $this->assertSame('both_approved', $workflow->output());
     }
 
-    /**
-     * Case 6: Activity (throws) -> await -> retry pattern (like SignalException test)
-     */
     public function testActivityThrowsAwaitRetry(): void
     {
         $workflow = WorkflowStub::make(TestActivityThrowsAwaitRetryWorkflow::class);
@@ -120,5 +103,25 @@ final class SignalReplayTest extends TestCase
 
         $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
         $this->assertTrue($workflow->output());
+    }
+
+    public function testMultiStageApprovalPattern(): void
+    {
+        $workflow = WorkflowStub::make(TestMultiStageApprovalWorkflow::class);
+        $workflow->start();
+
+        sleep(1);
+        $workflow->approveManager(true);
+        sleep(1);
+        $workflow->approveFinance(true);
+        sleep(1);
+        $workflow->approveLegal(true);
+        sleep(1);
+        $workflow->approveExecutive(true);
+
+        while ($workflow->running());
+
+        $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
+        $this->assertSame('approved', $workflow->output());
     }
 }
