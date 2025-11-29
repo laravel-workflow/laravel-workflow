@@ -206,7 +206,7 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
                     ->orderByDesc('index')
                     ->first();
 
-                if ($latestLogBeforeCurrent && $initialSignalBound !== null) {
+                if ($latestLogBeforeCurrent && $initialSignalBound) {
                     $this->storedWorkflow
                         ->signals()
                         ->where('created_at', '>', $latestLogBeforeCurrent->created_at->format('Y-m-d H:i:s.u'))
