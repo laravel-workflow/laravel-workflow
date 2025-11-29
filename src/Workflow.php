@@ -200,13 +200,13 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
                     ->each(function ($signal): void {
                         $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
                     });
-            } else {
+            } elseif ($initialSignalBound) {
                 $latestLogBeforeCurrent = $this->storedWorkflow->logs()
                     ->where('index', '<', $this->index)
                     ->orderByDesc('index')
                     ->first();
 
-                if ($latestLogBeforeCurrent && $initialSignalBound) {
+                if ($latestLogBeforeCurrent) {
                     $this->storedWorkflow
                         ->signals()
                         ->where('created_at', '>', $latestLogBeforeCurrent->created_at->format('Y-m-d H:i:s.u'))
