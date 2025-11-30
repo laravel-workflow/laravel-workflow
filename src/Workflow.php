@@ -101,6 +101,7 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
         return $this->storedWorkflow->children()
             ->wherePivot('parent_index', '<=', $this->index)
             ->orderByDesc('child_workflow_id')
+            ->get()
             ->map(static fn ($child) => new ChildWorkflowHandle($child))
             ->toArray();
     }

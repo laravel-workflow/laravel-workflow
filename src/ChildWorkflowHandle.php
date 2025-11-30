@@ -28,11 +28,11 @@ final class ChildWorkflowHandle
             'replaying' => $context->replaying,
         ];
 
-        $result = WorkflowStub::fromStoredWorkflow($this->storedWorkflow)->{$method}(...$arguments);
-
-        WorkflowStub::setContext($savedContext);
-
-        return $result;
+        try {
+            WorkflowStub::fromStoredWorkflow($this->storedWorkflow)->{$method}(...$arguments);
+        } finally {
+            WorkflowStub::setContext($savedContext);
+        }
     }
 
     public function id(): int
