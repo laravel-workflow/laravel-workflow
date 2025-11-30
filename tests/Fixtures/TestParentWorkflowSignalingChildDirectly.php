@@ -13,9 +13,9 @@ final class TestParentWorkflowSignalingChildDirectly extends Workflow
     {
         $childPromise = ChildWorkflowStub::make(TestSimpleChildWorkflowWithSignal::class, 'direct_signaling');
 
-        $childStub = $this->child();
+        $childHandle = $this->child();
 
-        $childStub->approve('approved');
+        $childHandle->approve('approved');
 
         $result = yield $childPromise;
 

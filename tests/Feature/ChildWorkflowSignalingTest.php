@@ -49,15 +49,6 @@ final class ChildWorkflowSignalingTest extends TestCase
             sleep(1);
         }
 
-        if ($timeout <= 0) {
-            echo 'Parent status: ' . $parentWorkflow->status() . "\n";
-            echo 'Parent output: ' . ($parentWorkflow->output() ?? 'null') . "\n";
-            $children = \Workflow\Models\StoredWorkflow::find(1)->children()->get();
-            foreach ($children as $child) {
-                echo "Child {$child->id} status: {$child->status}\n";
-            }
-        }
-
         $this->assertSame(WorkflowCompletedStatus::class, $parentWorkflow->status());
         $this->assertSame('forwarded_approved', $parentWorkflow->output());
     }
