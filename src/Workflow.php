@@ -88,8 +88,10 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 
     public function child(): ?ChildWorkflowHandle
     {
+        $currentIndex = WorkflowStub::getContext()->index;
+
         $storedChild = $this->storedWorkflow->children()
-            ->wherePivot('parent_index', '<=', $this->index)
+            ->wherePivot('parent_index', '<', $currentIndex)
             ->orderByDesc('child_workflow_id')
             ->first();
 
@@ -98,8 +100,10 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 
     public function children(): array
     {
+        $currentIndex = WorkflowStub::getContext()->index;
+
         return $this->storedWorkflow->children()
-            ->wherePivot('parent_index', '<=', $this->index)
+            ->wherePivot('parent_index', '<', $currentIndex)
             ->orderByDesc('child_workflow_id')
             ->get()
             ->map(static fn ($child) => new ChildWorkflowHandle($child))

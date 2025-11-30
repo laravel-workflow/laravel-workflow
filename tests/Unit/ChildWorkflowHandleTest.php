@@ -138,6 +138,13 @@ final class ChildWorkflowHandleTest extends TestCase
                 'parent_now' => Carbon::now(),
             ]);
 
+        WorkflowStub::setContext([
+            'storedWorkflow' => $storedParentWorkflow,
+            'index' => 1,
+            'now' => Carbon::now(),
+            'replaying' => false,
+        ]);
+
         $workflow = new TestParentWorkflow($storedParentWorkflow);
 
         $childHandle = $workflow->child();
@@ -180,11 +187,21 @@ final class ChildWorkflowHandleTest extends TestCase
 
         $workflow = new TestParentWorkflow($storedParentWorkflow);
 
-        $workflow->index = 0;
+        WorkflowStub::setContext([
+            'storedWorkflow' => $storedParentWorkflow,
+            'index' => 1,
+            'now' => Carbon::now(),
+            'replaying' => false,
+        ]);
         $childHandle = $workflow->child();
         $this->assertSame($storedChildWorkflow1->id, $childHandle->id());
 
-        $workflow->index = 5;
+        WorkflowStub::setContext([
+            'storedWorkflow' => $storedParentWorkflow,
+            'index' => 6,
+            'now' => Carbon::now(),
+            'replaying' => false,
+        ]);
         $childHandle = $workflow->child();
         $this->assertSame($storedChildWorkflow2->id, $childHandle->id());
     }
@@ -234,8 +251,14 @@ final class ChildWorkflowHandleTest extends TestCase
                 'parent_now' => Carbon::now(),
             ]);
 
+        WorkflowStub::setContext([
+            'storedWorkflow' => $storedParentWorkflow,
+            'index' => 10,
+            'now' => Carbon::now(),
+            'replaying' => false,
+        ]);
+
         $workflow = new TestParentWorkflow($storedParentWorkflow);
-        $workflow->index = 10;
 
         $children = $workflow->children();
 
@@ -278,12 +301,22 @@ final class ChildWorkflowHandleTest extends TestCase
 
         $workflow = new TestParentWorkflow($storedParentWorkflow);
 
-        $workflow->index = 0;
+        WorkflowStub::setContext([
+            'storedWorkflow' => $storedParentWorkflow,
+            'index' => 1,
+            'now' => Carbon::now(),
+            'replaying' => false,
+        ]);
         $children = $workflow->children();
         $this->assertCount(1, $children);
         $this->assertSame($storedChildWorkflow1->id, $children[0]->id());
 
-        $workflow->index = 5;
+        WorkflowStub::setContext([
+            'storedWorkflow' => $storedParentWorkflow,
+            'index' => 6,
+            'now' => Carbon::now(),
+            'replaying' => false,
+        ]);
         $children = $workflow->children();
         $this->assertCount(2, $children);
     }

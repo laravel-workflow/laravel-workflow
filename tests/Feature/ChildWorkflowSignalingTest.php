@@ -7,6 +7,7 @@ namespace Tests\Feature;
 use Tests\Fixtures\TestParentSignalingChildViaSignal;
 use Tests\Fixtures\TestParentWorkflowSignalingChildDirectly;
 use Tests\Fixtures\TestParentWorkflowWithContextCheck;
+use Tests\Fixtures\TestParentWorkflowWithMultipleChildren;
 use Tests\TestCase;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\WorkflowStub;
@@ -51,5 +52,16 @@ final class ChildWorkflowSignalingTest extends TestCase
 
         $this->assertSame(WorkflowCompletedStatus::class, $parentWorkflow->status());
         $this->assertSame('forwarded_approved', $parentWorkflow->output());
+    }
+
+    public function testChildrenReturnsMultipleHandlesInOrder(): void
+    {
+        $parentWorkflow = WorkflowStub::make(TestParentWorkflowWithMultipleChildren::class);
+        $parentWorkflow->start();
+
+        while ($parentWorkflow->running());
+
+        $this->assertSame(WorkflowCompletedStatus::class, $parentWorkflow->status());
+        $this->assertSame('child1_first|child2_second|child3_third', $parentWorkflow->output());
     }
 }
