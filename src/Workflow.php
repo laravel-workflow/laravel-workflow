@@ -86,6 +86,25 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
         return $this->{$method}();
     }
 
+    public function child(): ?ChildWorkflowHandle
+    {
+        $storedChild = $this->storedWorkflow->children()
+            ->wherePivot('parent_index', '<=', $this->index)
+            ->orderByDesc('child_workflow_id')
+            ->first();
+
+        return $storedChild ? new ChildWorkflowHandle($storedChild) : null;
+    }
+
+    public function children(): array
+    {
+        return $this->storedWorkflow->children()
+            ->wherePivot('parent_index', '<=', $this->index)
+            ->orderByDesc('child_workflow_id')
+            ->map(static fn ($child) => new ChildWorkflowHandle($child))
+            ->toArray();
+    }
+
     public function middleware()
     {
         $parentWorkflow = $this->storedWorkflow->parents()
