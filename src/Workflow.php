@@ -25,7 +25,6 @@ use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Serializer;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowContinuedStatus;
-use Workflow\States\WorkflowFailedStatus;
 use Workflow\States\WorkflowRunningStatus;
 use Workflow\States\WorkflowWaitingStatus;
 use Workflow\Traits\Sagas;
@@ -250,18 +249,19 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 
             if ($current instanceof PromiseInterface) {
                 $resolved = false;
+                $exception = null;
 
-                $current->then(function ($value) use (&$resolved): void {
+                $current->then(function ($value) use (&$resolved, &$exception): void {
+                    $resolved = true;
                     try {
-                        $resolved = true;
                         $this->coroutine->send($value);
-                    } catch (\Exception $e) {
-                        $this->failed($e);
+                    } catch (Throwable $th) {
+                        $exception = $th;
                     }
                 });
 
-                if ($this->storedWorkflow->status::class === WorkflowFailedStatus::class) {
-                    return;
+                if ($exception) {
+                    throw $exception;
                 }
 
                 if (! $resolved) {
