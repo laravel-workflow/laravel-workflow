@@ -24,6 +24,7 @@ use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Serializer;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowContinuedStatus;
+use Workflow\States\WorkflowFailedStatus;
 use Workflow\States\WorkflowRunningStatus;
 use Workflow\States\WorkflowWaitingStatus;
 use Workflow\Traits\Sagas;
@@ -212,9 +213,17 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
                 $resolved = false;
 
                 $current->then(function ($value) use (&$resolved): void {
-                    $resolved = true;
-                    $this->coroutine->send($value);
+                    try {
+                        $resolved = true;
+                        $this->coroutine->send($value);
+                    } catch (\Exception $e) {
+                        $this->failed($e);
+                    }
                 });
+
+                if ($this->storedWorkflow->status::class === WorkflowFailedStatus::class) {
+                    return;
+                }
 
                 if (! $resolved) {
                     if (! $this->replaying) {
