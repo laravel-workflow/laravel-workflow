@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use Tests\Fixtures\TestTimerQueryWorkflow;
 use Tests\Fixtures\TestTimerWorkflow;
 use Tests\TestCase;
 use Workflow\States\WorkflowCompletedStatus;
@@ -39,5 +40,18 @@ final class TimerWorkflowTest extends TestCase
         $this->assertGreaterThanOrEqual(5, now()->diffInSeconds($now));
         $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
         $this->assertSame('workflow', $workflow->output());
+    }
+
+    public function testTimerQueryDuringWait(): void
+    {
+        $workflow = WorkflowStub::make(TestTimerQueryWorkflow::class);
+
+        $workflow->start(10);
+
+        sleep(1);
+
+        $status = $workflow->getStatus();
+
+        $this->assertSame('waiting', $status);
     }
 }

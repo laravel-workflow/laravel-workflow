@@ -17,6 +17,7 @@ use Illuminate\Routing\RouteDependencyResolverTrait;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\App;
 use React\Promise\PromiseInterface;
+use ReflectionClass;
 use Throwable;
 use Workflow\Events\WorkflowCompleted;
 use Workflow\Middleware\WithoutOverlappingMiddleware;
@@ -38,6 +39,8 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
     use RouteDependencyResolverTrait;
     use Sagas;
     use SerializesModels;
+
+    public ?string $key = null;
 
     public int $tries = 0;
 
@@ -82,6 +85,26 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
         $this->replaying = true;
         $this->handle();
         return $this->{$method}();
+    }
+
+    public function child(): ?ChildWorkflowHandle
+    {
+        $storedChild = $this->storedWorkflow->children()
+            ->wherePivot('parent_index', '<', WorkflowStub::getContext()->index)
+            ->orderByDesc('child_workflow_id')
+            ->first();
+
+        return $storedChild ? new ChildWorkflowHandle($storedChild) : null;
+    }
+
+    public function children(): array
+    {
+        return $this->storedWorkflow->children()
+            ->wherePivot('parent_index', '<', WorkflowStub::getContext()->index)
+            ->orderByDesc('child_workflow_id')
+            ->get()
+            ->map(static fn ($child) => new ChildWorkflowHandle($child))
+            ->toArray();
     }
 
     public function middleware()
@@ -145,6 +168,8 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
         $nextLog = $logs->where('index', $this->index + 1)
             ->first();
 
+        $initialSignalBound = $nextLog ? $nextLog->created_at : null;
+
         $this->storedWorkflow
             ->signals()
             ->when($nextLog, static function ($query, $nextLog): void {
@@ -196,6 +221,20 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
                     ->each(function ($signal): void {
                         $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
                     });
+            } elseif ($initialSignalBound) {
+                $latestLogBeforeCurrent = $this->storedWorkflow->logs()
+                    ->where('index', '<', $this->index)
+                    ->orderByDesc('index')
+                    ->first();
+
+                if ($latestLogBeforeCurrent) {
+                    $this->storedWorkflow
+                        ->signals()
+                        ->where('created_at', '>', $latestLogBeforeCurrent->created_at->format('Y-m-d H:i:s.u'))
+                        ->each(function ($signal): void {
+                            $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
+                        });
+                }
             }
 
             $this->now = $log ? $log->now : Carbon::now();
@@ -261,12 +300,18 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
             );
 
             if ($parentWorkflow) {
+                $properties = (new ReflectionClass($parentWorkflow->class))->getDefaultProperties();
+                $connection = $properties['connection'] ?? config('queue.default');
+                $queue = $properties['queue'] ?? config('queue.connections.' . $connection . '.queue', 'default');
+
                 ChildWorkflow::dispatch(
                     $parentWorkflow->pivot->parent_index,
                     $this->now,
                     $this->storedWorkflow,
                     $return,
-                    $parentWorkflow
+                    $parentWorkflow,
+                    $connection,
+                    $queue
                 );
             }
         }
