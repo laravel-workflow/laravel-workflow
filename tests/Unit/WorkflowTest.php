@@ -339,6 +339,30 @@ final class WorkflowTest extends TestCase
         $workflow->handle();
     }
 
+    public function testCoroutineSendException(): void
+    {
+        $stub = WorkflowStub::load(WorkflowStub::make(TestCoroutineSendExceptionWorkflow::class)->id());
+        $storedWorkflow = StoredWorkflow::findOrFail($stub->id());
+        $storedWorkflow->update([
+            'arguments' => Serializer::serialize([]),
+            'status' => WorkflowPendingStatus::class,
+        ]);
+
+        $storedWorkflow->logs()
+            ->create([
+                'index' => 0,
+                'now' => now(),
+                'class' => TestActivity::class,
+                'result' => Serializer::serialize('test_result'),
+            ]);
+
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('exception test');
+
+        $workflow = new TestCoroutineSendExceptionWorkflow($storedWorkflow);
+        $workflow->handle();
+    }
+
     public function testContinueAsNew(): void
     {
         $storedWorkflow = StoredWorkflow::create([
