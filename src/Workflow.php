@@ -249,11 +249,20 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 
             if ($current instanceof PromiseInterface) {
                 $resolved = false;
+                $exception = null;
 
-                $current->then(function ($value) use (&$resolved): void {
+                $current->then(function ($value) use (&$resolved, &$exception): void {
                     $resolved = true;
-                    $this->coroutine->send($value);
+                    try {
+                        $this->coroutine->send($value);
+                    } catch (Throwable $th) {
+                        $exception = $th;
+                    }
                 });
+
+                if ($exception) {
+                    throw $exception;
+                }
 
                 if (! $resolved) {
                     if (! $this->replaying) {

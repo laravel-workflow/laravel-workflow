@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Event;
 use Tests\Fixtures\TestActivity;
 use Tests\Fixtures\TestChildWorkflow;
 use Tests\Fixtures\TestContinueAsNewWorkflow;
+use Tests\Fixtures\TestCoroutineSendExceptionWorkflow;
 use Tests\Fixtures\TestCountActivity;
 use Tests\Fixtures\TestOtherActivity;
 use Tests\Fixtures\TestParentWorkflow;
@@ -336,6 +337,30 @@ final class WorkflowTest extends TestCase
         $this->expectExceptionMessage('Workflow failed.');
 
         $workflow = new TestThrowOnReturnWorkflow($storedWorkflow);
+        $workflow->handle();
+    }
+
+    public function testCoroutineSendException(): void
+    {
+        $stub = WorkflowStub::load(WorkflowStub::make(TestCoroutineSendExceptionWorkflow::class)->id());
+        $storedWorkflow = StoredWorkflow::findOrFail($stub->id());
+        $storedWorkflow->update([
+            'arguments' => Serializer::serialize([]),
+            'status' => WorkflowPendingStatus::class,
+        ]);
+
+        $storedWorkflow->logs()
+            ->create([
+                'index' => 0,
+                'now' => now(),
+                'class' => TestActivity::class,
+                'result' => Serializer::serialize('test_result'),
+            ]);
+
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('exception test');
+
+        $workflow = new TestCoroutineSendExceptionWorkflow($storedWorkflow);
         $workflow->handle();
     }
 
