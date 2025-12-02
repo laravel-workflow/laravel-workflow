@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use Tests\Fixtures\TestCoroutineSendExceptionWorkflow;
 use Tests\Fixtures\TestExceptionWorkflow;
 use Tests\Fixtures\TestNonRetryableExceptionWorkflow;
 use Tests\TestCase;
@@ -46,6 +47,23 @@ final class ExceptionWorkflowTest extends TestCase
         $this->assertSame(
             'This is a non-retryable error',
             Serializer::unserialize($workflow->exceptions()->last()->exception)['message']
+        );
+    }
+
+    public function testCoroutineSendException(): void
+    {
+        $workflow = WorkflowStub::make(TestCoroutineSendExceptionWorkflow::class);
+
+        $workflow->start();
+
+        while ($workflow->running());
+
+        $this->assertSame(WorkflowFailedStatus::class, $workflow->status());
+        $this->assertNotNull($workflow->exceptions()->first());
+        $this->assertNull($workflow->output());
+        $this->assertSame(
+            'exception test',
+            Serializer::unserialize($workflow->exceptions()->first()->exception)['message']
         );
     }
 }
