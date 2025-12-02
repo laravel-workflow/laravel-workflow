@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Event;
 use Tests\Fixtures\TestActivity;
 use Tests\Fixtures\TestChildWorkflow;
 use Tests\Fixtures\TestContinueAsNewWorkflow;
+use Tests\Fixtures\TestCoroutineSendExceptionWorkflow;
 use Tests\Fixtures\TestCountActivity;
 use Tests\Fixtures\TestOtherActivity;
 use Tests\Fixtures\TestParentWorkflow;
