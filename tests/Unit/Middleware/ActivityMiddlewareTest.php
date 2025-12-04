@@ -56,6 +56,9 @@ final class ActivityMiddlewareTest extends TestCase
             return true;
         });
 
+        $this->assertTrue(isset($activity->onUnlock));
+        ($activity->onUnlock)(true);
+
         Event::assertDispatched(ActivityStarted::class);
         Event::assertDispatched(ActivityCompleted::class);
         Queue::assertPushed(TestWorkflow::class, 2);
@@ -87,6 +90,9 @@ final class ActivityMiddlewareTest extends TestCase
         $middleware->handle($activity, static function ($job) {
             return true;
         });
+
+        $this->assertTrue(isset($activity->onUnlock));
+        ($activity->onUnlock)(true);
 
         Event::assertDispatched(ActivityStarted::class);
         Event::assertNotDispatched(ActivityCompleted::class);
@@ -125,6 +131,9 @@ final class ActivityMiddlewareTest extends TestCase
         $middleware->handle($activity, static function ($job) {
             return true;
         });
+
+        $this->assertTrue(isset($activity->onUnlock));
+        ($activity->onUnlock)(true);
 
         Event::assertDispatched(ActivityStarted::class);
         Event::assertNotDispatched(ActivityCompleted::class);
@@ -236,6 +245,9 @@ final class ActivityMiddlewareTest extends TestCase
         $middleware->handle($activity, static function ($job) {
             return true;
         });
+
+        $this->assertTrue(isset($activity->onUnlock));
+        ($activity->onUnlock)(true);
 
         $this->assertSame(WorkflowFailedStatus::class, $workflow->status());
 
