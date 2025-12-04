@@ -149,10 +149,15 @@ class WithoutOverlappingMiddleware
 
     private function unlockActivity($job): bool
     {
-        while (true) {
+        $maxRetries = 100;
+        $retries = 0;
+
+        while ($retries < $maxRetries) {
             $lock = $this->cache->lock($this->getLockKey());
 
             if (! $lock->get()) {
+                $retries++;
+                usleep(1000);
                 continue;
             }
 
@@ -174,6 +179,8 @@ class WithoutOverlappingMiddleware
                 $lock->release();
             }
         }
+
+        return true;
     }
 
     private function compareAndSet($key, $expectedValue, $newValue, $expiresAfter = 0)
