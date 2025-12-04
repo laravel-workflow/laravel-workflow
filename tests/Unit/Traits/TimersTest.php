@@ -8,7 +8,9 @@ use Carbon\CarbonInterval;
 use Exception;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\Bus;
 use Mockery;
+use Tests\Fixtures\TestChildWorkflow;
 use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
 use Workflow\Models\StoredWorkflow;
@@ -248,5 +250,57 @@ final class TimersTest extends TestCase
             'stored_workflow_id' => $workflow->id(),
             'index' => 0,
         ]);
+    }
+
+    public function testTimerCapsDelayForSqsDriver(): void
+    {
+        Bus::fake();
+
+        config([
+            'queue.default' => 'sqs',
+        ]);
+        config([
+            'queue.connections.sqs' => [
+                'driver' => 'sqs',
+                'queue' => 'default',
+            ],
+        ]);
+
+        $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
+        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
+        $storedWorkflow->class = TestChildWorkflow::class;
+        $storedWorkflow->update([
+            'arguments' => Serializer::serialize([]),
+            'status' => WorkflowPendingStatus::$name,
+        ]);
+
+        $now = now();
+        WorkflowStub::setContext([
+            'storedWorkflow' => $storedWorkflow,
+            'index' => 0,
+            'now' => $now,
+            'replaying' => false,
+        ]);
+
+        $storedWorkflow->timers()
+            ->create([
+                'index' => 0,
+                'stop_at' => $now->copy()
+                    ->addHour(),
+            ]);
+
+        WorkflowStub::timer(3600)
+            ->then(static function ($value) use (&$result) {
+                $result = $value;
+            });
+
+        $this->assertNull($result);
+
+        Bus::assertDispatched(Signal::class, function ($job) use ($now) {
+            $delaySeconds = $job->delay->diffInSeconds($now);
+            $this->assertLessThanOrEqual(900, $delaySeconds);
+            $this->assertGreaterThanOrEqual(899, $delaySeconds);
+            return true;
+        });
     }
 }

@@ -78,7 +78,19 @@ trait Timers
         }
 
         if (! self::$context->replaying) {
-            Signal::dispatch(self::$context->storedWorkflow, self::connection(), self::queue())->delay($timer->stop_at);
+            $delay = $timer->stop_at;
+
+            $connection = self::connection() ?? config('queue.default');
+            $driver = config('queue.connections.' . $connection . '.driver');
+
+            if ($driver === 'sqs') {
+                $maxDelay = self::$context->now->copy()->addSeconds(900);
+                if ($timer->stop_at->greaterThan($maxDelay)) {
+                    $delay = $maxDelay;
+                }
+            }
+
+            Signal::dispatch(self::$context->storedWorkflow, self::connection(), self::queue())->delay($delay);
         }
 
         ++self::$context->index;
