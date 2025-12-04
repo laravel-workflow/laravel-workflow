@@ -262,7 +262,7 @@ final class WorkflowStub
             });
     }
 
-    public function next($index, $now, $class, $result): void
+    public function next($index, $now, $class, $result, bool $shouldSignal = true): void
     {
         try {
             $this->storedWorkflow->logs()
@@ -276,7 +276,9 @@ final class WorkflowStub
             // already logged
         }
 
-        $this->dispatch();
+        if ($shouldSignal) {
+            $this->dispatch();
+        }
     }
 
     private function dispatch(): void

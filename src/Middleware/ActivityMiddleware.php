@@ -13,13 +13,20 @@ use Workflow\Events\ActivityStarted;
 
 final class ActivityMiddleware
 {
+    private $job;
+
+    private $result;
+
+    private string $uuid;
+
     public function handle($job, $next): void
     {
-        $uuid = (string) Str::uuid();
+        $this->job = $job;
+        $this->uuid = (string) Str::uuid();
 
         ActivityStarted::dispatch(
             $job->storedWorkflow->id,
-            $uuid,
+            $this->uuid,
             $job::class,
             $job->index,
             json_encode($job->arguments),
@@ -28,32 +35,14 @@ final class ActivityMiddleware
         );
 
         try {
-            $result = $next($job);
+            $this->result = $next($job);
 
-            try {
-                $job->storedWorkflow->toWorkflow()
-                    ->next($job->index, $job->now, $job::class, $result);
-
-                ActivityCompleted::dispatch(
-                    $job->storedWorkflow->id,
-                    $uuid,
-                    json_encode($result),
-                    now()
-                        ->format('Y-m-d\TH:i:s.u\Z')
-                );
-            } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $throwable) {
-                $job->storedWorkflow->toWorkflow()
-                    ->fail($throwable);
-            } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
-                if ($job->storedWorkflow->toWorkflow()->running()) {
-                    $job->release();
-                }
-            }
+            $job->onUnlock = fn (bool $shouldSignal) => $this->onUnlock($shouldSignal);
         } catch (\Throwable $throwable) {
             $file = new SplFileObject($throwable->getFile());
             $iterator = new LimitIterator($file, max(0, $throwable->getLine() - 4), 7);
 
-            ActivityFailed::dispatch($job->storedWorkflow->id, $uuid, json_encode([
+            ActivityFailed::dispatch($job->storedWorkflow->id, $this->uuid, json_encode([
                 'class' => get_class($throwable),
                 'message' => $throwable->getMessage(),
                 'code' => $throwable->getCode(),
@@ -65,6 +54,29 @@ final class ActivityMiddleware
                 ->format('Y-m-d\TH:i:s.u\Z'));
 
             throw $throwable;
+        }
+    }
+
+    public function onUnlock(bool $shouldSignal): void
+    {
+        try {
+            $this->job->storedWorkflow->toWorkflow()
+                ->next($this->job->index, $this->job->now, $this->job::class, $this->result, $shouldSignal);
+
+            ActivityCompleted::dispatch(
+                $this->job->storedWorkflow->id,
+                $this->uuid,
+                json_encode($this->result),
+                now()
+                    ->format('Y-m-d\TH:i:s.u\Z')
+            );
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $throwable) {
+            $this->job->storedWorkflow->toWorkflow()
+                ->fail($throwable);
+        } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
+            if ($this->job->storedWorkflow->toWorkflow()->running()) {
+                $this->job->release();
+            }
         }
     }
 }

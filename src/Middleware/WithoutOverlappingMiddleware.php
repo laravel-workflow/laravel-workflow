@@ -46,7 +46,10 @@ class WithoutOverlappingMiddleware
             try {
                 $next($job);
             } finally {
-                $this->unlock($job);
+                $shouldSignal = $this->unlock($job);
+                if (isset($job->onUnlock) && is_callable($job->onUnlock)) {
+                    ($job->onUnlock)($shouldSignal);
+                }
             }
         } elseif ($this->releaseAfter !== null) {
             $job->release($this->releaseAfter);
@@ -120,7 +123,7 @@ class WithoutOverlappingMiddleware
         return $locked;
     }
 
-    public function unlock($job)
+    public function unlock($job): bool
     {
         switch ($this->type) {
             case self::WORKFLOW:
@@ -134,22 +137,42 @@ class WithoutOverlappingMiddleware
                         $this->expiresAfter
                     );
                 }
-                break;
+                return true;
 
             case self::ACTIVITY:
-                $unlocked = false;
-                while (! $unlocked) {
-                    $activitySemaphore = $this->cache->get($this->getActivitySemaphoreKey(), []);
-                    $unlocked = $this->compareAndSet(
-                        $this->getActivitySemaphoreKey(),
-                        $activitySemaphore,
-                        array_diff($activitySemaphore, [$job->key])
-                    );
-                    if ($unlocked) {
-                        $this->cache->forget($job->key);
+                return $this->unlockActivity($job);
+
+            default:
+                return true;
+        }
+    }
+
+    private function unlockActivity($job): bool
+    {
+        while (true) {
+            $lock = $this->cache->lock($this->getLockKey());
+
+            if (! $lock->get()) {
+                continue;
+            }
+
+            try {
+                $remaining = array_values(
+                    array_diff($this->cache->get($this->getActivitySemaphoreKey(), []), [$job->key])
+                );
+                $this->cache->put($this->getActivitySemaphoreKey(), $remaining);
+                $this->cache->forget($job->key);
+
+                foreach ($remaining as $semaphore) {
+                    if ($this->cache->has($semaphore)) {
+                        return false;
                     }
                 }
-                break;
+
+                return true;
+            } finally {
+                $lock->release();
+            }
         }
     }
 
