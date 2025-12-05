@@ -24,6 +24,7 @@ use Workflow\Traits\Continues;
 use Workflow\Traits\Fakes;
 use Workflow\Traits\SideEffects;
 use Workflow\Traits\Timers;
+use Workflow\Traits\Versions;
 
 final class WorkflowStub
 {
@@ -34,6 +35,9 @@ final class WorkflowStub
     use Macroable;
     use SideEffects;
     use Timers;
+    use Versions;
+
+    public const DEFAULT_VERSION = -1;
 
     private static ?\stdClass $context = null;
 
