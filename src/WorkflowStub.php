@@ -92,10 +92,7 @@ final class WorkflowStub
 
     public static function connection()
     {
-        return Arr::get(
-            self::getDefaultProperties(self::$context->storedWorkflow->class),
-            'connection'
-        );
+        return Arr::get(self::getDefaultProperties(self::$context->storedWorkflow->class), 'connection');
     }
 
     public static function queue()
@@ -110,40 +107,6 @@ final class WorkflowStub
         }
 
         return self::$defaultPropertiesCache[$class];
-    }
-
-    private static function isSignalMethod(string $class, string $method): bool
-    {
-        if (! isset(self::$signalMethodCache[$class])) {
-            self::$signalMethodCache[$class] = [];
-            foreach ((new ReflectionClass($class))->getMethods() as $reflectionMethod) {
-                foreach ($reflectionMethod->getAttributes() as $attribute) {
-                    if ($attribute->getName() === SignalMethod::class) {
-                        self::$signalMethodCache[$class][$reflectionMethod->getName()] = true;
-                        break;
-                    }
-                }
-            }
-        }
-
-        return self::$signalMethodCache[$class][$method] ?? false;
-    }
-
-    private static function isQueryMethod(string $class, string $method): bool
-    {
-        if (! isset(self::$queryMethodCache[$class])) {
-            self::$queryMethodCache[$class] = [];
-            foreach ((new ReflectionClass($class))->getMethods() as $reflectionMethod) {
-                foreach ($reflectionMethod->getAttributes() as $attribute) {
-                    if ($attribute->getName() === QueryMethod::class) {
-                        self::$queryMethodCache[$class][$reflectionMethod->getName()] = true;
-                        break;
-                    }
-                }
-            }
-        }
-
-        return self::$queryMethodCache[$class][$method] ?? false;
     }
 
     public static function make($class): static
@@ -322,6 +285,40 @@ final class WorkflowStub
         if ($shouldSignal) {
             $this->dispatch();
         }
+    }
+
+    private static function isSignalMethod(string $class, string $method): bool
+    {
+        if (! isset(self::$signalMethodCache[$class])) {
+            self::$signalMethodCache[$class] = [];
+            foreach ((new ReflectionClass($class))->getMethods() as $reflectionMethod) {
+                foreach ($reflectionMethod->getAttributes() as $attribute) {
+                    if ($attribute->getName() === SignalMethod::class) {
+                        self::$signalMethodCache[$class][$reflectionMethod->getName()] = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return self::$signalMethodCache[$class][$method] ?? false;
+    }
+
+    private static function isQueryMethod(string $class, string $method): bool
+    {
+        if (! isset(self::$queryMethodCache[$class])) {
+            self::$queryMethodCache[$class] = [];
+            foreach ((new ReflectionClass($class))->getMethods() as $reflectionMethod) {
+                foreach ($reflectionMethod->getAttributes() as $attribute) {
+                    if ($attribute->getName() === QueryMethod::class) {
+                        self::$queryMethodCache[$class][$reflectionMethod->getName()] = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return self::$queryMethodCache[$class][$method] ?? false;
     }
 
     private function dispatch(): void
