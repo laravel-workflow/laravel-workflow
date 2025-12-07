@@ -22,30 +22,17 @@ final class Y extends AbstractSerializer
 
     public static function encode(string $data): string
     {
-        $output = '';
-        for ($i = 0; $i < strlen($data); ++$i) {
-            $c = ord($data[$i]);
-            $output .= ($c === 0 || $c === 1) ? chr(1) . chr($c + 1) : $data[$i];
-        }
-
-        return $output;
+        return strtr($data, [
+            "\x00" => "\x01\x01",
+            "\x01" => "\x01\x02",
+        ]);
     }
 
     public static function decode(string $data): string
     {
-        $output = '';
-        $escaped = false;
-        for ($i = 0; $i < strlen($data); ++$i) {
-            $c = ord($data[$i]);
-            if ($escaped) {
-                $output .= chr($c - 1);
-                $escaped = false;
-            } else {
-                $escaped = $c === 1;
-                $output .= $escaped ? '' : $data[$i];
-            }
-        }
-
-        return $output;
+        return strtr($data, [
+            "\x01\x01" => "\x00",
+            "\x01\x02" => "\x01",
+        ]);
     }
 }
