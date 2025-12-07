@@ -109,13 +109,13 @@ final class SignalReplayTest extends TestCase
         $workflow = WorkflowStub::make(TestMultiStageApprovalWorkflow::class);
         $workflow->start();
 
-        sleep(1);
+        sleep(2);
         $workflow->approveManager(true);
-        sleep(1);
+        sleep(2);
         $workflow->approveFinance(true);
-        sleep(1);
+        sleep(2);
         $workflow->approveLegal(true);
-        sleep(1);
+        sleep(2);
         $workflow->approveExecutive(true);
 
         while ($workflow->running());
