@@ -157,22 +157,17 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
             ->wherePivot('parent_index', '!=', StoredWorkflow::ACTIVE_WORKFLOW_INDEX)
             ->first();
 
-        $logs = $this->storedWorkflow->logs()
-            ->whereIn('index', [$this->index, $this->index + 1])
-            ->get();
+        $allLogs = $this->storedWorkflow->logs()->get()->keyBy('index');
+        $allSignals = $this->storedWorkflow->signals()->get();
 
-        $log = $logs->where('index', $this->index)
-            ->first();
-
-        $nextLog = $logs->where('index', $this->index + 1)
-            ->first();
+        $log = $allLogs->get($this->index);
+        $nextLog = $allLogs->get($this->index + 1);
 
         $initialSignalBound = $nextLog ? $nextLog->created_at : null;
 
-        $this->storedWorkflow
-            ->signals()
-            ->when($nextLog, static function ($query, $nextLog): void {
-                $query->where('created_at', '<=', $nextLog->created_at->format('Y-m-d H:i:s.u'));
+        $allSignals
+            ->when($nextLog, static function ($signals, $nextLog) {
+                return $signals->filter(static fn ($signal) => $signal->created_at <= $nextLog->created_at);
             })
             ->each(function ($signal): void {
                 $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
@@ -199,37 +194,29 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 
         while ($this->coroutine->valid()) {
             $this->index = WorkflowStub::getContext()->index;
+            $currentIndex = $this->index;
 
-            $logs = $this->storedWorkflow->logs()
-                ->whereIn('index', [$this->index, $this->index + 1])
-                ->get();
-
-            $log = $logs->where('index', $this->index)
-                ->first();
-
-            $nextLog = $logs->where('index', $this->index + 1)
-                ->first();
+            $log = $allLogs->get($this->index);
+            $nextLog = $allLogs->get($this->index + 1);
 
             if ($log) {
-                $this->storedWorkflow
-                    ->signals()
-                    ->where('created_at', '>', $log->created_at->format('Y-m-d H:i:s.u'))
-                    ->when($nextLog, static function ($query, $nextLog): void {
-                        $query->where('created_at', '<=', $nextLog->created_at->format('Y-m-d H:i:s.u'));
+                $allSignals
+                    ->filter(static fn ($signal) => $signal->created_at > $log->created_at)
+                    ->when($nextLog, static function ($signals, $nextLog) {
+                        return $signals->filter(static fn ($signal) => $signal->created_at <= $nextLog->created_at);
                     })
                     ->each(function ($signal): void {
                         $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
                     });
             } elseif ($initialSignalBound) {
-                $latestLogBeforeCurrent = $this->storedWorkflow->logs()
-                    ->where('index', '<', $this->index)
-                    ->orderByDesc('index')
+                $latestLogBeforeCurrent = $allLogs
+                    ->filter(static fn ($logEntry, $index) => $index < $currentIndex)
+                    ->sortByDesc('index')
                     ->first();
 
                 if ($latestLogBeforeCurrent) {
-                    $this->storedWorkflow
-                        ->signals()
-                        ->where('created_at', '>', $latestLogBeforeCurrent->created_at->format('Y-m-d H:i:s.u'))
+                    $allSignals
+                        ->filter(static fn ($signal) => $signal->created_at > $latestLogBeforeCurrent->created_at)
                         ->each(function ($signal): void {
                             $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
                         });
