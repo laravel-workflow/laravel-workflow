@@ -41,6 +41,12 @@ final class WorkflowStub
 
     private static ?\stdClass $context = null;
 
+    private static array $signalMethodCache = [];
+
+    private static array $queryMethodCache = [];
+
+    private static array $defaultPropertiesCache = [];
+
     private function __construct(
         protected $storedWorkflow
     ) {
@@ -54,12 +60,7 @@ final class WorkflowStub
 
     public function __call($method, $arguments)
     {
-        if (collect((new ReflectionClass($this->storedWorkflow->class))->getMethods())
-            ->filter(static fn ($method): bool => collect($method->getAttributes())
-                ->contains(static fn ($attribute): bool => $attribute->getName() === SignalMethod::class))
-            ->map(static fn ($method) => $method->getName())
-            ->contains($method)
-        ) {
+        if (self::isSignalMethod($this->storedWorkflow->class, $method)) {
             $activeWorkflow = $this->storedWorkflow->active();
 
             $activeWorkflow->signals()
@@ -78,12 +79,7 @@ final class WorkflowStub
             return Signal::dispatch($activeWorkflow, self::connection(), self::queue());
         }
 
-        if (collect((new ReflectionClass($this->storedWorkflow->class))->getMethods())
-            ->filter(static fn ($method): bool => collect($method->getAttributes())
-                ->contains(static fn ($attribute): bool => $attribute->getName() === QueryMethod::class))
-            ->map(static fn ($method) => $method->getName())
-            ->contains($method)
-        ) {
+        if (self::isQueryMethod($this->storedWorkflow->class, $method)) {
             $activeWorkflow = $this->storedWorkflow->active();
 
             return (new $activeWorkflow->class(
@@ -97,14 +93,57 @@ final class WorkflowStub
     public static function connection()
     {
         return Arr::get(
-            (new ReflectionClass(self::$context->storedWorkflow->class))->getDefaultProperties(),
+            self::getDefaultProperties(self::$context->storedWorkflow->class),
             'connection'
         );
     }
 
     public static function queue()
     {
-        return Arr::get((new ReflectionClass(self::$context->storedWorkflow->class))->getDefaultProperties(), 'queue');
+        return Arr::get(self::getDefaultProperties(self::$context->storedWorkflow->class), 'queue');
+    }
+
+    public static function getDefaultProperties(string $class): array
+    {
+        if (! isset(self::$defaultPropertiesCache[$class])) {
+            self::$defaultPropertiesCache[$class] = (new ReflectionClass($class))->getDefaultProperties();
+        }
+
+        return self::$defaultPropertiesCache[$class];
+    }
+
+    private static function isSignalMethod(string $class, string $method): bool
+    {
+        if (! isset(self::$signalMethodCache[$class])) {
+            self::$signalMethodCache[$class] = [];
+            foreach ((new ReflectionClass($class))->getMethods() as $reflectionMethod) {
+                foreach ($reflectionMethod->getAttributes() as $attribute) {
+                    if ($attribute->getName() === SignalMethod::class) {
+                        self::$signalMethodCache[$class][$reflectionMethod->getName()] = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return self::$signalMethodCache[$class][$method] ?? false;
+    }
+
+    private static function isQueryMethod(string $class, string $method): bool
+    {
+        if (! isset(self::$queryMethodCache[$class])) {
+            self::$queryMethodCache[$class] = [];
+            foreach ((new ReflectionClass($class))->getMethods() as $reflectionMethod) {
+                foreach ($reflectionMethod->getAttributes() as $attribute) {
+                    if ($attribute->getName() === QueryMethod::class) {
+                        self::$queryMethodCache[$class][$reflectionMethod->getName()] = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return self::$queryMethodCache[$class][$method] ?? false;
     }
 
     public static function make($class): static
