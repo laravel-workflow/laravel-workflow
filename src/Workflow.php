@@ -157,8 +157,11 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
             ->wherePivot('parent_index', '!=', StoredWorkflow::ACTIVE_WORKFLOW_INDEX)
             ->first();
 
-        $allLogs = $this->storedWorkflow->logs()->get()->keyBy('index');
-        $allSignals = $this->storedWorkflow->signals()->get();
+        $allLogs = $this->storedWorkflow->logs()
+            ->get()
+            ->keyBy('index');
+        $allSignals = $this->storedWorkflow->signals()
+            ->get();
 
         $log = $allLogs->get($this->index);
         $nextLog = $allLogs->get($this->index + 1);
