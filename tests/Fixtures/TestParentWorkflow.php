@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
-use Workflow\ActivityStub;
-use Workflow\ChildWorkflowStub;
 use Workflow\SignalMethod;
 use Workflow\Workflow;
+use function Workflow\{activity, child};
 
 class TestParentWorkflow extends Workflow
 {
@@ -19,9 +18,9 @@ class TestParentWorkflow extends Workflow
 
     public function execute()
     {
-        $otherResult = yield ChildWorkflowStub::make(TestChildWorkflow::class);
+        $otherResult = yield child(TestChildWorkflow::class);
 
-        $result = yield ActivityStub::make(TestActivity::class);
+        $result = yield activity(TestActivity::class);
 
         return 'workflow_' . $result . '_' . $otherResult;
     }

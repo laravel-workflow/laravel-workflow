@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Tests\Fixtures;
 
 use Workflow\QueryMethod;
+use function Workflow\timer;
 use Workflow\Workflow;
-use Workflow\WorkflowStub;
 
 final class TestTimerQueryWorkflow extends Workflow
 {
@@ -20,7 +20,7 @@ final class TestTimerQueryWorkflow extends Workflow
 
     public function execute($seconds = 10)
     {
-        yield WorkflowStub::timer($seconds);
+        yield timer($seconds);
 
         $this->status = 'completed';
 

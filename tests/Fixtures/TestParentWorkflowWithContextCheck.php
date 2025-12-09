@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
-use Workflow\ActivityStub;
-use Workflow\ChildWorkflowStub;
 use Workflow\Workflow;
 use Workflow\WorkflowStub;
+use function Workflow\{activity, child};
 
 final class TestParentWorkflowWithContextCheck extends Workflow
 {
     public function execute()
     {
-        $childPromise = ChildWorkflowStub::make(TestSimpleChildWorkflowWithSignal::class, 'context_check');
+        $childPromise = child(TestSimpleChildWorkflowWithSignal::class, 'context_check');
 
         $contextBefore = WorkflowStub::getContext();
         $indexBefore = $contextBefore->index;
@@ -40,7 +39,7 @@ final class TestParentWorkflowWithContextCheck extends Workflow
             return 'context_corrupted:workflow:' . $storedWorkflowBefore . ':' . $storedWorkflowAfter;
         }
 
-        yield ActivityStub::make(TestActivity::class);
+        yield activity(TestActivity::class);
 
         $result = yield $childPromise;
 

@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
+use function Workflow\timer;
 use Workflow\Workflow;
-use Workflow\WorkflowStub;
 
 final class TestTimerWorkflow extends Workflow
 {
     public function execute($seconds = 1)
     {
-        yield WorkflowStub::timer($seconds);
+        yield timer($seconds);
 
         return 'workflow';
     }

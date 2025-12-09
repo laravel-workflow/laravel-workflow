@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
+use function Workflow\child;
 use Workflow\ChildWorkflowStub;
 use Workflow\Workflow;
 
@@ -11,15 +12,15 @@ final class TestParentWorkflowWithMultipleChildren extends Workflow
 {
     public function execute()
     {
-        $child1Promise = ChildWorkflowStub::make(TestSimpleChildWorkflowWithSignal::class, 'child1');
+        $child1Promise = child(TestSimpleChildWorkflowWithSignal::class, 'child1');
         $child1Handle = $this->child();
         $child1Handle->approve('first');
 
-        $child2Promise = ChildWorkflowStub::make(TestSimpleChildWorkflowWithSignal::class, 'child2');
+        $child2Promise = child(TestSimpleChildWorkflowWithSignal::class, 'child2');
         $child2Handle = $this->child();
         $child2Handle->approve('second');
 
-        $child3Promise = ChildWorkflowStub::make(TestSimpleChildWorkflowWithSignal::class, 'child3');
+        $child3Promise = child(TestSimpleChildWorkflowWithSignal::class, 'child3');
         $child3Handle = $this->child();
         $child3Handle->approve('third');
 

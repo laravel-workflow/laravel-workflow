@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
-use Workflow\ActivityStub;
 use Workflow\SignalMethod;
 use Workflow\Workflow;
-use Workflow\WorkflowStub;
+use function Workflow\{activity, await};
 
 final class TestActivityThenAwaitWorkflow extends Workflow
 {
@@ -21,9 +20,9 @@ final class TestActivityThenAwaitWorkflow extends Workflow
 
     public function execute()
     {
-        yield ActivityStub::make(TestActivity::class);
+        yield activity(TestActivity::class);
 
-        yield WorkflowStub::await(fn () => $this->approved);
+        yield await(fn () => $this->approved);
 
         return 'approved';
     }

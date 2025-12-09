@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
+use function Workflow\await;
 use Workflow\SignalMethod;
 use Workflow\Workflow;
-use Workflow\WorkflowStub;
 
 class TestSimpleChildWorkflowWithSignal extends Workflow
 {
@@ -20,7 +20,7 @@ class TestSimpleChildWorkflowWithSignal extends Workflow
 
     public function execute(string $prefix)
     {
-        yield WorkflowStub::await(fn () => $this->approved !== null);
+        yield await(fn () => $this->approved !== null);
 
         return $prefix . '_' . $this->approved;
     }

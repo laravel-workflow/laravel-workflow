@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
-use Workflow\ActivityStub;
 use Workflow\SignalMethod;
 use Workflow\Workflow;
-use Workflow\WorkflowStub;
+use function Workflow\{activity, all, await};
 
 final class TestMultiStageApprovalWorkflow extends Workflow
 {
@@ -45,20 +44,20 @@ final class TestMultiStageApprovalWorkflow extends Workflow
 
     public function execute()
     {
-        yield ActivityStub::make(TestRequestManagerApprovalActivity::class);
+        yield activity(TestRequestManagerApprovalActivity::class);
 
-        yield WorkflowStub::await(fn () => $this->managerApproved);
+        yield await(fn () => $this->managerApproved);
 
-        yield ActivityStub::all([
-            ActivityStub::make(TestRequestFinanceApprovalActivity::class),
-            ActivityStub::make(TestRequestLegalApprovalActivity::class),
+        yield all([
+            activity(TestRequestFinanceApprovalActivity::class),
+            activity(TestRequestLegalApprovalActivity::class),
         ]);
 
-        yield WorkflowStub::await(fn () => $this->financeApproved && $this->legalApproved);
+        yield await(fn () => $this->financeApproved && $this->legalApproved);
 
-        yield ActivityStub::make(TestRequestExecutiveApprovalActivity::class);
+        yield activity(TestRequestExecutiveApprovalActivity::class);
 
-        yield WorkflowStub::await(fn () => $this->executiveApproved);
+        yield await(fn () => $this->executiveApproved);
 
         return 'approved';
     }

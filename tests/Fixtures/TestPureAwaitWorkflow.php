@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
+use function Workflow\await;
 use Workflow\SignalMethod;
 use Workflow\Workflow;
-use Workflow\WorkflowStub;
 
 final class TestPureAwaitWorkflow extends Workflow
 {
@@ -20,7 +20,7 @@ final class TestPureAwaitWorkflow extends Workflow
 
     public function execute()
     {
-        yield WorkflowStub::await(fn () => $this->approved);
+        yield await(fn () => $this->approved);
 
         return 'approved';
     }

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
+use function Workflow\await;
 use Workflow\SignalMethod;
 use Workflow\Workflow;
-use Workflow\WorkflowStub;
 
 final class TestAwaitWorkflow extends Workflow
 {
@@ -20,7 +20,7 @@ final class TestAwaitWorkflow extends Workflow
 
     public function execute()
     {
-        yield WorkflowStub::await(fn (): bool => $this->canceled);
+        yield await(fn (): bool => $this->canceled);
 
         return 'workflow';
     }

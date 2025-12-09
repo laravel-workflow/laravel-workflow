@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
+use function Workflow\await;
 use Workflow\Models\StoredWorkflow;
 use Workflow\SignalMethod;
 use Workflow\Workflow;
-use Workflow\WorkflowStub;
 
 class TestStateMachineWorkflow extends Workflow
 {
@@ -72,9 +72,9 @@ class TestStateMachineWorkflow extends Workflow
 
     public function execute()
     {
-        yield WorkflowStub::await(fn () => $this->isSubmitted());
+        yield await(fn () => $this->isSubmitted());
 
-        yield WorkflowStub::await(fn () => $this->isApproved() || $this->isDenied());
+        yield await(fn () => $this->isApproved() || $this->isDenied());
 
         return $this->stateMachine->getCurrentState();
     }
