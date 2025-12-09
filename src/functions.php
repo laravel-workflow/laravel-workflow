@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Workflow;
 
+use Carbon\CarbonInterval;
 use React\Promise\PromiseInterface;
 
 if (! function_exists(__NAMESPACE__ . '\\await')) {
@@ -14,14 +15,14 @@ if (! function_exists(__NAMESPACE__ . '\\await')) {
 }
 
 if (! function_exists(__NAMESPACE__ . '\\timer')) {
-    function timer(int|string|\Carbon\CarbonInterval $seconds): PromiseInterface
+    function timer(int|string|CarbonInterval $seconds): PromiseInterface
     {
         return WorkflowStub::timer($seconds);
     }
 }
 
 if (! function_exists(__NAMESPACE__ . '\\awaitWithTimeout')) {
-    function awaitWithTimeout(int|string|\Carbon\CarbonInterval $seconds, $condition): PromiseInterface
+    function awaitWithTimeout(int|string|CarbonInterval $seconds, $condition): PromiseInterface
     {
         return WorkflowStub::awaitWithTimeout($seconds, $condition);
     }
