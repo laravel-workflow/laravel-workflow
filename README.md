@@ -32,14 +32,14 @@ There's also a [sample application](https://github.com/laravel-workflow/sample-a
 
 **1. Create a workflow.**
 ```php
-use Workflow\ActivityStub;
+use function Workflow\activity;
 use Workflow\Workflow;
 
 class MyWorkflow extends Workflow
 {
     public function execute($name)
     {
-        $result = yield ActivityStub::make(MyActivity::class, $name);
+        $result = yield activity(MyActivity::class, $name);
         return $result;
     }
 }
