@@ -80,6 +80,13 @@ if (! function_exists(__NAMESPACE__ . '\\async')) {
     }
 }
 
+if (! function_exists(__NAMESPACE__ . '\\now')) {
+    function now()
+    {
+        return WorkflowStub::now();
+    }
+}
+
 if (! function_exists(__NAMESPACE__ . '\\seconds')) {
     function seconds(int $seconds): PromiseInterface
     {

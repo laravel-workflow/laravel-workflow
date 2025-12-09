@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
-use function Workflow\child;
-use Workflow\ChildWorkflowStub;
 use Workflow\Workflow;
+use function Workflow\{all, child};
 
 final class TestParentWorkflowWithMultipleChildren extends Workflow
 {
@@ -38,7 +37,7 @@ final class TestParentWorkflowWithMultipleChildren extends Workflow
             return "wrong_order:{$child1Id},{$child2Id},{$child3Id}";
         }
 
-        $results = yield ChildWorkflowStub::all([$child1Promise, $child2Promise, $child3Promise]);
+        $results = yield all([$child1Promise, $child2Promise, $child3Promise]);
 
         return implode('|', $results);
     }

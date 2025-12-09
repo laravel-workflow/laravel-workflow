@@ -11,7 +11,7 @@ use Tests\TestCase;
 use Workflow\SignalMethod;
 use Workflow\Workflow;
 use Workflow\WorkflowStub;
-use function Workflow\{activity, all, async, await, awaitWithTimeout, child, continueAsNew, days, getVersion, hours, minutes, months, seconds, sideEffect, timer, weeks, years};
+use function Workflow\{activity, all, async, await, awaitWithTimeout, child, continueAsNew, days, getVersion, hours, minutes, months, now, seconds, sideEffect, timer, weeks, years};
 
 final class FunctionsTest extends TestCase
 {
@@ -83,6 +83,21 @@ final class FunctionsTest extends TestCase
     {
         $promise = async(static fn () => 'test');
         $this->assertInstanceOf(PromiseInterface::class, $promise);
+    }
+
+    public function testNowFunction(): void
+    {
+        $workflow = WorkflowStub::make(TestNowWorkflow::class);
+        $workflow->start();
+
+        $this->assertNull($workflow->output());
+
+        $this->travel(1)
+            ->seconds();
+        $workflow->resume();
+
+        $output = $workflow->output();
+        $this->assertSame(1, $output);
     }
 
     public function testSecondsFunction(): void
@@ -277,6 +292,20 @@ class TestAllWorkflow extends Workflow
     public function execute()
     {
         return yield all([activity(TestActivity::class), activity(TestActivity::class)]);
+    }
+}
+
+class TestNowWorkflow extends Workflow
+{
+    public function execute()
+    {
+        $start = yield sideEffect(static fn () => now());
+
+        yield timer(1);
+
+        $end = yield sideEffect(static fn () => now());
+
+        return $start->diffInSeconds($end);
     }
 }
 
