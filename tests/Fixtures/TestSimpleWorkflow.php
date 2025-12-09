@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
-use Workflow\ActivityStub;
+use function Workflow\activity;
 use Workflow\Workflow;
 
 class TestSimpleWorkflow extends Workflow
@@ -15,7 +15,7 @@ class TestSimpleWorkflow extends Workflow
 
     public function execute()
     {
-        $result = yield ActivityStub::make(TestActivity::class);
+        $result = yield activity(TestActivity::class);
 
         return 'workflow_' . $result;
     }

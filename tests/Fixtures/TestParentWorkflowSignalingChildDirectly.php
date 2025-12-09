@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
-use Workflow\ChildWorkflowStub;
+use function Workflow\child;
 use Workflow\Workflow;
 
 final class TestParentWorkflowSignalingChildDirectly extends Workflow
 {
     public function execute()
     {
-        $childPromise = ChildWorkflowStub::make(TestSimpleChildWorkflowWithSignal::class, 'direct_signaling');
+        $childPromise = child(TestSimpleChildWorkflowWithSignal::class, 'direct_signaling');
 
         $childHandle = $this->child();
 

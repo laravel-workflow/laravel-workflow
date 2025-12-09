@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
-use Workflow\ActivityStub;
+use function Workflow\activity;
 use Workflow\Workflow;
 
 final class TestNonRetryableExceptionWorkflow extends Workflow
 {
     public function execute()
     {
-        yield ActivityStub::make(TestNonRetryableExceptionActivity::class);
-        yield ActivityStub::make(TestActivity::class);
+        yield activity(TestNonRetryableExceptionActivity::class);
+        yield activity(TestActivity::class);
 
         return 'Workflow completes';
     }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
-use Workflow\ActivityStub;
+use function Workflow\activity;
 use Workflow\Workflow;
 
 class TestRetriesWorkflow extends Workflow
@@ -15,6 +15,6 @@ class TestRetriesWorkflow extends Workflow
 
     public function execute()
     {
-        yield ActivityStub::make(TestRetriesActivity::class);
+        yield activity(TestRetriesActivity::class);
     }
 }

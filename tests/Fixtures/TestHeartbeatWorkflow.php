@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
-use Workflow\ActivityStub;
+use function Workflow\activity;
 use Workflow\Workflow;
 
 final class TestHeartbeatWorkflow extends Workflow
 {
     public function execute()
     {
-        $otherResult = yield ActivityStub::make(TestOtherActivity::class, 'other');
+        $otherResult = yield activity(TestOtherActivity::class, 'other');
 
-        $result = yield ActivityStub::make(TestHeartbeatActivity::class);
+        $result = yield activity(TestHeartbeatActivity::class);
 
         return 'workflow_' . $result . '_' . $otherResult;
     }

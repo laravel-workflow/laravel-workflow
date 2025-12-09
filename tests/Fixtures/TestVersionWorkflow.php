@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
-use Workflow\ActivityStub;
 use Workflow\Workflow;
 use Workflow\WorkflowStub;
+use function Workflow\{activity, getVersion};
 
 class TestVersionWorkflow extends Workflow
 {
@@ -16,15 +16,15 @@ class TestVersionWorkflow extends Workflow
 
     public function execute()
     {
-        $version = yield WorkflowStub::getVersion('step-1', WorkflowStub::DEFAULT_VERSION, 2);
+        $version = yield getVersion('step-1', WorkflowStub::DEFAULT_VERSION, 2);
 
         $result = match ($version) {
-            WorkflowStub::DEFAULT_VERSION => yield ActivityStub::make(TestVersionedActivityV1::class),
-            1 => yield ActivityStub::make(TestVersionedActivityV2::class),
-            2 => yield ActivityStub::make(TestVersionedActivityV3::class),
+            WorkflowStub::DEFAULT_VERSION => yield activity(TestVersionedActivityV1::class),
+            1 => yield activity(TestVersionedActivityV2::class),
+            2 => yield activity(TestVersionedActivityV3::class),
         };
 
-        $version2 = yield WorkflowStub::getVersion('step-2', WorkflowStub::DEFAULT_VERSION, 1);
+        $version2 = yield getVersion('step-2', WorkflowStub::DEFAULT_VERSION, 1);
 
         $result2 = $version2 === WorkflowStub::DEFAULT_VERSION
             ? 'old_path'

@@ -5,10 +5,9 @@ declare(strict_types=1);
 namespace Tests\Fixtures;
 
 use Throwable;
-use Workflow\ActivityStub;
 use Workflow\SignalMethod;
 use Workflow\Workflow;
-use Workflow\WorkflowStub;
+use function Workflow\{activity, await};
 
 class TestSignalExceptionWorkflow extends Workflow
 {
@@ -25,11 +24,11 @@ class TestSignalExceptionWorkflow extends Workflow
         $shouldThrow = true;
         while (true) {
             try {
-                yield ActivityStub::make(TestActivity::class);
-                yield ActivityStub::make(TestSingleTryExceptionActivity::class, $shouldThrow);
+                yield activity(TestActivity::class);
+                yield activity(TestSingleTryExceptionActivity::class, $shouldThrow);
                 return true;
             } catch (Throwable) {
-                yield WorkflowStub::await(fn () => $this->shouldRetry);
+                yield await(fn () => $this->shouldRetry);
                 $this->shouldRetry = false;
                 $shouldThrow = false;
             }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
-use Workflow\ActivityStub;
+use function Workflow\activity;
 use Workflow\Workflow;
 
 class TestSagaWorkflow extends Workflow
@@ -12,11 +12,11 @@ class TestSagaWorkflow extends Workflow
     public function execute($shouldThrow = false)
     {
         try {
-            yield ActivityStub::make(TestActivity::class);
-            $this->addCompensation(static fn () => ActivityStub::make(TestUndoActivity::class));
+            yield activity(TestActivity::class);
+            $this->addCompensation(static fn () => activity(TestUndoActivity::class));
 
-            yield ActivityStub::make(TestSagaActivity::class);
-            $this->addCompensation(static fn () => ActivityStub::make(TestSagaUndoActivity::class));
+            yield activity(TestSagaActivity::class);
+            $this->addCompensation(static fn () => activity(TestSagaUndoActivity::class));
         } catch (\Throwable $th) {
             yield from $this->compensate();
             if ($shouldThrow) {

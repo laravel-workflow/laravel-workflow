@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
-use Workflow\ActivityStub;
-use Workflow\ChildWorkflowStub;
 use Workflow\Workflow;
+use function Workflow\{activity, child};
 
 class TestParentExceptionWorkflow extends Workflow
 {
@@ -16,9 +15,9 @@ class TestParentExceptionWorkflow extends Workflow
 
     public function execute($shouldThrow = false)
     {
-        $otherResult = yield ChildWorkflowStub::make(TestChildExceptionWorkflow::class, $shouldThrow);
+        $otherResult = yield child(TestChildExceptionWorkflow::class, $shouldThrow);
 
-        $result = yield ActivityStub::make(TestActivity::class);
+        $result = yield activity(TestActivity::class);
 
         return 'workflow_' . $result . '_' . $otherResult;
     }

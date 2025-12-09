@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Fixtures;
 
 use Exception;
-use Workflow\ActivityStub;
+use function Workflow\activity;
 use Workflow\Workflow;
 
 class TestChildExceptionWorkflow extends Workflow
@@ -20,7 +20,7 @@ class TestChildExceptionWorkflow extends Workflow
             throw new Exception('failed');
         }
 
-        $otherResult = yield ActivityStub::make(TestOtherActivity::class, 'other');
+        $otherResult = yield activity(TestOtherActivity::class, 'other');
 
         return $otherResult;
     }
