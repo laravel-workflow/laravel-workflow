@@ -40,6 +40,7 @@ class MyWorkflow extends Workflow
     public function execute($name)
     {
         $result = yield activity(MyActivity::class, $name);
+
         return $result;
     }
 }
@@ -64,7 +65,9 @@ use Workflow\WorkflowStub;
 
 $workflow = WorkflowStub::make(MyWorkflow::class);
 $workflow->start('world');
-while ($workflow->running());
+```
+
+```php
 $workflow->output();
 => 'Hello, world!'
 ```
