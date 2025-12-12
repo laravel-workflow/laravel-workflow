@@ -30,7 +30,7 @@ There's also a [sample application](https://github.com/laravel-workflow/sample-a
 
 ## Usage
 
-**1. Create a workflow.**
+**1. Create a workflow**
 ```php
 use function Workflow\activity;
 use Workflow\Workflow;
@@ -46,7 +46,7 @@ class MyWorkflow extends Workflow
 }
 ```
 
-**2. Create an activity.**
+**2. Create an activity**
 ```php
 use Workflow\Activity;
 
@@ -59,7 +59,7 @@ class MyActivity extends Activity
 }
 ```
 
-**3. Run the workflow.**
+**3. Run the workflow**
 ```php
 use Workflow\WorkflowStub;
 
