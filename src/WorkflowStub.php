@@ -20,20 +20,32 @@ use Workflow\States\WorkflowFailedStatus;
 use Workflow\States\WorkflowPendingStatus;
 use Workflow\Traits\Awaits;
 use Workflow\Traits\AwaitWithTimeouts;
+use Workflow\Traits\Continues;
 use Workflow\Traits\Fakes;
 use Workflow\Traits\SideEffects;
 use Workflow\Traits\Timers;
+use Workflow\Traits\Versions;
 
 final class WorkflowStub
 {
     use Awaits;
     use AwaitWithTimeouts;
+    use Continues;
     use Fakes;
     use Macroable;
     use SideEffects;
     use Timers;
+    use Versions;
+
+    public const DEFAULT_VERSION = -1;
 
     private static ?\stdClass $context = null;
+
+    private static array $signalMethodCache = [];
+
+    private static array $queryMethodCache = [];
+
+    private static array $defaultPropertiesCache = [];
 
     private function __construct(
         protected $storedWorkflow
@@ -48,37 +60,31 @@ final class WorkflowStub
 
     public function __call($method, $arguments)
     {
-        if (collect((new ReflectionClass($this->storedWorkflow->class))->getMethods())
-            ->filter(static fn ($method): bool => collect($method->getAttributes())
-                ->contains(static fn ($attribute): bool => $attribute->getName() === SignalMethod::class))
-            ->map(static fn ($method) => $method->getName())
-            ->contains($method)
-        ) {
-            $this->storedWorkflow->signals()
+        if (self::isSignalMethod($this->storedWorkflow->class, $method)) {
+            $activeWorkflow = $this->storedWorkflow->active();
+
+            $activeWorkflow->signals()
                 ->create([
                     'method' => $method,
                     'arguments' => Serializer::serialize($arguments),
                 ]);
 
-            $this->storedWorkflow->toWorkflow();
+            $activeWorkflow->toWorkflow();
 
             if (static::faked()) {
                 $this->resume();
                 return;
             }
 
-            return Signal::dispatch($this->storedWorkflow, self::connection(), self::queue());
+            return Signal::dispatch($activeWorkflow, self::connection(), self::queue());
         }
 
-        if (collect((new ReflectionClass($this->storedWorkflow->class))->getMethods())
-            ->filter(static fn ($method): bool => collect($method->getAttributes())
-                ->contains(static fn ($attribute): bool => $attribute->getName() === QueryMethod::class))
-            ->map(static fn ($method) => $method->getName())
-            ->contains($method)
-        ) {
-            return (new $this->storedWorkflow->class(
-                $this->storedWorkflow,
-                ...Serializer::unserialize($this->storedWorkflow->arguments),
+        if (self::isQueryMethod($this->storedWorkflow->class, $method)) {
+            $activeWorkflow = $this->storedWorkflow->active();
+
+            return (new $activeWorkflow->class(
+                $activeWorkflow,
+                ...Serializer::unserialize($activeWorkflow->arguments),
             ))
                 ->query($method);
         }
@@ -86,15 +92,21 @@ final class WorkflowStub
 
     public static function connection()
     {
-        return Arr::get(
-            (new ReflectionClass(self::$context->storedWorkflow->class))->getDefaultProperties(),
-            'connection'
-        );
+        return Arr::get(self::getDefaultProperties(self::$context->storedWorkflow->class), 'connection');
     }
 
     public static function queue()
     {
-        return Arr::get((new ReflectionClass(self::$context->storedWorkflow->class))->getDefaultProperties(), 'queue');
+        return Arr::get(self::getDefaultProperties(self::$context->storedWorkflow->class), 'queue');
+    }
+
+    public static function getDefaultProperties(string $class): array
+    {
+        if (! isset(self::$defaultPropertiesCache[$class])) {
+            self::$defaultPropertiesCache[$class] = (new ReflectionClass($class))->getDefaultProperties();
+        }
+
+        return self::$defaultPropertiesCache[$class];
     }
 
     public static function make($class): static
@@ -140,21 +152,25 @@ final class WorkflowStub
 
     public function logs()
     {
-        return $this->storedWorkflow->logs;
+        return $this->storedWorkflow->active()
+            ->logs;
     }
 
     public function exceptions()
     {
-        return $this->storedWorkflow->exceptions;
+        return $this->storedWorkflow->active()
+            ->exceptions;
     }
 
     public function output()
     {
-        if ($this->storedWorkflow->fresh()->output === null) {
+        $activeWorkflow = $this->storedWorkflow->active();
+
+        if ($activeWorkflow->output === null) {
             return null;
         }
 
-        return Serializer::unserialize($this->storedWorkflow->fresh()->output);
+        return Serializer::unserialize($activeWorkflow->output);
     }
 
     public function completed(): bool
@@ -179,7 +195,7 @@ final class WorkflowStub
 
     public function status(): string|bool
     {
-        return $this->storedWorkflow->fresh()
+        return $this->storedWorkflow->active()
             ->status::class;
     }
 
@@ -252,7 +268,7 @@ final class WorkflowStub
             });
     }
 
-    public function next($index, $now, $class, $result): void
+    public function next($index, $now, $class, $result, bool $shouldSignal = true): void
     {
         try {
             $this->storedWorkflow->logs()
@@ -266,7 +282,43 @@ final class WorkflowStub
             // already logged
         }
 
-        $this->dispatch();
+        if ($shouldSignal) {
+            $this->dispatch();
+        }
+    }
+
+    private static function isSignalMethod(string $class, string $method): bool
+    {
+        if (! isset(self::$signalMethodCache[$class])) {
+            self::$signalMethodCache[$class] = [];
+            foreach ((new ReflectionClass($class))->getMethods() as $reflectionMethod) {
+                foreach ($reflectionMethod->getAttributes() as $attribute) {
+                    if ($attribute->getName() === SignalMethod::class) {
+                        self::$signalMethodCache[$class][$reflectionMethod->getName()] = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return self::$signalMethodCache[$class][$method] ?? false;
+    }
+
+    private static function isQueryMethod(string $class, string $method): bool
+    {
+        if (! isset(self::$queryMethodCache[$class])) {
+            self::$queryMethodCache[$class] = [];
+            foreach ((new ReflectionClass($class))->getMethods() as $reflectionMethod) {
+                foreach ($reflectionMethod->getAttributes() as $attribute) {
+                    if ($attribute->getName() === QueryMethod::class) {
+                        self::$queryMethodCache[$class][$reflectionMethod->getName()] = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return self::$queryMethodCache[$class][$method] ?? false;
     }
 
     private function dispatch(): void

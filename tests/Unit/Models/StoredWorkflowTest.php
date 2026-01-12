@@ -5,8 +5,14 @@ declare(strict_types=1);
 namespace Tests\Unit\Models;
 
 use Illuminate\Support\Carbon;
+use Tests\Fixtures\TestContinueAsNewWorkflow;
+use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
 use Workflow\Models\StoredWorkflow;
+use Workflow\Serializers\Serializer;
+use Workflow\States\WorkflowContinuedStatus;
+use Workflow\States\WorkflowRunningStatus;
+use Workflow\WorkflowStub;
 
 final class StoredWorkflowTest extends TestCase
 {
@@ -69,5 +75,178 @@ final class StoredWorkflowTest extends TestCase
         $this->assertSame(0, $workflow->signals()->count());
         $this->assertSame(0, $workflow->timers()->count());
         $this->assertSame(0, $workflow->children()->count());
+    }
+
+    public function testContinuedWorkflows(): void
+    {
+        $parentWorkflow = StoredWorkflow::create([
+            'class' => 'ParentWorkflow',
+            'status' => 'continued',
+        ]);
+
+        $continuedWorkflow = StoredWorkflow::create([
+            'class' => 'ContinuedWorkflow',
+            'status' => 'completed',
+        ]);
+
+        $continuedWorkflow->parents()
+            ->attach($parentWorkflow, [
+                'parent_index' => StoredWorkflow::CONTINUE_PARENT_INDEX,
+                'parent_now' => now(),
+            ]);
+
+        $result = $parentWorkflow->continuedWorkflows();
+
+        $this->assertSame(1, $parentWorkflow->continuedWorkflows()->count());
+        $this->assertSame($continuedWorkflow->id, $parentWorkflow->continuedWorkflows()->first()->id);
+    }
+
+    public function testActiveWithContinuedWorkflow(): void
+    {
+        $parentWorkflow = StoredWorkflow::create([
+            'class' => 'ParentWorkflow',
+            'status' => WorkflowContinuedStatus::class,
+        ]);
+
+        $continuedWorkflow = StoredWorkflow::create([
+            'class' => 'ContinuedWorkflow',
+            'status' => 'completed',
+        ]);
+
+        $continuedWorkflow->parents()
+            ->attach($parentWorkflow, [
+                'parent_index' => StoredWorkflow::CONTINUE_PARENT_INDEX,
+                'parent_now' => now(),
+            ]);
+
+        $parentWorkflow->children()
+            ->attach($continuedWorkflow, [
+                'parent_index' => StoredWorkflow::ACTIVE_WORKFLOW_INDEX,
+                'parent_now' => now(),
+            ]);
+
+        $active = $parentWorkflow->active();
+
+        $this->assertSame($continuedWorkflow->id, $active->id);
+    }
+
+    public function testActiveWithShortcut(): void
+    {
+        $rootWorkflow = StoredWorkflow::create([
+            'class' => 'RootWorkflow',
+            'status' => WorkflowContinuedStatus::class,
+        ]);
+
+        $activeWorkflow = StoredWorkflow::create([
+            'class' => 'ActiveWorkflow',
+            'status' => 'completed',
+        ]);
+
+        $rootWorkflow->children()
+            ->attach($activeWorkflow, [
+                'parent_index' => StoredWorkflow::ACTIVE_WORKFLOW_INDEX,
+                'parent_now' => now(),
+            ]);
+
+        $active = $rootWorkflow->active();
+
+        $this->assertSame($activeWorkflow->id, $active->id);
+    }
+
+    public function testActiveWorkflowShortcutTransferOnContinue(): void
+    {
+        $rootWorkflow = StoredWorkflow::create([
+            'class' => TestWorkflow::class,
+            'arguments' => Serializer::serialize([]),
+            'status' => WorkflowRunningStatus::class,
+        ]);
+
+        $intermediateWorkflow = StoredWorkflow::create([
+            'class' => TestContinueAsNewWorkflow::class,
+            'arguments' => Serializer::serialize([1, 3]),
+            'status' => WorkflowRunningStatus::class,
+        ]);
+
+        $intermediateWorkflow->parents()
+            ->attach($rootWorkflow->id, [
+                'parent_index' => StoredWorkflow::ACTIVE_WORKFLOW_INDEX,
+                'parent_now' => now(),
+            ]);
+
+        WorkflowStub::setContext([
+            'storedWorkflow' => $intermediateWorkflow,
+            'index' => 0,
+            'now' => now(),
+            'replaying' => false,
+        ]);
+
+        WorkflowStub::continueAsNew(2, 3);
+
+        $this->assertSame(1, $intermediateWorkflow->continuedWorkflows()->count());
+        $newWorkflow = $intermediateWorkflow->continuedWorkflows()
+            ->first();
+
+        $activeParent = $newWorkflow->parents()
+            ->wherePivot('parent_index', StoredWorkflow::ACTIVE_WORKFLOW_INDEX)
+            ->first();
+
+        $this->assertNotNull($activeParent);
+        $this->assertSame($rootWorkflow->id, $activeParent->id);
+    }
+
+    public function testActiveWorkflowWithMultipleContinuations(): void
+    {
+        $rootWorkflow = StoredWorkflow::create([
+            'class' => 'RootWorkflow',
+            'status' => WorkflowContinuedStatus::class,
+        ]);
+
+        $intermediateWorkflow = StoredWorkflow::create([
+            'class' => 'IntermediateWorkflow',
+            'status' => WorkflowContinuedStatus::class,
+        ]);
+
+        $finalWorkflow = StoredWorkflow::create([
+            'class' => 'FinalWorkflow',
+            'status' => 'completed',
+        ]);
+
+        $intermediateWorkflow->parents()
+            ->attach($rootWorkflow, [
+                'parent_index' => StoredWorkflow::CONTINUE_PARENT_INDEX,
+                'parent_now' => now(),
+            ]);
+
+        $finalWorkflow->parents()
+            ->attach($intermediateWorkflow, [
+                'parent_index' => StoredWorkflow::CONTINUE_PARENT_INDEX,
+                'parent_now' => now(),
+            ]);
+
+        $rootWorkflow->children()
+            ->attach($finalWorkflow, [
+                'parent_index' => StoredWorkflow::ACTIVE_WORKFLOW_INDEX,
+                'parent_now' => now(),
+            ]);
+
+        $active = $rootWorkflow->active();
+
+        $this->assertSame($finalWorkflow->id, $active->id);
+    }
+
+    public function testActiveWithContinuedStatusButNoActiveChild(): void
+    {
+        $workflow = StoredWorkflow::create([
+            'class' => 'TestWorkflow',
+            'status' => WorkflowRunningStatus::class,
+            'arguments' => json_encode([]),
+        ]);
+
+        $workflow->status->transitionTo(WorkflowContinuedStatus::class);
+
+        $active = $workflow->active();
+
+        $this->assertNotNull($active);
+        $this->assertSame($workflow->id, $active->id);
     }
 }

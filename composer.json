@@ -6,7 +6,10 @@
     "autoload": {
         "psr-4": {
             "Workflow\\": "src/"
-        }
+        },
+        "files": [
+            "src/functions.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
@@ -22,6 +25,7 @@
         "feature": "phpunit --testdox --testsuite feature",
         "unit": "phpunit --testdox --testsuite unit",
         "test": "phpunit --testdox",
+        "coverage": "XDEBUG_MODE=coverage phpunit --testdox --testsuite unit --coverage-clover coverage.xml",
         "post-autoload-dump": [
             "@clear",
             "@prepare"
@@ -53,7 +57,6 @@
     "require-dev": {
         "orchestra/testbench": "^8.0",
         "phpstan/phpstan": "^2.0",
-        "scrutinizer/ocular": "dev-master",
         "symplify/easy-coding-standard": "^11.0"
     },
     "extra": {

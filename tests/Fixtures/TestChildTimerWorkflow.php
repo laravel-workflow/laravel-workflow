@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
-use Workflow\ActivityStub;
 use Workflow\Workflow;
-use Workflow\WorkflowStub;
+use function Workflow\{activity, timer};
 
 class TestChildTimerWorkflow extends Workflow
 {
@@ -16,9 +15,9 @@ class TestChildTimerWorkflow extends Workflow
 
     public function execute($seconds = 1)
     {
-        $otherResult = yield ActivityStub::make(TestOtherActivity::class, 'other');
+        $otherResult = yield activity(TestOtherActivity::class, 'other');
 
-        yield WorkflowStub::timer($seconds);
+        yield timer($seconds);
 
         return $otherResult;
     }

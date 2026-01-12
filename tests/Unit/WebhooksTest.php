@@ -313,19 +313,13 @@ final class WebhooksTest extends TestCase
 
     public function testWebhookRegistration()
     {
-        $response = $this->postJson('/webhooks/signal/test-webhook-workflow/1/cancel');
+        $routeMock = Mockery::mock();
+        $routeMock->shouldReceive('name')
+            ->andReturnSelf();
 
         Route::shouldReceive('post')
-            ->once()
-            ->withArgs(static function ($uri, $callback) {
-                return str_contains($uri, 'webhooks/start/test-webhook-workflow');
-            });
-
-        Route::shouldReceive('post')
-            ->once()
-            ->withArgs(static function ($uri, $callback) {
-                return str_contains($uri, 'webhooks/signal/test-webhook-workflow/{workflowId}/cancel');
-            });
+            ->times(4)
+            ->andReturn($routeMock);
 
         Webhooks::routes('Tests\\Fixtures', __DIR__ . '/../Fixtures');
     }

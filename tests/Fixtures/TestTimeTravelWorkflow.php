@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
-use Workflow\ActivityStub;
 use Workflow\QueryMethod;
 use Workflow\SignalMethod;
 use Workflow\Workflow;
-use Workflow\WorkflowStub;
+use function Workflow\{activity, await, minutes};
 
 class TestTimeTravelWorkflow extends Workflow
 {
@@ -28,13 +27,13 @@ class TestTimeTravelWorkflow extends Workflow
 
     public function execute()
     {
-        $otherResult = yield ActivityStub::make(TestOtherActivity::class, 'other');
+        $otherResult = yield activity(TestOtherActivity::class, 'other');
 
-        yield WorkflowStub::await(fn (): bool => $this->canceled);
+        yield await(fn (): bool => $this->canceled);
 
-        $result = yield ActivityStub::make(TestActivity::class);
+        $result = yield activity(TestActivity::class);
 
-        yield WorkflowStub::timer(60);
+        yield minutes(1);
 
         return 'workflow_' . $result . '_' . $otherResult;
     }

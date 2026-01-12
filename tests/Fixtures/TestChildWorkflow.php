@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
-use Workflow\ActivityStub;
+use function Workflow\activity;
 use Workflow\Workflow;
 
 class TestChildWorkflow extends Workflow
 {
     public function execute()
     {
-        $otherResult = yield ActivityStub::make(TestOtherActivity::class, 'other');
+        $otherResult = yield activity(TestOtherActivity::class, 'other');
 
         return $otherResult;
     }

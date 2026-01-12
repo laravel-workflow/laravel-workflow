@@ -13,7 +13,7 @@ use Workflow\Signal;
 
 trait AwaitWithTimeouts
 {
-    public static function awaitWithTimeout($seconds, $condition): PromiseInterface
+    public static function awaitWithTimeout(int|string|CarbonInterval $seconds, $condition): PromiseInterface
     {
         $log = self::$context->storedWorkflow->logs()
             ->whereIndex(self::$context->index)
@@ -22,10 +22,6 @@ trait AwaitWithTimeouts
         if ($log) {
             ++self::$context->index;
             return resolve(Serializer::unserialize($log->result));
-        }
-
-        if (is_string($seconds)) {
-            $seconds = CarbonInterval::fromString($seconds)->totalSeconds;
         }
 
         $result = $condition();
@@ -49,6 +45,8 @@ trait AwaitWithTimeouts
                         ++self::$context->index;
                         return resolve(Serializer::unserialize($log->result));
                     }
+
+                    throw $exception;
                 }
             }
             ++self::$context->index;

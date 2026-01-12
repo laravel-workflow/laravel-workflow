@@ -13,7 +13,7 @@ final class CreateWorkflowRelationshipsTable extends Migration
      */
     public function up(): void
     {
-        Schema::create('workflow_relationships', static function (Blueprint $blueprint) {
+        Schema::create('workflow_relationships', static function (Blueprint $blueprint): void {
             $blueprint->id('id');
             $blueprint->foreignId('parent_workflow_id')
                 ->nullable()

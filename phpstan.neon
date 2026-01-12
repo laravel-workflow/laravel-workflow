@@ -1,4 +1,2 @@
 parameters:
     level: 0
-    bootstrapFiles:
-        - tests/classAliases.php

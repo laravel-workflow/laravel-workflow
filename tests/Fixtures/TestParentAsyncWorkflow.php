@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
-use Workflow\ActivityStub;
-use Workflow\ChildWorkflowStub;
 use Workflow\Workflow;
+use function Workflow\{activity, async, child};
 
 class TestParentAsyncWorkflow extends Workflow
 {
@@ -16,10 +15,10 @@ class TestParentAsyncWorkflow extends Workflow
 
     public function execute()
     {
-        $results = yield ActivityStub::async(static function () {
-            $otherResult = yield ChildWorkflowStub::make(TestChildWorkflow::class);
+        $results = yield async(static function () {
+            $otherResult = yield child(TestChildWorkflow::class);
 
-            $result = yield ActivityStub::make(TestActivity::class);
+            $result = yield activity(TestActivity::class);
 
             return [$otherResult, $result];
         });

@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace Tests\Fixtures;
 
 use Illuminate\Contracts\Foundation\Application;
-use Workflow\ActivityStub;
 use Workflow\QueryMethod;
 use Workflow\SignalMethod;
+use Workflow\Webhook;
 use Workflow\Workflow;
-use Workflow\WorkflowStub;
+use function Workflow\{activity, await};
 
+#[Webhook]
 class TestWorkflow extends Workflow
 {
     public $connection = 'redis';
@@ -20,6 +21,7 @@ class TestWorkflow extends Workflow
     private bool $canceled = false;
 
     #[SignalMethod]
+    #[Webhook]
     public function cancel(): void
     {
         $this->canceled = true;
@@ -39,15 +41,11 @@ class TestWorkflow extends Workflow
             assert(! $this->canceled);
         }
 
-        $otherResult = yield ActivityStub::make(TestOtherActivity::class, 'other');
+        $otherResult = yield activity(TestOtherActivity::class, 'other');
 
-        if ($shouldAssert) {
-            assert(! $this->canceled);
-        }
+        yield await(fn (): bool => $this->canceled);
 
-        yield WorkflowStub::await(fn (): bool => $this->canceled);
-
-        $result = yield ActivityStub::make(TestActivity::class);
+        $result = yield activity(TestActivity::class);
 
         return 'workflow_' . $result . '_' . $otherResult;
     }

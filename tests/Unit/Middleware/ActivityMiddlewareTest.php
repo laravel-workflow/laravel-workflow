@@ -6,6 +6,7 @@ namespace Tests\Unit\Middleware;
 
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use Mockery\MockInterface;
@@ -31,6 +32,8 @@ final class ActivityMiddlewareTest extends TestCase
         Event::fake();
         Queue::fake();
 
+        Cache::flush();
+
         $workflow = WorkflowStub::make(TestWorkflow::class);
         $workflow->start();
 
@@ -38,6 +41,8 @@ final class ActivityMiddlewareTest extends TestCase
         $storedWorkflow->update([
             'status' => WorkflowWaitingStatus::class,
         ]);
+
+        Cache::flush();
 
         $activity = $this->mock(TestActivity::class);
         $activity->index = 0;
@@ -51,6 +56,9 @@ final class ActivityMiddlewareTest extends TestCase
             return true;
         });
 
+        $this->assertTrue(isset($activity->onUnlock));
+        ($activity->onUnlock)(true);
+
         Event::assertDispatched(ActivityStarted::class);
         Event::assertDispatched(ActivityCompleted::class);
         Queue::assertPushed(TestWorkflow::class, 2);
@@ -60,6 +68,8 @@ final class ActivityMiddlewareTest extends TestCase
     {
         Event::fake();
         Queue::fake();
+
+        Cache::flush();
 
         $workflow = WorkflowStub::make(TestWorkflow::class);
         $workflow->start();
@@ -81,6 +91,9 @@ final class ActivityMiddlewareTest extends TestCase
             return true;
         });
 
+        $this->assertTrue(isset($activity->onUnlock));
+        ($activity->onUnlock)(true);
+
         Event::assertDispatched(ActivityStarted::class);
         Event::assertNotDispatched(ActivityCompleted::class);
         Event::assertNotDispatched(ActivityFailed::class);
@@ -92,6 +105,8 @@ final class ActivityMiddlewareTest extends TestCase
         Event::fake();
         Queue::fake();
 
+        Cache::flush();
+
         $workflow = WorkflowStub::make(TestWorkflow::class);
         $workflow->start();
 
@@ -99,6 +114,8 @@ final class ActivityMiddlewareTest extends TestCase
         $storedWorkflow->update([
             'status' => WorkflowRunningStatus::class,
         ]);
+
+        Cache::flush();
 
         $activity = $this->mock(TestActivity::class, static function (MockInterface $mock) {
             $mock->shouldReceive('release')
@@ -114,6 +131,9 @@ final class ActivityMiddlewareTest extends TestCase
         $middleware->handle($activity, static function ($job) {
             return true;
         });
+
+        $this->assertTrue(isset($activity->onUnlock));
+        ($activity->onUnlock)(true);
 
         Event::assertDispatched(ActivityStarted::class);
         Event::assertNotDispatched(ActivityCompleted::class);
@@ -133,6 +153,8 @@ final class ActivityMiddlewareTest extends TestCase
         $storedWorkflow->update([
             'status' => WorkflowWaitingStatus::class,
         ]);
+
+        Cache::flush();
 
         $activity = $this->mock(TestActivity::class);
         $activity->index = 0;
@@ -167,6 +189,8 @@ final class ActivityMiddlewareTest extends TestCase
         $storedWorkflow->update([
             'status' => WorkflowWaitingStatus::class,
         ]);
+
+        Cache::flush();
 
         $activity = $this->mock(TestActivity::class);
         $activity->index = 0;
@@ -221,6 +245,9 @@ final class ActivityMiddlewareTest extends TestCase
         $middleware->handle($activity, static function ($job) {
             return true;
         });
+
+        $this->assertTrue(isset($activity->onUnlock));
+        ($activity->onUnlock)(true);
 
         $this->assertSame(WorkflowFailedStatus::class, $workflow->status());
 

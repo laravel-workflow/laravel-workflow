@@ -18,6 +18,7 @@ abstract class WorkflowStatus extends State
             ->allowTransition(WorkflowPendingStatus::class, WorkflowFailedStatus::class)
             ->allowTransition(WorkflowPendingStatus::class, WorkflowRunningStatus::class)
             ->allowTransition(WorkflowRunningStatus::class, WorkflowCompletedStatus::class)
+            ->allowTransition(WorkflowRunningStatus::class, WorkflowContinuedStatus::class)
             ->allowTransition(WorkflowRunningStatus::class, WorkflowFailedStatus::class)
             ->allowTransition(WorkflowRunningStatus::class, WorkflowWaitingStatus::class)
             ->allowTransition(WorkflowWaitingStatus::class, WorkflowFailedStatus::class)

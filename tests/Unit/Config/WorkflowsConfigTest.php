@@ -16,7 +16,6 @@ final class WorkflowsConfigTest extends TestCase
 
         $expectedConfig = [
             'workflows_folder' => 'Workflows',
-            'base_model' => \Illuminate\Database\Eloquent\Model::class,
             'stored_workflow_model' => \Workflow\Models\StoredWorkflow::class,
             'stored_workflow_exception_model' => \Workflow\Models\StoredWorkflowException::class,
             'stored_workflow_log_model' => \Workflow\Models\StoredWorkflowLog::class,

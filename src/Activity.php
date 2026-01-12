@@ -8,10 +8,10 @@ use BadMethodCallException;
 use Illuminate\Bus\Queueable;
 use Illuminate\Container\Container;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Routing\RouteDependencyResolverTrait;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Cache;
@@ -24,8 +24,9 @@ use Workflow\Middleware\ActivityMiddleware;
 use Workflow\Middleware\WithoutOverlappingMiddleware;
 use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Serializer;
+use Workflow\Traits\SerializesModels;
 
-class Activity implements ShouldBeEncrypted, ShouldQueue
+class Activity implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
@@ -69,6 +70,11 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
         return [1, 2, 5, 10, 15, 30, 60, 120];
     }
 
+    public function uniqueId()
+    {
+        return $this->storedWorkflow->id . ':' . $this->index;
+    }
+
     public function workflowId()
     {
         return $this->storedWorkflow->id;
@@ -76,13 +82,16 @@ class Activity implements ShouldBeEncrypted, ShouldQueue
 
     public function webhookUrl(string $signalMethod = ''): string
     {
-        $basePath = config('workflows.webhooks_route', '/webhooks');
+        $workflow = Str::kebab(class_basename($this->storedWorkflow->class));
+
         if ($signalMethod === '') {
-            $workflow = Str::kebab(class_basename($this->storedWorkflow->class));
-            return url("{$basePath}/{$workflow}");
+            return route("workflows.start.{$workflow}");
         }
+
         $signal = Str::kebab($signalMethod);
-        return url("{$basePath}/signal/{$this->storedWorkflow->id}/{$signal}");
+        return route("workflows.signal.{$workflow}.{$signal}", [
+            'workflowId' => $this->storedWorkflow->id,
+        ]);
     }
 
     public function handle()

@@ -13,9 +13,11 @@ use Workflow\Signal;
 
 trait Timers
 {
-    public static function timer($seconds): PromiseInterface
+    public static function timer(int|string|CarbonInterval $seconds): PromiseInterface
     {
-        if (is_string($seconds)) {
+        if ($seconds instanceof CarbonInterval) {
+            $seconds = $seconds->totalSeconds;
+        } elseif (is_string($seconds)) {
             $seconds = CarbonInterval::fromString($seconds)->totalSeconds;
         }
 
@@ -47,6 +49,10 @@ trait Timers
                         'index' => self::$context->index,
                         'stop_at' => $when,
                     ]);
+            } else {
+                ++self::$context->index;
+                $deferred = new Deferred();
+                return $deferred->promise();
             }
         }
 
@@ -72,7 +78,19 @@ trait Timers
         }
 
         if (! self::$context->replaying) {
-            Signal::dispatch(self::$context->storedWorkflow, self::connection(), self::queue())->delay($timer->stop_at);
+            $delay = $timer->stop_at;
+
+            $connection = self::connection() ?? config('queue.default');
+            $driver = config('queue.connections.' . $connection . '.driver');
+
+            if ($driver === 'sqs') {
+                $maxDelay = self::$context->now->copy()->addSeconds(900);
+                if ($timer->stop_at->greaterThan($maxDelay)) {
+                    $delay = $maxDelay;
+                }
+            }
+
+            Signal::dispatch(self::$context->storedWorkflow, self::connection(), self::queue())->delay($delay);
         }
 
         ++self::$context->index;

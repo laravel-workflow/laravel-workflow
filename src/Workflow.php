@@ -9,10 +9,10 @@ use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Container\Container;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Routing\RouteDependencyResolverTrait;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\App;
@@ -23,11 +23,13 @@ use Workflow\Middleware\WithoutOverlappingMiddleware;
 use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Serializer;
 use Workflow\States\WorkflowCompletedStatus;
+use Workflow\States\WorkflowContinuedStatus;
 use Workflow\States\WorkflowRunningStatus;
 use Workflow\States\WorkflowWaitingStatus;
 use Workflow\Traits\Sagas;
+use Workflow\Traits\SerializesModels;
 
-class Workflow implements ShouldBeEncrypted, ShouldQueue
+class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
@@ -35,6 +37,8 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
     use RouteDependencyResolverTrait;
     use Sagas;
     use SerializesModels;
+
+    public ?string $key = null;
 
     public int $tries = 0;
 
@@ -69,6 +73,11 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
         $this->afterCommit = true;
     }
 
+    public function uniqueId()
+    {
+        return $this->storedWorkflow->id;
+    }
+
     public function query($method)
     {
         $this->replaying = true;
@@ -76,9 +85,31 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
         return $this->{$method}();
     }
 
+    public function child(): ?ChildWorkflowHandle
+    {
+        $storedChild = $this->storedWorkflow->children()
+            ->wherePivot('parent_index', '<', WorkflowStub::getContext()->index)
+            ->orderByDesc('child_workflow_id')
+            ->first();
+
+        return $storedChild ? new ChildWorkflowHandle($storedChild) : null;
+    }
+
+    public function children(): array
+    {
+        return $this->storedWorkflow->children()
+            ->wherePivot('parent_index', '<', WorkflowStub::getContext()->index)
+            ->orderByDesc('child_workflow_id')
+            ->get()
+            ->map(static fn ($child) => new ChildWorkflowHandle($child))
+            ->toArray();
+    }
+
     public function middleware()
     {
         $parentWorkflow = $this->storedWorkflow->parents()
+            ->wherePivot('parent_index', '!=', StoredWorkflow::CONTINUE_PARENT_INDEX)
+            ->wherePivot('parent_index', '!=', StoredWorkflow::ACTIVE_WORKFLOW_INDEX)
             ->first();
 
         if ($parentWorkflow) {
@@ -121,16 +152,26 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
         }
 
         $parentWorkflow = $this->storedWorkflow->parents()
+            ->wherePivot('parent_index', '!=', StoredWorkflow::CONTINUE_PARENT_INDEX)
+            ->wherePivot('parent_index', '!=', StoredWorkflow::ACTIVE_WORKFLOW_INDEX)
             ->first();
 
-        $log = $this->storedWorkflow->logs()
-            ->whereIndex($this->index)
+        $logs = $this->storedWorkflow->logs()
+            ->whereIn('index', [$this->index, $this->index + 1])
+            ->get();
+
+        $log = $logs->where('index', $this->index)
             ->first();
+
+        $nextLog = $logs->where('index', $this->index + 1)
+            ->first();
+
+        $initialSignalBound = $nextLog ? $nextLog->created_at : null;
 
         $this->storedWorkflow
             ->signals()
-            ->when($log, static function ($query, $log): void {
-                $query->where('created_at', '<=', $log->created_at->format('Y-m-d H:i:s.u'));
+            ->when($nextLog, static function ($query, $nextLog): void {
+                $query->where('created_at', '<=', $nextLog->created_at->format('Y-m-d H:i:s.u'));
             })
             ->each(function ($signal): void {
                 $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
@@ -158,8 +199,14 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
         while ($this->coroutine->valid()) {
             $this->index = WorkflowStub::getContext()->index;
 
-            $nextLog = $this->storedWorkflow->logs()
-                ->whereIndex($this->index)
+            $logs = $this->storedWorkflow->logs()
+                ->whereIn('index', [$this->index, $this->index + 1])
+                ->get();
+
+            $log = $logs->where('index', $this->index)
+                ->first();
+
+            $nextLog = $logs->where('index', $this->index + 1)
                 ->first();
 
             if ($log) {
@@ -172,9 +219,21 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
                     ->each(function ($signal): void {
                         $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
                     });
-            }
+            } elseif ($initialSignalBound) {
+                $latestLogBeforeCurrent = $this->storedWorkflow->logs()
+                    ->where('index', '<', $this->index)
+                    ->orderByDesc('index')
+                    ->first();
 
-            $log = $nextLog;
+                if ($latestLogBeforeCurrent) {
+                    $this->storedWorkflow
+                        ->signals()
+                        ->where('created_at', '>', $latestLogBeforeCurrent->created_at->format('Y-m-d H:i:s.u'))
+                        ->each(function ($signal): void {
+                            $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
+                        });
+                }
+            }
 
             $this->now = $log ? $log->now : Carbon::now();
 
@@ -189,11 +248,20 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
 
             if ($current instanceof PromiseInterface) {
                 $resolved = false;
+                $exception = null;
 
-                $current->then(function ($value) use (&$resolved): void {
+                $current->then(function ($value) use (&$resolved, &$exception): void {
                     $resolved = true;
-                    $this->coroutine->send($value);
+                    try {
+                        $this->coroutine->send($value);
+                    } catch (Throwable $th) {
+                        $exception = $th;
+                    }
                 });
+
+                if ($exception) {
+                    throw $exception;
+                }
 
                 if (! $resolved) {
                     if (! $this->replaying) {
@@ -214,6 +282,11 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
                 throw new Exception('Workflow failed.', 0, $th);
             }
 
+            if ($return instanceof ContinuedWorkflow) {
+                $this->storedWorkflow->status->transitionTo(WorkflowContinuedStatus::class);
+                return;
+            }
+
             $this->storedWorkflow->output = Serializer::serialize($return);
 
             $this->storedWorkflow->status->transitionTo(WorkflowCompletedStatus::class);
@@ -226,12 +299,18 @@ class Workflow implements ShouldBeEncrypted, ShouldQueue
             );
 
             if ($parentWorkflow) {
+                $properties = WorkflowStub::getDefaultProperties($parentWorkflow->class);
+                $connection = $properties['connection'] ?? config('queue.default');
+                $queue = $properties['queue'] ?? config('queue.connections.' . $connection . '.queue', 'default');
+
                 ChildWorkflow::dispatch(
                     $parentWorkflow->pivot->parent_index,
                     $this->now,
                     $this->storedWorkflow,
                     $return,
-                    $parentWorkflow
+                    $parentWorkflow,
+                    $connection,
+                    $queue
                 );
             }
         }

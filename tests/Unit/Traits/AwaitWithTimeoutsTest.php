@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Traits;
 
+use Mockery;
 use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
 use Workflow\Models\StoredWorkflow;
@@ -113,5 +114,42 @@ final class AwaitWithTimeoutsTest extends TestCase
             'class' => Signal::class,
         ]);
         $this->assertFalse(Serializer::unserialize($workflow->logs()->firstWhere('index', 0)->result));
+    }
+
+    public function testThrowsQueryExceptionWhenNotDuplicateKey(): void
+    {
+        $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
+        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
+
+        $mockLogs = Mockery::mock(\Illuminate\Database\Eloquent\Relations\HasMany::class)
+            ->shouldReceive('whereIndex')
+            ->twice()
+            ->andReturnSelf()
+            ->shouldReceive('first')
+            ->twice()
+            ->andReturn(null)
+            ->shouldReceive('create')
+            ->andThrow(new \Illuminate\Database\QueryException('', '', [], new \Exception('Some other error')))
+            ->getMock();
+
+        $mockStoredWorkflow = Mockery::spy($storedWorkflow);
+
+        $mockStoredWorkflow->shouldReceive('logs')
+            ->andReturnUsing(static function () use ($mockLogs) {
+                return $mockLogs;
+            });
+
+        WorkflowStub::setContext([
+            'storedWorkflow' => $mockStoredWorkflow,
+            'index' => 0,
+            'now' => now(),
+            'replaying' => false,
+        ]);
+
+        $this->expectException(\Illuminate\Database\QueryException::class);
+
+        WorkflowStub::awaitWithTimeout('1 minute', static fn () => true);
+
+        Mockery::close();
     }
 }

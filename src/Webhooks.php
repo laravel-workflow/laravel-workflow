@@ -85,7 +85,7 @@ class Webhooks
                     return response()->json([
                         'message' => 'Workflow started',
                     ]);
-                });
+                })->name("workflows.start.{$slug}");
             }
         }
     }
@@ -111,7 +111,7 @@ class Webhooks
                             'message' => 'Signal sent',
                         ]);
                     }
-                );
+                )->name("workflows.signal.{$slug}.{$signal}");
             }
         }
     }

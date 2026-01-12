@@ -1,7 +1,7 @@
 <p align="center">
 <img alt="logo" src="https://user-images.githubusercontent.com/1130888/210139313-43f0d7ed-2005-4b71-9149-540f124c2c2f.png">
 </p>
-<p align="center"><a href="https://github.com/laravel-workflow/laravel-workflow/actions/workflows/php.yml"><img src="https://img.shields.io/github/actions/workflow/status/laravel-workflow/laravel-workflow/php.yml" alt="GitHub Workflow Status"></a> <a href="https://scrutinizer-ci.com/g/laravel-workflow/laravel-workflow/?branch=master"><img src="https://img.shields.io/scrutinizer/coverage/g/laravel-workflow/laravel-workflow" alt="Scrutinizer coverage (GitHub/BitBucket)"></a> <a href="https://packagist.org/packages/laravel-workflow/laravel-workflow/stats"><img alt="Packagist Downloads (custom server)" src="https://img.shields.io/packagist/dt/laravel-workflow/laravel-workflow"></a>
+<p align="center"><a href="https://github.com/laravel-workflow/laravel-workflow/actions/workflows/php.yml"><img src="https://img.shields.io/github/actions/workflow/status/laravel-workflow/laravel-workflow/php.yml" alt="GitHub Workflow Status"></a> <a href="https://codecov.io/gh/laravel-workflow/laravel-workflow"><img alt="Codecov" src="https://img.shields.io/codecov/c/github/laravel-workflow/laravel-workflow"></a> <a href="https://packagist.org/packages/laravel-workflow/laravel-workflow/stats"><img alt="Packagist Downloads (custom server)" src="https://img.shields.io/packagist/dt/laravel-workflow/laravel-workflow"></a>
  <a href="https://laravel-workflow.com/docs/installation"><img src="https://img.shields.io/badge/docs-read%20now-brightgreen" alt="Docs"></a> <a href="https://github.com/laravel-workflow/laravel-workflow/blob/master/LICENSE"><img alt="Packagist License" src="https://img.shields.io/packagist/l/laravel-workflow/laravel-workflow?color=bright-green"></a></p>
 
 Laravel Workflow is a package for the Laravel web framework that provides tools for defining and managing workflows and activities. A workflow is a series of interconnected activities that are executed in a specific order to achieve a desired result. Activities are individual tasks or pieces of logic that are executed as part of a workflow.
@@ -30,22 +30,23 @@ There's also a [sample application](https://github.com/laravel-workflow/sample-a
 
 ## Usage
 
-**1. Create a workflow.**
+**1. Create a workflow**
 ```php
-use Workflow\ActivityStub;
+use function Workflow\activity;
 use Workflow\Workflow;
 
 class MyWorkflow extends Workflow
 {
     public function execute($name)
     {
-        $result = yield ActivityStub::make(MyActivity::class, $name);
+        $result = yield activity(MyActivity::class, $name);
+
         return $result;
     }
 }
 ```
 
-**2. Create an activity.**
+**2. Create an activity**
 ```php
 use Workflow\Activity;
 
@@ -58,13 +59,15 @@ class MyActivity extends Activity
 }
 ```
 
-**3. Run the workflow.**
+**3. Run the workflow**
 ```php
 use Workflow\WorkflowStub;
 
 $workflow = WorkflowStub::make(MyWorkflow::class);
 $workflow->start('world');
-while ($workflow->running());
+```
+
+```php
 $workflow->output();
 => 'Hello, world!'
 ```

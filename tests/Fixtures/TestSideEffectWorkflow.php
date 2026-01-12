@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace Tests\Fixtures;
 
 use Exception;
-use Workflow\ActivityStub;
 use Workflow\Workflow;
-use Workflow\WorkflowStub;
+use function Workflow\{activity, sideEffect};
 
 class TestSideEffectWorkflow extends Workflow
 {
@@ -17,15 +16,15 @@ class TestSideEffectWorkflow extends Workflow
 
     public function execute()
     {
-        $sideEffect = yield WorkflowStub::sideEffect(static fn () => random_int(PHP_INT_MIN, PHP_INT_MAX));
+        $sideEffect = yield sideEffect(static fn () => random_int(PHP_INT_MIN, PHP_INT_MAX));
 
         $badSideEffect = random_int(PHP_INT_MIN, PHP_INT_MAX);
 
-        $result = yield ActivityStub::make(TestActivity::class);
+        $result = yield activity(TestActivity::class);
 
-        $otherResult1 = yield ActivityStub::make(TestOtherActivity::class, $sideEffect);
+        $otherResult1 = yield activity(TestOtherActivity::class, $sideEffect);
 
-        $otherResult2 = yield ActivityStub::make(TestOtherActivity::class, $badSideEffect);
+        $otherResult2 = yield activity(TestOtherActivity::class, $badSideEffect);
 
         if ($sideEffect !== $otherResult1) {
             throw new Exception(

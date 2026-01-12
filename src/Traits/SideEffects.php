@@ -42,6 +42,8 @@ trait SideEffects
                     ++self::$context->index;
                     return resolve(Serializer::unserialize($log->result));
                 }
+
+                throw $exception;
             }
         }
 

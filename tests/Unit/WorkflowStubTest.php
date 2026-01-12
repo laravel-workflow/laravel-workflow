@@ -6,6 +6,7 @@ namespace Tests\Unit;
 
 use Exception;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Queue;
 use Tests\Fixtures\TestAwaitWorkflow;
 use Tests\Fixtures\TestBadConnectionWorkflow;
@@ -73,6 +74,9 @@ final class WorkflowStubTest extends TestCase
         $workflow->start();
         $workflow->cancel();
         $workflow->fail(new Exception('resume'));
+
+        Cache::flush();
+
         $workflow->resume();
         $this->assertSame('2022-01-01 00:00:00', WorkflowStub::now()->toDateTimeString());
         $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
@@ -122,10 +126,14 @@ final class WorkflowStubTest extends TestCase
 
     public function testAwaitWithTimeout(): void
     {
+        Cache::flush();
+
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $workflow->start();
         $workflow->cancel();
         while (! $workflow->isCanceled());
+
+        Cache::flush();
 
         $workflow = WorkflowStub::load($workflow->id());
 
@@ -165,6 +173,8 @@ final class WorkflowStubTest extends TestCase
         $workflow->start();
         $workflow->cancel();
         while (! $workflow->isCanceled());
+
+        Cache::flush();
 
         $this->assertSame(1, $workflow->logs()->count());
         $this->assertSame(1, WorkflowStub::getContext()->index);
@@ -235,6 +245,8 @@ final class WorkflowStubTest extends TestCase
             ]);
 
         $workflow = $storedWorkflow->toWorkflow();
+
+        Cache::flush();
 
         $workflow->next(0, now(), Signal::class, true);
 

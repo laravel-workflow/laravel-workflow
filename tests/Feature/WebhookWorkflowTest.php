@@ -39,6 +39,8 @@ final class WebhookWorkflowTest extends TestCase
 
         $workflow = WorkflowStub::load(1);
 
+        sleep(1);
+
         $workflow->cancel();
 
         while (! $workflow->isCanceled());
