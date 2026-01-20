@@ -72,6 +72,13 @@ $workflow->output();
 => 'Hello, world!'
 ```
 
+## Sponsors
+
+Laravel Workflow is sustained by the community via sponsors and volunteers.
+
+- <a href="https://freispace.com" target="_blank" rel="noopener sponsored">Freispace Resource Scheduling</a>
+- <a href="https://github.com/hnccox" target="_blank" rel="noopener sponsored">Hugo Cox</a>
+
 ## Monitoring
 
 [Waterline](https://github.com/laravel-workflow/waterline) is a separate UI that works nicely alongside Horizon. Think of Waterline as being to workflows what Horizon is to queues.
@@ -85,6 +92,5 @@ $workflow->output();
 ![workflow](https://user-images.githubusercontent.com/1130888/202866616-98a214d3-a916-4ae1-952e-ca8267ddf4a7.png)
 
 Refer to https://github.com/laravel-workflow/waterline for installation and configuration instructions.
-
 
 <sub><sup>"Laravel" is a registered trademark of Taylor Otwell. This project is not affiliated, associated, endorsed, or sponsored by Taylor Otwell, nor has it been reviewed, tested, or certified by Taylor Otwell. The use of the trademark "Laravel" is for informational and descriptive purposes only. Laravel Workflow is not officially related to the Laravel trademark or Taylor Otwell.</sup></sub>
