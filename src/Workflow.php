@@ -54,12 +54,16 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 
     public bool $replaying = false;
 
+    public Inbox $inbox;
+
     private Container $container;
 
     public function __construct(
         public StoredWorkflow $storedWorkflow,
         ...$arguments
     ) {
+        $this->inbox = new Inbox();
+
         $this->arguments = $arguments;
 
         if (property_exists($this, 'connection')) {
