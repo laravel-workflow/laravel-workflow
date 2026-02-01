@@ -11,18 +11,10 @@ use function Workflow\{activity, await};
 
 final class TestChatBotWorkflow extends Workflow
 {
-    public Inbox $messages;
-
-    public function __construct(...$args)
-    {
-        $this->messages = new Inbox();
-        parent::__construct(...$args);
-    }
-
     #[SignalMethod]
     public function receive(string $message): void
     {
-        $this->messages->receive($message);
+        $this->inbox->receive($message);
     }
 
     public function execute()
@@ -34,8 +26,8 @@ final class TestChatBotWorkflow extends Workflow
             if ($step === 'ask') {
                 $step = 'answer';
                 yield activity(TestChatBotAskActivity::class);
-                yield await(fn () => $this->messages->hasUnread());
-                $message = $this->messages->nextUnread();
+                yield await(fn () => $this->inbox->hasUnread());
+                $message = $this->inbox->nextUnread();
             } elseif ($step === 'answer') {
                 $step = 'ask';
                 $done = yield activity(TestChatBotAnswerActivity::class, $message);
