@@ -223,7 +223,7 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
             } elseif ($initialSignalBound) {
                 $latestLogBeforeCurrent = StoredWorkflowLog::where('stored_workflow_id', $this->storedWorkflow->id)
                     ->where('index', '<', $this->index)
-                    ->orderByDesc('created_at')
+                    ->orderBy('created_at')
                     ->first();
 
                 if ($latestLogBeforeCurrent) {
