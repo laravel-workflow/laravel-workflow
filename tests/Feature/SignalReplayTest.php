@@ -7,6 +7,7 @@ namespace Tests\Feature;
 use Tests\Fixtures\TestActivityAwaitActivityAwaitWorkflow;
 use Tests\Fixtures\TestActivityThenAwaitWorkflow;
 use Tests\Fixtures\TestActivityThrowsAwaitRetryWorkflow;
+use Tests\Fixtures\TestChatBotWorkflow;
 use Tests\Fixtures\TestMultipleAwaitsWorkflow;
 use Tests\Fixtures\TestMultiStageApprovalWorkflow;
 use Tests\Fixtures\TestPureAwaitWorkflow;
@@ -122,5 +123,22 @@ final class SignalReplayTest extends TestCase
 
         $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
         $this->assertSame('approved', $workflow->output());
+    }
+
+    public function testChatBotWorkflowWithInbox(): void
+    {
+        $workflow = WorkflowStub::make(TestChatBotWorkflow::class);
+        $workflow->start();
+
+        sleep(1);
+        $workflow->receive('Unknown');
+
+        sleep(1);
+        $workflow->receive('User');
+
+        while ($workflow->running());
+
+        $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
+        $this->assertSame('completed', $workflow->output());
     }
 }

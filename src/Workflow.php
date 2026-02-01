@@ -21,7 +21,6 @@ use Throwable;
 use Workflow\Events\WorkflowCompleted;
 use Workflow\Middleware\WithoutOverlappingMiddleware;
 use Workflow\Models\StoredWorkflow;
-use Workflow\Models\StoredWorkflowLog;
 use Workflow\Serializers\Serializer;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowContinuedStatus;
@@ -221,19 +220,12 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
                         $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
                     });
             } elseif ($initialSignalBound) {
-                $latestLogBeforeCurrent = StoredWorkflowLog::where('stored_workflow_id', $this->storedWorkflow->id)
-                    ->where('index', '<', $this->index)
-                    ->orderBy('created_at')
-                    ->first();
-
-                if ($latestLogBeforeCurrent) {
-                    $this->storedWorkflow
-                        ->signals()
-                        ->where('created_at', '>', $latestLogBeforeCurrent->created_at->format('Y-m-d H:i:s.u'))
-                        ->each(function ($signal): void {
-                            $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
-                        });
-                }
+                $this->storedWorkflow
+                    ->signals()
+                    ->where('created_at', '>', $initialSignalBound->format('Y-m-d H:i:s.u'))
+                    ->each(function ($signal): void {
+                        $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
+                    });
             }
 
             $this->now = $log ? $log->now : Carbon::now();
