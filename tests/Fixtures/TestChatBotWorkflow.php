@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
-use Workflow\Inbox;
 use Workflow\SignalMethod;
 use Workflow\Workflow;
 use function Workflow\{activity, await};
