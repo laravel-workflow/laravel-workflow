@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Queue;
 use Tests\Fixtures\TestAwaitWorkflow;
 use Tests\Fixtures\TestBadConnectionWorkflow;
+use Tests\Fixtures\TestChatBotWorkflow;
 use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
 use Workflow\Models\StoredWorkflow;
@@ -18,6 +19,7 @@ use Workflow\Signal;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowCreatedStatus;
 use Workflow\States\WorkflowPendingStatus;
+use Workflow\States\WorkflowWaitingStatus;
 use Workflow\WorkflowStub;
 
 final class WorkflowStubTest extends TestCase
@@ -254,5 +256,80 @@ final class WorkflowStubTest extends TestCase
         $this->assertSame(1, $workflow->logs()->count());
 
         Queue::assertPushed(TestWorkflow::class, 1);
+    }
+
+    public function testIsUpdateMethodReturnsTrueForUpdateMethods(): void
+    {
+        $this->assertTrue(WorkflowStub::isUpdateMethod(TestChatBotWorkflow::class, 'receive'));
+    }
+
+    public function testIsUpdateMethodReturnsFalseForNonUpdateMethods(): void
+    {
+        $this->assertFalse(WorkflowStub::isUpdateMethod(TestChatBotWorkflow::class, 'send'));
+        $this->assertFalse(WorkflowStub::isUpdateMethod(TestChatBotWorkflow::class, 'execute'));
+        $this->assertFalse(WorkflowStub::isUpdateMethod(TestChatBotWorkflow::class, 'nonexistent'));
+    }
+
+    public function testIsUpdateMethodReturnsFalseForClassWithoutUpdateMethods(): void
+    {
+        $this->assertFalse(WorkflowStub::isUpdateMethod(TestWorkflow::class, 'execute'));
+        $this->assertFalse(WorkflowStub::isUpdateMethod(TestWorkflow::class, 'nonexistent'));
+    }
+
+    public function testUpdateMethodCreatesSignalAndReturnsQueryResult(): void
+    {
+        WorkflowStub::fake();
+
+        $workflow = WorkflowStub::make(TestChatBotWorkflow::class);
+        $workflow->start();
+
+        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
+        $storedWorkflow->update([
+            'arguments' => Serializer::serialize([]),
+            'status' => WorkflowWaitingStatus::$name,
+        ]);
+
+        $storedWorkflow->logs()
+            ->create([
+                'index' => 0,
+                'now' => now(),
+                'class' => Signal::class,
+                'result' => Serializer::serialize(true),
+            ]);
+
+        $workflow->receive();
+
+        $this->assertSame(1, $storedWorkflow->signals()->count());
+        $this->assertSame('receive', $storedWorkflow->signals()->first()->method);
+    }
+
+    public function testUpdateMethodDispatchesSyncWhenNotFaked(): void
+    {
+        Queue::fake();
+
+        app()
+            ->offsetUnset('workflow.mocks');
+
+        $workflow = WorkflowStub::make(TestChatBotWorkflow::class);
+        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
+        $storedWorkflow->update([
+            'arguments' => Serializer::serialize([]),
+            'status' => WorkflowPendingStatus::$name,
+        ]);
+
+        $storedWorkflow->logs()
+            ->create([
+                'index' => 0,
+                'now' => now(),
+                'class' => Signal::class,
+                'result' => Serializer::serialize(true),
+            ]);
+
+        $result = $workflow->receive();
+
+        $this->assertSame(1, $storedWorkflow->signals()->count());
+        $this->assertSame('receive', $storedWorkflow->signals()->first()->method);
+
+        Queue::assertPushed(Signal::class);
     }
 }
