@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Workflow;
 
-class Inbox
+final class Inbox
 {
     public array $values = [];
 

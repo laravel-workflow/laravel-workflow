@@ -45,6 +45,8 @@ final class WorkflowStub
 
     private static array $queryMethodCache = [];
 
+    private static array $updateMethodCache = [];
+
     private static array $defaultPropertiesCache = [];
 
     private function __construct(
@@ -87,6 +89,33 @@ final class WorkflowStub
                 ...Serializer::unserialize($activeWorkflow->arguments),
             ))
                 ->query($method);
+        }
+
+        if (self::isUpdateMethod($this->storedWorkflow->class, $method)) {
+            $activeWorkflow = $this->storedWorkflow->active();
+
+            $result = (new $activeWorkflow->class(
+                $activeWorkflow,
+                ...Serializer::unserialize($activeWorkflow->arguments),
+            ))
+                ->query($method);
+
+            $activeWorkflow->signals()
+                ->create([
+                    'method' => $method,
+                    'arguments' => Serializer::serialize($arguments),
+                ]);
+
+            $activeWorkflow->toWorkflow();
+
+            if (static::faked()) {
+                $this->resume();
+                return;
+            }
+
+            Signal::dispatchSync($activeWorkflow, self::connection(), self::queue());
+
+            return $result;
         }
     }
 
@@ -285,6 +314,23 @@ final class WorkflowStub
         if ($shouldSignal) {
             $this->dispatch();
         }
+    }
+
+    public static function isUpdateMethod(string $class, string $method): bool
+    {
+        if (! isset(self::$updateMethodCache[$class])) {
+            self::$updateMethodCache[$class] = [];
+            foreach ((new ReflectionClass($class))->getMethods() as $reflectionMethod) {
+                foreach ($reflectionMethod->getAttributes() as $attribute) {
+                    if ($attribute->getName() === UpdateMethod::class) {
+                        self::$updateMethodCache[$class][$reflectionMethod->getName()] = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return self::$updateMethodCache[$class][$method] ?? false;
     }
 
     private static function isSignalMethod(string $class, string $method): bool

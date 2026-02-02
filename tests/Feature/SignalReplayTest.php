@@ -131,10 +131,18 @@ final class SignalReplayTest extends TestCase
         $workflow->start();
 
         sleep(1);
-        $workflow->receive('Unknown');
+        $workflow->send('Unknown');
 
-        sleep(1);
-        $workflow->receive('User');
+        sleep(2);
+        $message = $workflow->receive();
+        $this->assertSame('You said: Unknown', $message);
+
+        sleep(2);
+        $workflow->send('User');
+
+        sleep(2);
+        $message = $workflow->receive();
+        $this->assertSame('You said: User', $message);
 
         while ($workflow->running());
 
