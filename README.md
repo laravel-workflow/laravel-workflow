@@ -1,6 +1,3 @@
-<p align="center">
-<img alt="logo" src="https://user-images.githubusercontent.com/1130888/210139313-43f0d7ed-2005-4b71-9149-540f124c2c2f.png">
-</p>
 <p align="center"><a href="https://github.com/laravel-workflow/laravel-workflow/actions/workflows/php.yml"><img src="https://img.shields.io/github/actions/workflow/status/laravel-workflow/laravel-workflow/php.yml" alt="GitHub Workflow Status"></a> <a href="https://codecov.io/gh/laravel-workflow/laravel-workflow"><img alt="Codecov" src="https://img.shields.io/codecov/c/github/laravel-workflow/laravel-workflow"></a> <a href="https://packagist.org/packages/laravel-workflow/laravel-workflow/stats"><img alt="Packagist Downloads (custom server)" src="https://img.shields.io/packagist/dt/laravel-workflow/laravel-workflow"></a>
  <a href="https://laravel-workflow.com/docs/installation"><img src="https://img.shields.io/badge/docs-read%20now-brightgreen" alt="Docs"></a> <a href="https://github.com/laravel-workflow/laravel-workflow/blob/master/LICENSE"><img alt="Packagist License" src="https://img.shields.io/packagist/l/laravel-workflow/laravel-workflow?color=bright-green"></a></p>
 
@@ -18,7 +15,7 @@ Some key features and benefits of Workflow include:
 
 ## Documentation
 
-Documentation for Workflow can be found on the [Workflow website](https://laravel-workflow.com/docs/installation).
+Documentation for Workflow can be found on the [website](https://laravel-workflow.com/docs/installation).
 
 ## Community
 
