@@ -56,6 +56,8 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 
     public Inbox $inbox;
 
+    public Outbox $outbox;
+
     private Container $container;
 
     public function __construct(
@@ -63,6 +65,8 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
         ...$arguments
     ) {
         $this->inbox = new Inbox();
+
+        $this->outbox = new Outbox();
 
         $this->arguments = $arguments;
 
@@ -160,6 +164,8 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
             ->wherePivot('parent_index', '!=', StoredWorkflow::ACTIVE_WORKFLOW_INDEX)
             ->first();
 
+        $replayedSignalIds = [];
+
         $logs = $this->storedWorkflow->logs()
             ->whereIn('index', [$this->index, $this->index + 1])
             ->get();
@@ -220,15 +226,21 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
                     ->when($nextLog, static function ($query, $nextLog): void {
                         $query->where('created_at', '<=', $nextLog->created_at->format('Y-m-d H:i:s.u'));
                     })
-                    ->each(function ($signal): void {
-                        $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
+                    ->each(function ($signal) use (&$replayedSignalIds): void {
+                        if (! in_array($signal->id, $replayedSignalIds, true)) {
+                            $replayedSignalIds[] = $signal->id;
+                            $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
+                        }
                     });
             } elseif ($initialSignalBound) {
                 $this->storedWorkflow
                     ->signals()
                     ->where('created_at', '>', $initialSignalBound->format('Y-m-d H:i:s.u'))
-                    ->each(function ($signal): void {
-                        $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
+                    ->each(function ($signal) use (&$replayedSignalIds): void {
+                        if (! in_array($signal->id, $replayedSignalIds, true)) {
+                            $replayedSignalIds[] = $signal->id;
+                            $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
+                        }
                     });
             }
 

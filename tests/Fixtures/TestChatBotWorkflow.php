@@ -5,15 +5,24 @@ declare(strict_types=1);
 namespace Tests\Fixtures;
 
 use Workflow\SignalMethod;
+use Workflow\UpdateMethod;
 use Workflow\Workflow;
 use function Workflow\{activity, await};
 
 final class TestChatBotWorkflow extends Workflow
 {
     #[SignalMethod]
-    public function receive(string $message): void
+    public function send(string $message): void
     {
         $this->inbox->receive($message);
+    }
+
+    #[UpdateMethod]
+    public function receive()
+    {
+        if ($this->outbox->hasUnsent()) {
+            return $this->outbox->nextUnsent();
+        }
     }
 
     public function execute()
@@ -29,6 +38,7 @@ final class TestChatBotWorkflow extends Workflow
                 $message = $this->inbox->nextUnread();
             } elseif ($step === 'answer') {
                 $step = 'ask';
+                $this->outbox->send("You said: {$message}");
                 $done = yield activity(TestChatBotAnswerActivity::class, $message);
             }
         }
