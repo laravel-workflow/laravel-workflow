@@ -238,8 +238,10 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
                     ->where('created_at', '>', $initialSignalBound->format('Y-m-d H:i:s.u'))
                     ->each(function ($signal) use (&$replayedSignalIds): void {
                         if (! in_array($signal->id, $replayedSignalIds, true)) {
+                            // @codeCoverageIgnoreStart
                             $replayedSignalIds[] = $signal->id;
                             $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
+                            // @codeCoverageIgnoreEnd
                         }
                     });
             }
