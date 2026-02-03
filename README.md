@@ -15,7 +15,7 @@ Some key features and benefits of Workflow include:
 
 ## Documentation
 
-Documentation for Workflow can be found on the [website](https://laravel-workflow.com/docs/installation).
+Documentation for Workflow can be found on the [website](https://durable-workflow.com/docs/installation).
 
 ## Community
 
