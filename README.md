@@ -1,7 +1,7 @@
 <p align="center"><a href="https://github.com/durable-workflow/workflow/actions/workflows/php.yml"><img src="https://img.shields.io/github/actions/workflow/status/durable-workflow/workflow/php.yml" alt="GitHub Workflow Status"></a> <a href="https://codecov.io/gh/laravel-workflow/laravel-workflow"><img alt="Codecov" src="https://img.shields.io/codecov/c/github/laravel-workflow/laravel-workflow"></a> <a href="https://packagist.org/packages/laravel-workflow/laravel-workflow/stats"><img alt="Packagist Downloads (custom server)" src="https://img.shields.io/packagist/dt/laravel-workflow/laravel-workflow"></a>
  <a href="https://durable-workflow.com/docs/installation"><img src="https://img.shields.io/badge/docs-read%20now-brightgreen" alt="Docs"></a> <a href="https://github.com/durable-workflow/workflow/blob/master/LICENSE"><img alt="Packagist License" src="https://img.shields.io/packagist/l/laravel-workflow/laravel-workflow?color=bright-green"></a></p>
 
-Durable Workflow is a package for the Laravel web framework that provides tools for defining and managing workflows and activities. A workflow is a series of interconnected activities that are executed in a specific order to achieve a desired result. Activities are individual tasks or pieces of logic that are executed as part of a workflow.
+Durable Workflow (formerly Laravel Workflow) is a package for the Laravel web framework that provides tools for defining and managing workflows and activities. A workflow is a series of interconnected activities that are executed in a specific order to achieve a desired result. Activities are individual tasks or pieces of logic that are executed as part of a workflow.
 
 Durable Workflow can be used to automate and manage complex processes, such as agentic workflows (AI-driven), financial transactions, data analysis, data pipelines, microservices, job tracking, user signup flows, sagas and other business processes. By using Durable Workflow, developers can break down large, complex processes into smaller, modular units that can be easily maintained and updated.
 
@@ -82,11 +82,11 @@ The Durable Workflow package is sustained by the community via sponsors and volu
 
 ### Dashboard View
 
-![waterline_dashboard](https://user-images.githubusercontent.com/1130888/202866614-4adad485-60d1-403c-976f-d3063e928287.png)
+![waterline_dashboard](https://github.com/user-attachments/assets/5688a234-4c02-4d5e-84d4-5f40b5fa27c5)
 
 ### Workflow View
 
-![workflow](https://user-images.githubusercontent.com/1130888/202866616-98a214d3-a916-4ae1-952e-ca8267ddf4a7.png)
+![workflow](https://github.com/user-attachments/assets/da685466-7747-4c2f-ae10-300041381d51)
 
 Refer to https://github.com/durable-workflow/waterline for installation and configuration instructions.
 
