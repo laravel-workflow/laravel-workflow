@@ -94,17 +94,17 @@ final class WorkflowStub
         if (self::isUpdateMethod($this->storedWorkflow->class, $method)) {
             $activeWorkflow = $this->storedWorkflow->active();
 
-            $result = (new $activeWorkflow->class(
-                $activeWorkflow,
-                ...Serializer::unserialize($activeWorkflow->arguments),
-            ))
-                ->query($method);
-
             $activeWorkflow->signals()
                 ->create([
                     'method' => $method,
                     'arguments' => Serializer::serialize($arguments),
                 ]);
+
+            $result = (new $activeWorkflow->class(
+                $activeWorkflow,
+                ...Serializer::unserialize($activeWorkflow->arguments),
+            ))
+                ->query($method);
 
             $activeWorkflow->toWorkflow();
 
