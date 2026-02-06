@@ -113,7 +113,7 @@ final class WorkflowStub
                 return;
             }
 
-            Signal::dispatchSync($activeWorkflow, self::connection(), self::queue());
+            Signal::dispatch($activeWorkflow, self::connection(), self::queue());
 
             return $result;
         }
