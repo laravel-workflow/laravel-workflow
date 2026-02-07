@@ -13,7 +13,6 @@ final class OutboxTest extends TestCase
     {
         $outbox = new Outbox();
 
-        $this->assertFalse($outbox->hasUnsent());
         $this->assertSame(0, $outbox->transmitted);
         $this->assertSame(0, $outbox->sent);
         $this->assertSame([], $outbox->values);
@@ -28,7 +27,6 @@ final class OutboxTest extends TestCase
         $this->assertSame(['message1'], $outbox->values);
         $this->assertSame(1, $outbox->transmitted);
         $this->assertSame(0, $outbox->sent);
-        $this->assertTrue($outbox->hasUnsent());
     }
 
     public function testSendMultipleValues(): void
@@ -42,7 +40,6 @@ final class OutboxTest extends TestCase
         $this->assertSame(['message1', 'message2', 'message3'], $outbox->values);
         $this->assertSame(3, $outbox->transmitted);
         $this->assertSame(0, $outbox->sent);
-        $this->assertTrue($outbox->hasUnsent());
     }
 
     public function testNextUnsentReturnsNullWhenEmpty(): void
@@ -62,7 +59,6 @@ final class OutboxTest extends TestCase
 
         $this->assertSame('message1', $value);
         $this->assertSame(1, $outbox->sent);
-        $this->assertFalse($outbox->hasUnsent());
     }
 
     public function testNextUnsentReturnsValuesInOrder(): void
@@ -76,22 +72,6 @@ final class OutboxTest extends TestCase
         $this->assertSame('second', $outbox->nextUnsent());
         $this->assertSame('third', $outbox->nextUnsent());
         $this->assertNull($outbox->nextUnsent());
-        $this->assertFalse($outbox->hasUnsent());
-    }
-
-    public function testHasUnsentReturnsTrueWhenUnsentMessagesExist(): void
-    {
-        $outbox = new Outbox();
-        $outbox->send('message1');
-        $outbox->send('message2');
-
-        $this->assertTrue($outbox->hasUnsent());
-
-        $outbox->nextUnsent();
-        $this->assertTrue($outbox->hasUnsent());
-
-        $outbox->nextUnsent();
-        $this->assertFalse($outbox->hasUnsent());
     }
 
     public function testSendAfterReadingMaintainsCorrectState(): void
@@ -102,7 +82,6 @@ final class OutboxTest extends TestCase
         $this->assertSame('message1', $outbox->nextUnsent());
 
         $outbox->send('message2');
-        $this->assertTrue($outbox->hasUnsent());
         $this->assertSame(2, $outbox->transmitted);
         $this->assertSame(1, $outbox->sent);
         $this->assertSame('message2', $outbox->nextUnsent());

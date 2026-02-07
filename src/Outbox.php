@@ -20,11 +20,6 @@ final class Outbox
         $this->transmitted++;
     }
 
-    public function hasUnsent(): bool
-    {
-        return ($this->transmitted - $this->sent - $this->deferred) > 0;
-    }
-
     public function nextUnsent(): mixed
     {
         $skip = min($this->deferred, max(0, $this->transmitted - $this->sent));
@@ -32,6 +27,7 @@ final class Outbox
         $this->deferred -= $skip;
 
         if ($this->transmitted <= $this->sent) {
+            $this->deferred++;
             return null;
         }
 

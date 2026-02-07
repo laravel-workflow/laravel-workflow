@@ -168,22 +168,12 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
             ->where('index', $this->index)
             ->first();
 
-        $updateMethodCount = 0;
         $this->storedWorkflow
             ->signals()
             ->orderBy('created_at')
-            ->each(function ($signal) use (&$updateMethodCount): void {
+            ->each(function ($signal): void {
                 $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
-                try {
-                    $method = new \ReflectionMethod($this, $signal->method);
-                    if (! empty($method->getAttributes(UpdateMethod::class))) {
-                        $updateMethodCount++;
-                    }
-                } catch (\ReflectionException) {
-                }
             });
-
-        $this->outbox->deferred = max(0, $updateMethodCount - $this->outbox->sent);
 
         if ($parentWorkflow) {
             $this->now = Carbon::parse($parentWorkflow->pivot->parent_now);
