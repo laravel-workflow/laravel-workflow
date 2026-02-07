@@ -318,7 +318,7 @@ final class WorkflowStubTest extends TestCase
         $this->assertSame(1, $storedWorkflow->signals()->where('method', 'receive')->count());
     }
 
-    public function testUpdateMethodDispatchesSyncWhenNotFaked(): void
+    public function testUpdateMethodDispatchesWhenNotFaked(): void
     {
         Queue::fake();
 
