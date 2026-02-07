@@ -164,24 +164,14 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
             ->wherePivot('parent_index', '!=', StoredWorkflow::ACTIVE_WORKFLOW_INDEX)
             ->first();
 
-        $replayedSignalIds = [];
-
-        $logs = $this->storedWorkflow->logs()
-            ->whereIn('index', [$this->index, $this->index + 1])
-            ->get();
-
-        $log = $logs->where('index', $this->index)
+        $log = $this->storedWorkflow->logs()
+            ->where('index', $this->index)
             ->first();
-
-        $nextLog = $logs->where('index', $this->index + 1)
-            ->first();
-
-        $initialSignalBound = $nextLog ? $nextLog->created_at : null;
 
         $this->storedWorkflow
             ->signals()
-            ->when($nextLog, static function ($query, $nextLog): void {
-                $query->where('created_at', '<=', $nextLog->created_at->format('Y-m-d H:i:s.u'));
+            ->when($log, static function ($query, $log): void {
+                $query->where('created_at', '<=', $log->now->format('Y-m-d H:i:s.u'));
             })
             ->each(function ($signal): void {
                 $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
@@ -209,42 +199,23 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
         while ($this->coroutine->valid()) {
             $this->index = WorkflowStub::getContext()->index;
 
-            $logs = $this->storedWorkflow->logs()
-                ->whereIn('index', [$this->index, $this->index + 1])
-                ->get();
+            $previousLog = $log;
 
-            $log = $logs->where('index', $this->index)
+            $log = $this->storedWorkflow->logs()
+                ->where('index', $this->index)
                 ->first();
 
-            $nextLog = $logs->where('index', $this->index + 1)
-                ->first();
-
-            if ($log) {
-                $this->storedWorkflow
-                    ->signals()
-                    ->where('created_at', '>', $log->created_at->format('Y-m-d H:i:s.u'))
-                    ->when($nextLog, static function ($query, $nextLog): void {
-                        $query->where('created_at', '<=', $nextLog->created_at->format('Y-m-d H:i:s.u'));
-                    })
-                    ->each(function ($signal) use (&$replayedSignalIds): void {
-                        if (! in_array($signal->id, $replayedSignalIds, true)) {
-                            $replayedSignalIds[] = $signal->id;
-                            $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
-                        }
-                    });
-            } elseif ($initialSignalBound) {
-                $this->storedWorkflow
-                    ->signals()
-                    ->where('created_at', '>', $initialSignalBound->format('Y-m-d H:i:s.u'))
-                    ->each(function ($signal) use (&$replayedSignalIds): void {
-                        if (! in_array($signal->id, $replayedSignalIds, true)) {
-                            // @codeCoverageIgnoreStart
-                            $replayedSignalIds[] = $signal->id;
-                            $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
-                            // @codeCoverageIgnoreEnd
-                        }
-                    });
-            }
+            $this->storedWorkflow
+                ->signals()
+                ->when($previousLog, static function ($query, $previousLog): void {
+                    $query->where('created_at', '>', $previousLog->now->format('Y-m-d H:i:s.u'));
+                })
+                ->when($log, static function ($query, $log): void {
+                    $query->where('created_at', '<=', $log->now->format('Y-m-d H:i:s.u'));
+                })
+                ->each(function ($signal): void {
+                    $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
+                });
 
             $this->now = $log ? $log->now : Carbon::now();
 
