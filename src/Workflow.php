@@ -168,14 +168,22 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
             ->where('index', $this->index)
             ->first();
 
+        $updateMethodCount = 0;
         $this->storedWorkflow
             ->signals()
-            ->when($log, static function ($query, $log): void {
-                $query->where('created_at', '<=', $log->now->format('Y-m-d H:i:s.u'));
-            })
-            ->each(function ($signal): void {
+            ->orderBy('created_at')
+            ->each(function ($signal) use (&$updateMethodCount): void {
                 $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
+                try {
+                    $method = new \ReflectionMethod($this, $signal->method);
+                    if (! empty($method->getAttributes(UpdateMethod::class))) {
+                        $updateMethodCount++;
+                    }
+                } catch (\ReflectionException) {
+                }
             });
+
+        $this->outbox->deferred = max(0, $updateMethodCount - $this->outbox->sent);
 
         if ($parentWorkflow) {
             $this->now = Carbon::parse($parentWorkflow->pivot->parent_now);
@@ -204,18 +212,6 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
             $log = $this->storedWorkflow->logs()
                 ->where('index', $this->index)
                 ->first();
-
-            $this->storedWorkflow
-                ->signals()
-                ->when($previousLog, static function ($query, $previousLog): void {
-                    $query->where('created_at', '>', $previousLog->now->format('Y-m-d H:i:s.u'));
-                })
-                ->when($log, static function ($query, $log): void {
-                    $query->where('created_at', '<=', $log->now->format('Y-m-d H:i:s.u'));
-                })
-                ->each(function ($signal): void {
-                    $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
-                });
 
             $this->now = $log ? $log->now : Carbon::now();
 

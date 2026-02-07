@@ -14,7 +14,6 @@ final class StateMachineWorkflowTest extends TestCase
 {
     public function testApproved(): void
     {
-        $this->markTestSkipped('Skipping flaky test until fixed in future.');
 
         $workflow = WorkflowStub::make(TestStateMachineWorkflow::class);
 
@@ -37,7 +36,6 @@ final class StateMachineWorkflowTest extends TestCase
 
     public function testDenied(): void
     {
-        $this->markTestSkipped('Skipping flaky test until fixed in future.');
 
         $workflow = WorkflowStub::make(TestStateMachineWorkflow::class);
 

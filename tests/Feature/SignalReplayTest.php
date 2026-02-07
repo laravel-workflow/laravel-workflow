@@ -93,7 +93,6 @@ final class SignalReplayTest extends TestCase
 
     public function testActivityThrowsAwaitRetry(): void
     {
-        $this->markTestSkipped('Skipping flaky test until fixed in future.');
 
         $workflow = WorkflowStub::make(TestActivityThrowsAwaitRetryWorkflow::class);
         $workflow->start();
@@ -129,7 +128,6 @@ final class SignalReplayTest extends TestCase
 
     public function testChatBotWorkflowWithInbox(): void
     {
-        $this->markTestSkipped('Skipping flaky test until fixed in future.');
 
         $workflow = WorkflowStub::make(TestChatBotWorkflow::class);
         $workflow->start();

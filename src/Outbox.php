@@ -12,6 +12,8 @@ final class Outbox
 
     public int $sent = 0;
 
+    public int $deferred = 0;
+
     public function send(mixed $value): void
     {
         $this->values[] = $value;
@@ -20,12 +22,16 @@ final class Outbox
 
     public function hasUnsent(): bool
     {
-        return $this->transmitted > $this->sent;
+        return ($this->transmitted - $this->sent - $this->deferred) > 0;
     }
 
     public function nextUnsent(): mixed
     {
-        if (! $this->hasUnsent()) {
+        $skip = min($this->deferred, max(0, $this->transmitted - $this->sent));
+        $this->sent += $skip;
+        $this->deferred -= $skip;
+
+        if ($this->transmitted <= $this->sent) {
             return null;
         }
 

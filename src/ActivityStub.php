@@ -66,7 +66,9 @@ final class ActivityStub
             return resolve($result);
         }
 
-        $activity::dispatch($context->index, $context->now, $context->storedWorkflow, ...$arguments);
+        if (! $context->replaying) {
+            $activity::dispatch($context->index, $context->now, $context->storedWorkflow, ...$arguments);
+        }
 
         ++$context->index;
         WorkflowStub::setContext($context);
