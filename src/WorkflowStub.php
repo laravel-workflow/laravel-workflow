@@ -94,26 +94,28 @@ final class WorkflowStub
         if (self::isUpdateMethod($this->storedWorkflow->class, $method)) {
             $activeWorkflow = $this->storedWorkflow->active();
 
-            $result = (new $activeWorkflow->class(
+            $workflow = new $activeWorkflow->class(
                 $activeWorkflow,
                 ...Serializer::unserialize($activeWorkflow->arguments),
-            ))
-                ->query($method);
+            );
+            $result = $workflow->query($method);
 
-            $activeWorkflow->signals()
-                ->create([
-                    'method' => $method,
-                    'arguments' => Serializer::serialize($arguments),
-                ]);
+            if ($workflow->outboxWasConsumed) {
+                $activeWorkflow->signals()
+                    ->create([
+                        'method' => $method,
+                        'arguments' => Serializer::serialize($arguments),
+                    ]);
 
-            $activeWorkflow->toWorkflow();
+                $activeWorkflow->toWorkflow();
 
-            if (static::faked()) {
-                $this->resume();
-                return;
+                if (static::faked()) {
+                    $this->resume();
+                    return $result;
+                }
+
+                Signal::dispatchSync($activeWorkflow, self::connection(), self::queue());
             }
-
-            Signal::dispatchSync($activeWorkflow, self::connection(), self::queue());
 
             return $result;
         }

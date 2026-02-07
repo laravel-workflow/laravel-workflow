@@ -58,6 +58,10 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 
     public Outbox $outbox;
 
+    public array $updateMethodSignals = [];
+
+    public bool $outboxWasConsumed = false;
+
     private Container $container;
 
     public function __construct(
@@ -90,7 +94,16 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
     {
         $this->replaying = true;
         $this->handle();
-        return $this->{$method}();
+
+        foreach ($this->updateMethodSignals as $signal) {
+            $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
+        }
+
+        $sentBefore = $this->outbox->sent;
+        $result = $this->{$method}();
+        $this->outboxWasConsumed = $this->outbox->sent > $sentBefore;
+
+        return $result;
     }
 
     public function child(): ?ChildWorkflowHandle
@@ -172,6 +185,10 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
             ->signals()
             ->orderBy('created_at')
             ->each(function ($signal): void {
+                if (WorkflowStub::isUpdateMethod($this->storedWorkflow->class, $signal->method)) {
+                    $this->updateMethodSignals[] = $signal;
+                    return;
+                }
                 $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
             });
 
