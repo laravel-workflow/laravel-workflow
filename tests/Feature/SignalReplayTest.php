@@ -93,7 +93,6 @@ final class SignalReplayTest extends TestCase
 
     public function testActivityThrowsAwaitRetry(): void
     {
-
         $workflow = WorkflowStub::make(TestActivityThrowsAwaitRetryWorkflow::class);
         $workflow->start();
 
@@ -128,7 +127,6 @@ final class SignalReplayTest extends TestCase
 
     public function testChatBotWorkflowWithInbox(): void
     {
-
         $workflow = WorkflowStub::make(TestChatBotWorkflow::class);
         $workflow->start();
 

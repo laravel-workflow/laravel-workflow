@@ -14,7 +14,6 @@ final class StateMachineWorkflowTest extends TestCase
 {
     public function testApproved(): void
     {
-
         $workflow = WorkflowStub::make(TestStateMachineWorkflow::class);
 
         $workflow->start();
@@ -36,7 +35,6 @@ final class StateMachineWorkflowTest extends TestCase
 
     public function testDenied(): void
     {
-
         $workflow = WorkflowStub::make(TestStateMachineWorkflow::class);
 
         $workflow->start();

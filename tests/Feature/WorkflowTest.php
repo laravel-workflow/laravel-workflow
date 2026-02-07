@@ -78,7 +78,6 @@ final class WorkflowTest extends TestCase
 
     public function testTestSignalExceptionWorkflowLate(): void
     {
-
         $workflow = WorkflowStub::make(TestSignalExceptionWorkflow::class);
 
         $workflow->start([
@@ -115,7 +114,6 @@ final class WorkflowTest extends TestCase
 
     public function testTestSignalExceptionWorkflowLeaderLate(): void
     {
-
         $workflow = WorkflowStub::make(TestSignalExceptionWorkflowLeader::class);
 
         $workflow->start([
