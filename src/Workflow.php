@@ -58,6 +58,10 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 
     public Outbox $outbox;
 
+    public array $updateMethodSignals = [];
+
+    public bool $outboxWasConsumed = false;
+
     private Container $container;
 
     public function __construct(
@@ -90,7 +94,16 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
     {
         $this->replaying = true;
         $this->handle();
-        return $this->{$method}();
+
+        foreach ($this->updateMethodSignals as $signal) {
+            $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
+        }
+
+        $sentBefore = $this->outbox->sent;
+        $result = $this->{$method}();
+        $this->outboxWasConsumed = $this->outbox->sent > $sentBefore;
+
+        return $result;
     }
 
     public function child(): ?ChildWorkflowHandle
@@ -164,26 +177,18 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
             ->wherePivot('parent_index', '!=', StoredWorkflow::ACTIVE_WORKFLOW_INDEX)
             ->first();
 
-        $replayedSignalIds = [];
-
-        $logs = $this->storedWorkflow->logs()
-            ->whereIn('index', [$this->index, $this->index + 1])
-            ->get();
-
-        $log = $logs->where('index', $this->index)
+        $log = $this->storedWorkflow->logs()
+            ->where('index', $this->index)
             ->first();
-
-        $nextLog = $logs->where('index', $this->index + 1)
-            ->first();
-
-        $initialSignalBound = $nextLog ? $nextLog->created_at : null;
 
         $this->storedWorkflow
             ->signals()
-            ->when($nextLog, static function ($query, $nextLog): void {
-                $query->where('created_at', '<=', $nextLog->created_at->format('Y-m-d H:i:s.u'));
-            })
+            ->orderBy('created_at')
             ->each(function ($signal): void {
+                if (WorkflowStub::isUpdateMethod($this->storedWorkflow->class, $signal->method)) {
+                    $this->updateMethodSignals[] = $signal;
+                    return;
+                }
                 $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
             });
 
@@ -209,42 +214,11 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
         while ($this->coroutine->valid()) {
             $this->index = WorkflowStub::getContext()->index;
 
-            $logs = $this->storedWorkflow->logs()
-                ->whereIn('index', [$this->index, $this->index + 1])
-                ->get();
+            $previousLog = $log;
 
-            $log = $logs->where('index', $this->index)
+            $log = $this->storedWorkflow->logs()
+                ->where('index', $this->index)
                 ->first();
-
-            $nextLog = $logs->where('index', $this->index + 1)
-                ->first();
-
-            if ($log) {
-                $this->storedWorkflow
-                    ->signals()
-                    ->where('created_at', '>', $log->created_at->format('Y-m-d H:i:s.u'))
-                    ->when($nextLog, static function ($query, $nextLog): void {
-                        $query->where('created_at', '<=', $nextLog->created_at->format('Y-m-d H:i:s.u'));
-                    })
-                    ->each(function ($signal) use (&$replayedSignalIds): void {
-                        if (! in_array($signal->id, $replayedSignalIds, true)) {
-                            $replayedSignalIds[] = $signal->id;
-                            $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
-                        }
-                    });
-            } elseif ($initialSignalBound) {
-                $this->storedWorkflow
-                    ->signals()
-                    ->where('created_at', '>', $initialSignalBound->format('Y-m-d H:i:s.u'))
-                    ->each(function ($signal) use (&$replayedSignalIds): void {
-                        if (! in_array($signal->id, $replayedSignalIds, true)) {
-                            // @codeCoverageIgnoreStart
-                            $replayedSignalIds[] = $signal->id;
-                            $this->{$signal->method}(...Serializer::unserialize($signal->arguments));
-                            // @codeCoverageIgnoreEnd
-                        }
-                    });
-            }
 
             $this->now = $log ? $log->now : Carbon::now();
 

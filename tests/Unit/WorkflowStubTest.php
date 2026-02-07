@@ -289,21 +289,36 @@ final class WorkflowStubTest extends TestCase
             'status' => WorkflowWaitingStatus::$name,
         ]);
 
+        $storedWorkflow->signals()
+            ->create([
+                'method' => 'send',
+                'arguments' => Serializer::serialize(['test']),
+            ]);
+
         $storedWorkflow->logs()
             ->create([
                 'index' => 0,
                 'now' => now(),
                 'class' => Signal::class,
+                'result' => Serializer::serialize(null),
+            ]);
+
+        $storedWorkflow->logs()
+            ->create([
+                'index' => 1,
+                'now' => now(),
+                'class' => Signal::class,
                 'result' => Serializer::serialize(true),
             ]);
 
-        $workflow->receive();
+        $result = $workflow->receive();
 
-        $this->assertSame(1, $storedWorkflow->signals()->count());
-        $this->assertSame('receive', $storedWorkflow->signals()->first()->method);
+        $this->assertSame('You said: test', $result);
+        $this->assertSame(2, $storedWorkflow->signals()->count());
+        $this->assertSame(1, $storedWorkflow->signals()->where('method', 'receive')->count());
     }
 
-    public function testUpdateMethodDispatchesSyncWhenNotFaked(): void
+    public function testUpdateMethodDispatchesWhenNotFaked(): void
     {
         Queue::fake();
 
@@ -317,9 +332,23 @@ final class WorkflowStubTest extends TestCase
             'status' => WorkflowPendingStatus::$name,
         ]);
 
+        $storedWorkflow->signals()
+            ->create([
+                'method' => 'send',
+                'arguments' => Serializer::serialize(['test']),
+            ]);
+
         $storedWorkflow->logs()
             ->create([
                 'index' => 0,
+                'now' => now(),
+                'class' => Signal::class,
+                'result' => Serializer::serialize(null),
+            ]);
+
+        $storedWorkflow->logs()
+            ->create([
+                'index' => 1,
                 'now' => now(),
                 'class' => Signal::class,
                 'result' => Serializer::serialize(true),
@@ -327,9 +356,82 @@ final class WorkflowStubTest extends TestCase
 
         $result = $workflow->receive();
 
-        $this->assertSame(1, $storedWorkflow->signals()->count());
-        $this->assertSame('receive', $storedWorkflow->signals()->first()->method);
+        $this->assertSame('You said: test', $result);
+        $this->assertSame(2, $storedWorkflow->signals()->count());
+        $this->assertSame(1, $storedWorkflow->signals()->where('method', 'receive')->count());
 
         Queue::assertPushed(Signal::class);
+    }
+
+    public function testUpdateMethodReplaysStoredSignals(): void
+    {
+        WorkflowStub::fake();
+
+        $workflow = WorkflowStub::make(TestChatBotWorkflow::class);
+        $workflow->start();
+
+        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
+        $storedWorkflow->update([
+            'arguments' => Serializer::serialize([]),
+            'status' => WorkflowWaitingStatus::$name,
+        ]);
+
+        $storedWorkflow->signals()
+            ->create([
+                'method' => 'send',
+                'arguments' => Serializer::serialize(['first']),
+            ]);
+
+        $storedWorkflow->signals()
+            ->create([
+                'method' => 'send',
+                'arguments' => Serializer::serialize(['second']),
+            ]);
+
+        $storedWorkflow->logs()
+            ->create([
+                'index' => 0,
+                'now' => now(),
+                'class' => Signal::class,
+                'result' => Serializer::serialize(null),
+            ]);
+
+        $storedWorkflow->logs()
+            ->create([
+                'index' => 1,
+                'now' => now(),
+                'class' => Signal::class,
+                'result' => Serializer::serialize(true),
+            ]);
+
+        $storedWorkflow->logs()
+            ->create([
+                'index' => 2,
+                'now' => now(),
+                'class' => Signal::class,
+                'result' => Serializer::serialize(false),
+            ]);
+
+        $storedWorkflow->logs()
+            ->create([
+                'index' => 3,
+                'now' => now(),
+                'class' => Signal::class,
+                'result' => Serializer::serialize(null),
+            ]);
+
+        $storedWorkflow->logs()
+            ->create([
+                'index' => 4,
+                'now' => now(),
+                'class' => Signal::class,
+                'result' => Serializer::serialize(true),
+            ]);
+
+        $result1 = $workflow->receive();
+        $this->assertSame('You said: first', $result1);
+
+        $result2 = $workflow->receive();
+        $this->assertSame('You said: second', $result2);
     }
 }

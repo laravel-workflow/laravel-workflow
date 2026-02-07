@@ -18,14 +18,9 @@ final class Outbox
         $this->transmitted++;
     }
 
-    public function hasUnsent(): bool
-    {
-        return $this->transmitted > $this->sent;
-    }
-
     public function nextUnsent(): mixed
     {
-        if (! $this->hasUnsent()) {
+        if ($this->transmitted <= $this->sent) {
             return null;
         }
 
