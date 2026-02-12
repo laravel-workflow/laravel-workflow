@@ -98,19 +98,31 @@ class WithoutOverlappingMiddleware
 
             case self::ACTIVITY:
                 $locked = false;
-                if ($workflowSemaphore === 0) {
-                    $job->key = $this->getActivitySemaphoreKey() . ':' . (string) Str::uuid();
-                    $locked = $this->compareAndSet(
-                        $this->getActivitySemaphoreKey(),
-                        $activitySemaphores,
-                        array_merge($activitySemaphores, [$job->key])
-                    );
-                    if ($locked) {
-                        if ($this->expiresAfter) {
-                            $this->cache->put($job->key, 1, $this->expiresAfter);
-                        } else {
-                            $this->cache->put($job->key, 1);
+                $maxAttempts = 5;
+                for ($attempt = 0; $attempt < $maxAttempts; $attempt++) {
+                    if ($attempt > 0) {
+                        $workflowSemaphore = (int) $this->cache->get($this->getWorkflowSemaphoreKey(), 0);
+                        if ($workflowSemaphore !== 0) {
+                            break;
                         }
+                        $activitySemaphores = $this->cache->get($this->getActivitySemaphoreKey(), []);
+                    }
+                    if ($workflowSemaphore === 0) {
+                        $job->key = $this->getActivitySemaphoreKey() . ':' . (string) Str::uuid();
+                        $locked = $this->compareAndSet(
+                            $this->getActivitySemaphoreKey(),
+                            $activitySemaphores,
+                            array_merge($activitySemaphores, [$job->key])
+                        );
+                        if ($locked) {
+                            if ($this->expiresAfter) {
+                                $this->cache->put($job->key, 1, $this->expiresAfter);
+                            } else {
+                                $this->cache->put($job->key, 1);
+                            }
+                            break;
+                        }
+                        usleep(500);
                     }
                 }
                 break;
@@ -153,7 +165,7 @@ class WithoutOverlappingMiddleware
         $retries = 0;
 
         while ($retries < $maxRetries) {
-            $lock = $this->cache->lock($this->getLockKey());
+            $lock = $this->cache->lock($this->getLockKey(), 5);
 
             if (! $lock->get()) {
                 $retries++;
@@ -185,25 +197,35 @@ class WithoutOverlappingMiddleware
 
     private function compareAndSet($key, $expectedValue, $newValue, $expiresAfter = 0)
     {
-        $lock = $this->cache->lock($this->getLockKey());
+        $maxRetries = 10;
+        $retries = 0;
 
-        if ($lock->get()) {
-            try {
-                $currentValue = $this->cache->get($key, $expectedValue);
+        while ($retries < $maxRetries) {
+            $lock = $this->cache->lock($this->getLockKey(), 5);
 
-                $currentValue = is_int($expectedValue) ? (int) $currentValue : $currentValue;
+            if ($lock->get()) {
+                try {
+                    $currentValue = $this->cache->get($key, $expectedValue);
 
-                if ($currentValue === $expectedValue) {
-                    if ($expiresAfter) {
-                        $this->cache->put($key, $newValue, $expiresAfter);
-                    } else {
-                        $this->cache->put($key, $newValue);
+                    $currentValue = is_int($expectedValue) ? (int) $currentValue : $currentValue;
+
+                    if ($currentValue === $expectedValue) {
+                        if ($expiresAfter) {
+                            $this->cache->put($key, $newValue, $expiresAfter);
+                        } else {
+                            $this->cache->put($key, $newValue);
+                        }
+                        return true;
                     }
-                    return true;
+                } finally {
+                    $lock->release();
                 }
-            } finally {
-                $lock->release();
+
+                return false;
             }
+
+            $retries++;
+            usleep(1000);
         }
 
         return false;

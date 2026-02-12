@@ -148,13 +148,13 @@ final class WithoutOverlappingMiddlewareTest extends TestCase
 
         $lock = $this->mock(Lock::class, static function (MockInterface $mock) {
             $mock->shouldReceive('get')
-                ->once()
+                ->times(10)
                 ->andReturn(false);
         });
 
         $cache = $this->mock(Repository::class, static function (MockInterface $mock) use ($lock) {
             $mock->shouldReceive('lock')
-                ->once()
+                ->times(10)
                 ->andReturn($lock);
             $mock->shouldReceive('get')
                 ->andReturn([]);
@@ -353,5 +353,77 @@ final class WithoutOverlappingMiddlewareTest extends TestCase
         $result = $middleware->unlock($job);
 
         $this->assertTrue($result);
+    }
+
+    public function testActivityRetryBreaksWhenWorkflowSemaphoreBecomesActive(): void
+    {
+        $this->app->make('cache')
+            ->store()
+            ->clear();
+
+        $job = $this->mock(TestActivity::class, static function (MockInterface $mock) {
+            $mock->shouldReceive('release')
+                ->once();
+        });
+
+        $lock = $this->mock(Lock::class, static function (MockInterface $mock) {
+            $mock->shouldReceive('get')
+                ->andReturn(false);
+        });
+
+        $cache = $this->mock(Repository::class, static function (MockInterface $mock) use ($lock) {
+            $mock->shouldReceive('lock')
+                ->andReturn($lock);
+            $mock->shouldReceive('get')
+                ->with('laravel-workflow-overlap:1:workflow', 0)
+                ->andReturn(0, 0, 1);
+            $mock->shouldReceive('get')
+                ->with('laravel-workflow-overlap:1:activity', [])
+                ->andReturn([]);
+        });
+
+        $middleware = new WithoutOverlappingMiddleware(1, WithoutOverlappingMiddleware::ACTIVITY);
+
+        $middleware->handle($job, function ($job) {
+            $this->fail('Should not call next when workflow semaphore becomes active on retry');
+        });
+    }
+
+    public function testCompareAndSetReturnsFalseOnValueMismatch(): void
+    {
+        $this->app->make('cache')
+            ->store()
+            ->clear();
+
+        $job = $this->mock(TestWorkflow::class, static function (MockInterface $mock) {
+            $mock->shouldReceive('release')
+                ->once();
+        });
+
+        $lock = $this->mock(Lock::class, static function (MockInterface $mock) {
+            $mock->shouldReceive('get')
+                ->once()
+                ->andReturn(true);
+            $mock->shouldReceive('release')
+                ->once();
+        });
+
+        $cache = $this->mock(Repository::class, static function (MockInterface $mock) use ($lock) {
+            $mock->shouldReceive('lock')
+                ->once()
+                ->andReturn($lock);
+            $mock->shouldReceive('get')
+                ->with('laravel-workflow-overlap:1:workflow', 0)
+                ->andReturn(0, 99);
+            $mock->shouldReceive('get')
+                ->with('laravel-workflow-overlap:1:activity', [])
+                ->andReturn([]);
+        });
+
+        $middleware = new WithoutOverlappingMiddleware(1, WithoutOverlappingMiddleware::WORKFLOW);
+
+        $middleware->handle($job, function ($job) {
+            $this->fail('Should not call next when CAS value mismatch');
+        });
     }
 }
