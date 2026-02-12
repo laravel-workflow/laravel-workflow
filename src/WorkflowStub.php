@@ -383,11 +383,11 @@ final class WorkflowStub
 
         try {
             $this->storedWorkflow->status->transitionTo(WorkflowPendingStatus::class);
-        } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
+        } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound $exception) {
             $this->storedWorkflow->refresh();
 
-            if (! $this->running()) {
-                return;
+            if ($this->status() !== WorkflowPendingStatus::class) {
+                throw $exception;
             }
         }
 
