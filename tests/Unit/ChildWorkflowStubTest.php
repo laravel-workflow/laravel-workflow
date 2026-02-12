@@ -11,6 +11,7 @@ use Workflow\ChildWorkflowStub;
 use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Serializer;
 use Workflow\States\WorkflowPendingStatus;
+use Workflow\States\WorkflowRunningStatus;
 use Workflow\WorkflowStub;
 
 final class ChildWorkflowStubTest extends TestCase
@@ -87,6 +88,37 @@ final class ChildWorkflowStubTest extends TestCase
             });
 
         $this->assertNull($result);
+    }
+
+    public function testIgnoresTransitionNotFoundWhenExistingChildIsAlreadyRunning(): void
+    {
+        $workflow = WorkflowStub::load(WorkflowStub::make(TestParentWorkflow::class)->id());
+        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
+        $storedWorkflow->update([
+            'arguments' => Serializer::serialize([]),
+            'status' => WorkflowPendingStatus::$name,
+        ]);
+
+        $childWorkflow = WorkflowStub::load(WorkflowStub::make(TestChildWorkflow::class)->id());
+        $storedChildWorkflow = StoredWorkflow::findOrFail($childWorkflow->id());
+        $storedChildWorkflow->update([
+            'arguments' => Serializer::serialize([]),
+            'status' => WorkflowRunningStatus::class,
+        ]);
+        $storedChildWorkflow->parents()
+            ->attach($storedWorkflow, [
+                'parent_index' => 0,
+                'parent_now' => now(),
+            ]);
+
+        ChildWorkflowStub::make(TestChildWorkflow::class)
+            ->then(static function ($value) use (&$result) {
+                $result = $value;
+            });
+
+        $this->assertNull($result);
+        $this->assertSame(WorkflowRunningStatus::class, $storedChildWorkflow->refresh()->status::class);
+        $this->assertSame(1, WorkflowStub::getContext()->index);
     }
 
     public function testAll(): void
