@@ -44,6 +44,8 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 
     public int $maxExceptions = 0;
 
+    public $timeout = 0;
+
     public $arguments;
 
     public $coroutine;

@@ -25,8 +25,27 @@ abstract class TestCase extends BaseTestCase
             }
         }
 
+        foreach ($_ENV as $key => $value) {
+            if (is_string($value) && getenv($key) === false) {
+                putenv("{$key}={$value}");
+            }
+        }
+
+        $redisHost = getenv('REDIS_HOST') ?: ($_ENV['REDIS_HOST'] ?? null);
+        $redisPort = getenv('REDIS_PORT') ?: ($_ENV['REDIS_PORT'] ?? 6379);
+        if ($redisHost && class_exists(\Redis::class)) {
+            try {
+                $redis = new \Redis();
+                $redis->connect($redisHost, (int) $redisPort);
+                $redis->flushDB();
+            } catch (\Throwable $e) {
+                // Ignore if no redis
+            }
+        }
+
         for ($i = 0; $i < self::NUMBER_OF_WORKERS; $i++) {
             self::$workers[$i] = new Process(['php', __DIR__ . '/../vendor/bin/testbench', 'queue:work']);
+            self::$workers[$i]->disableOutput();
             self::$workers[$i]->start();
         }
     }
@@ -51,6 +70,18 @@ abstract class TestCase extends BaseTestCase
         parent::setUp();
 
         Cache::flush();
+
+        $redisHost = getenv('REDIS_HOST') ?: ($_ENV['REDIS_HOST'] ?? null);
+        $redisPort = getenv('REDIS_PORT') ?: ($_ENV['REDIS_PORT'] ?? 6379);
+        if ($redisHost && class_exists(\Redis::class)) {
+            try {
+                $redis = new \Redis();
+                $redis->connect($redisHost, (int) $redisPort);
+                $redis->flushDB();
+            } catch (\Throwable $e) {
+                // Ignore if no redis
+            }
+        }
     }
 
     protected function defineDatabaseMigrations()
