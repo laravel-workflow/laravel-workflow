@@ -9,6 +9,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Traits\Macroable;
 use LimitIterator;
 use ReflectionClass;
+use Spatie\ModelStates\Exceptions\TransitionNotFound;
 use SplFileObject;
 use Workflow\Events\WorkflowFailed;
 use Workflow\Events\WorkflowStarted;
@@ -381,7 +382,15 @@ final class WorkflowStub
             );
         }
 
-        $this->storedWorkflow->status->transitionTo(WorkflowPendingStatus::class);
+        try {
+            $this->storedWorkflow->status->transitionTo(WorkflowPendingStatus::class);
+        } catch (TransitionNotFound) {
+            $this->storedWorkflow->refresh();
+
+            if (! $this->running()) {
+                return;
+            }
+        }
 
         $dispatch = static::faked() ? 'dispatchSync' : 'dispatch';
 
