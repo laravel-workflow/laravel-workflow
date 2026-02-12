@@ -29,7 +29,7 @@ final class ChildWorkflowTest extends TestCase
             'arguments' => Serializer::serialize([]),
         ]);
 
-        $job = new ChildWorkflow(0, now() ->toDateTimeString(), $storedChild, true, $storedParent);
+        $job = new ChildWorkflow(0, now()->toDateTimeString(), $storedChild, true, $storedParent);
 
         $job->handle();
 
