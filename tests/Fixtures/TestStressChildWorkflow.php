@@ -6,16 +6,15 @@ namespace Tests\Fixtures;
 
 use Generator;
 use Illuminate\Support\Facades\Log;
-use Workflow\Workflow;
 use function Workflow\activity;
+use Workflow\Workflow;
 
-class StressChildWorkflow extends Workflow
+class TestStressChildWorkflow extends Workflow
 {
     public function execute(int $runId, int $childIndex, int $activitiesPerChild = 10): Generator
     {
         for ($activityIndex = 0; $activityIndex < $activitiesPerChild; $activityIndex++) {
-
-            Log::info(__METHOD__.':'.__LINE__, [
+            Log::info(__METHOD__ . ':' . __LINE__, [
                 'run_id' => $runId,
                 'workflow_id' => $this->storedWorkflow->id,
                 'child_index' => $childIndex,
@@ -23,7 +22,7 @@ class StressChildWorkflow extends Workflow
                 'worker_pid' => getmypid(),
             ]);
 
-            yield activity(StressLogActivity::class, $runId, $childIndex, $activityIndex);
+            yield activity(TestStressLogActivity::class, $runId, $childIndex, $activityIndex);
         }
 
         return true;

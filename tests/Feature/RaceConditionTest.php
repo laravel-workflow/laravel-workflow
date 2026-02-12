@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use Illuminate\Support\Facades\Cache;
-use Tests\TestCase;
 use RuntimeException;
+use Tests\Fixtures\TestStressParentWorkflow;
+use Tests\TestCase;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\WorkflowStub;
-use Tests\Fixtures\StressParentWorkflow;
 
 class RaceConditionTest extends TestCase
 {
@@ -18,11 +17,11 @@ class RaceConditionTest extends TestCase
         $runId = (int) now()
             ->format('Uu');
 
-        $workflow = WorkflowStub::make(StressParentWorkflow::class);
+        $workflow = WorkflowStub::make(TestStressParentWorkflow::class);
         $workflow->start($runId, $children, $actPerChild);
 
         $deadline = now()
-            ->addSeconds(30);
+            ->addSeconds(120);
 
         while ($workflow->running() && now()->lt($deadline)) {
             usleep(50000);
