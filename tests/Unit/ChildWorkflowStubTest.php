@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Mockery;
+use Spatie\ModelStates\Exceptions\TransitionNotFound;
 use Tests\Fixtures\TestChildWorkflow;
 use Tests\Fixtures\TestParentWorkflow;
 use Tests\TestCase;
@@ -11,7 +13,6 @@ use Workflow\ChildWorkflowStub;
 use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Serializer;
 use Workflow\States\WorkflowPendingStatus;
-use Workflow\States\WorkflowRunningStatus;
 use Workflow\WorkflowStub;
 
 final class ChildWorkflowStubTest extends TestCase
@@ -90,34 +91,75 @@ final class ChildWorkflowStubTest extends TestCase
         $this->assertNull($result);
     }
 
-    public function testIgnoresTransitionNotFoundWhenExistingChildIsAlreadyRunning(): void
+    public function testIgnoresTransitionNotFoundWhenChildResumeThrows(): void
     {
-        $workflow = WorkflowStub::load(WorkflowStub::make(TestParentWorkflow::class)->id());
-        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
-        $storedWorkflow->update([
-            'arguments' => Serializer::serialize([]),
-            'status' => WorkflowPendingStatus::$name,
+        $logs = Mockery::mock();
+        $logs->shouldReceive('whereIndex')
+            ->once()
+            ->with(0)
+            ->andReturnSelf();
+        $logs->shouldReceive('first')
+            ->once()
+            ->andReturn(null);
+
+        $childWorkflow = new class
+        {
+            public function running(): bool
+            {
+                return true;
+            }
+
+            public function created(): bool
+            {
+                return false;
+            }
+
+            public function resume(): void
+            {
+                throw TransitionNotFound::make('running', 'pending', StoredWorkflow::class);
+            }
+
+            public function completed(): bool
+            {
+                return false;
+            }
+
+            public function startAsChild(...$arguments): void
+            {
+            }
+        };
+
+        $storedChildWorkflow = Mockery::mock();
+        $storedChildWorkflow->shouldReceive('toWorkflow')
+            ->once()
+            ->andReturn($childWorkflow);
+
+        $children = Mockery::mock();
+        $children->shouldReceive('wherePivot')
+            ->once()
+            ->with('parent_index', 0)
+            ->andReturnSelf();
+        $children->shouldReceive('first')
+            ->once()
+            ->andReturn($storedChildWorkflow);
+
+        $storedWorkflow = Mockery::mock();
+        $storedWorkflow->shouldReceive('logs')
+            ->once()
+            ->andReturn($logs);
+        $storedWorkflow->shouldReceive('children')
+            ->once()
+            ->andReturn($children);
+
+        WorkflowStub::setContext([
+            'storedWorkflow' => $storedWorkflow,
+            'index' => 0,
+            'now' => now(),
+            'replaying' => false,
         ]);
 
-        $childWorkflow = WorkflowStub::load(WorkflowStub::make(TestChildWorkflow::class)->id());
-        $storedChildWorkflow = StoredWorkflow::findOrFail($childWorkflow->id());
-        $storedChildWorkflow->update([
-            'arguments' => Serializer::serialize([]),
-            'status' => WorkflowRunningStatus::class,
-        ]);
-        $storedChildWorkflow->parents()
-            ->attach($storedWorkflow, [
-                'parent_index' => 0,
-                'parent_now' => now(),
-            ]);
+        ChildWorkflowStub::make(TestChildWorkflow::class);
 
-        ChildWorkflowStub::make(TestChildWorkflow::class)
-            ->then(static function ($value) use (&$result) {
-                $result = $value;
-            });
-
-        $this->assertNull($result);
-        $this->assertSame(WorkflowRunningStatus::class, $storedChildWorkflow->refresh()->status::class);
         $this->assertSame(1, WorkflowStub::getContext()->index);
     }
 
