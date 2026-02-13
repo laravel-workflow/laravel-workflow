@@ -102,8 +102,7 @@ final class ChildWorkflowStubTest extends TestCase
             ->once()
             ->andReturn(null);
 
-        $childWorkflow = new class
-        {
+        $childWorkflow = new class() {
             public function running(): bool
             {
                 return true;
