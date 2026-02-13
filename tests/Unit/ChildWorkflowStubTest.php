@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Mockery;
+use Spatie\ModelStates\Exceptions\TransitionNotFound;
 use Tests\Fixtures\TestChildWorkflow;
 use Tests\Fixtures\TestParentWorkflow;
 use Tests\TestCase;
@@ -87,6 +89,77 @@ final class ChildWorkflowStubTest extends TestCase
             });
 
         $this->assertNull($result);
+    }
+
+    public function testIgnoresTransitionNotFoundWhenChildResumeThrows(): void
+    {
+        $logs = Mockery::mock();
+        $logs->shouldReceive('whereIndex')
+            ->once()
+            ->with(0)
+            ->andReturnSelf();
+        $logs->shouldReceive('first')
+            ->once()
+            ->andReturn(null);
+
+        $childWorkflow = new class() {
+            public function running(): bool
+            {
+                return true;
+            }
+
+            public function created(): bool
+            {
+                return false;
+            }
+
+            public function resume(): void
+            {
+                throw TransitionNotFound::make('running', 'pending', StoredWorkflow::class);
+            }
+
+            public function completed(): bool
+            {
+                return false;
+            }
+
+            public function startAsChild(...$arguments): void
+            {
+            }
+        };
+
+        $storedChildWorkflow = Mockery::mock();
+        $storedChildWorkflow->shouldReceive('toWorkflow')
+            ->once()
+            ->andReturn($childWorkflow);
+
+        $children = Mockery::mock();
+        $children->shouldReceive('wherePivot')
+            ->once()
+            ->with('parent_index', 0)
+            ->andReturnSelf();
+        $children->shouldReceive('first')
+            ->once()
+            ->andReturn($storedChildWorkflow);
+
+        $storedWorkflow = Mockery::mock();
+        $storedWorkflow->shouldReceive('logs')
+            ->once()
+            ->andReturn($logs);
+        $storedWorkflow->shouldReceive('children')
+            ->once()
+            ->andReturn($children);
+
+        WorkflowStub::setContext([
+            'storedWorkflow' => $storedWorkflow,
+            'index' => 0,
+            'now' => now(),
+            'replaying' => false,
+        ]);
+
+        ChildWorkflowStub::make(TestChildWorkflow::class);
+
+        $this->assertSame(1, WorkflowStub::getContext()->index);
     }
 
     public function testAll(): void

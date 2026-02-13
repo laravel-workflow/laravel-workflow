@@ -258,6 +258,23 @@ final class WorkflowStubTest extends TestCase
         Queue::assertPushed(TestWorkflow::class, 1);
     }
 
+    public function testResumeWhilePendingDoesNotThrowAndStillDispatches(): void
+    {
+        Queue::fake();
+
+        $workflow = WorkflowStub::make(TestWorkflow::class);
+        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
+        $storedWorkflow->update([
+            'arguments' => Serializer::serialize([]),
+            'status' => WorkflowPendingStatus::$name,
+        ]);
+
+        $workflow->resume();
+
+        $this->assertSame(WorkflowPendingStatus::class, $workflow->status());
+        Queue::assertPushed(TestWorkflow::class, 1);
+    }
+
     public function testIsUpdateMethodReturnsTrueForUpdateMethods(): void
     {
         $this->assertTrue(WorkflowStub::isUpdateMethod(TestChatBotWorkflow::class, 'receive'));
