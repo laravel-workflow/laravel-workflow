@@ -20,6 +20,7 @@ use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowCreatedStatus;
 use Workflow\States\WorkflowPendingStatus;
 use Workflow\States\WorkflowWaitingStatus;
+use Workflow\Timer;
 use Workflow\WorkflowStub;
 
 final class WorkflowStubTest extends TestCase
@@ -204,7 +205,7 @@ final class WorkflowStubTest extends TestCase
         $this->assertDatabaseHas('workflow_logs', [
             'stored_workflow_id' => $workflow->id(),
             'index' => 1,
-            'class' => Signal::class,
+            'class' => Timer::class,
         ]);
         $this->assertTrue(Serializer::unserialize($workflow->logs()->firstWhere('index', 1)->result));
     }

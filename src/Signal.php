@@ -13,7 +13,7 @@ use Illuminate\Queue\SerializesModels;
 use Workflow\Middleware\WithoutOverlappingMiddleware;
 use Workflow\Models\StoredWorkflow;
 
-final class Signal implements ShouldBeEncrypted, ShouldQueue
+class Signal implements ShouldBeEncrypted, ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
