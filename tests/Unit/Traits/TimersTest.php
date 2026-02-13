@@ -15,8 +15,8 @@ use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
 use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Serializer;
-use Workflow\Signal;
 use Workflow\States\WorkflowPendingStatus;
+use Workflow\Timer;
 use Workflow\WorkflowStub;
 
 final class TimersTest extends TestCase
@@ -109,7 +109,7 @@ final class TimersTest extends TestCase
         $this->assertDatabaseHas('workflow_logs', [
             'stored_workflow_id' => $workflow->id(),
             'index' => 0,
-            'class' => Signal::class,
+            'class' => Timer::class,
         ]);
         $this->assertSame(true, Serializer::unserialize($workflow->logs()->firstWhere('index', 0)->result));
     }
@@ -127,7 +127,7 @@ final class TimersTest extends TestCase
             ->create([
                 'index' => 0,
                 'now' => now(),
-                'class' => Signal::class,
+                'class' => Timer::class,
                 'result' => Serializer::serialize(true),
             ]);
 
@@ -141,7 +141,7 @@ final class TimersTest extends TestCase
         $this->assertDatabaseHas('workflow_logs', [
             'stored_workflow_id' => $workflow->id(),
             'index' => 0,
-            'class' => Signal::class,
+            'class' => Timer::class,
         ]);
         $this->assertSame(true, Serializer::unserialize($workflow->logs()->firstWhere('index', 0)->result));
     }
@@ -159,7 +159,7 @@ final class TimersTest extends TestCase
             ->create([
                 'index' => 0,
                 'now' => now(),
-                'class' => Signal::class,
+                'class' => Timer::class,
                 'result' => Serializer::serialize(true),
             ]);
 
@@ -296,7 +296,7 @@ final class TimersTest extends TestCase
 
         $this->assertNull($result);
 
-        Bus::assertDispatched(Signal::class, function ($job) use ($now) {
+        Bus::assertDispatched(Timer::class, function ($job) use ($now) {
             $delaySeconds = $job->delay->diffInSeconds($now);
             $this->assertLessThanOrEqual(900, $delaySeconds);
             $this->assertGreaterThanOrEqual(899, $delaySeconds);

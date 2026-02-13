@@ -9,7 +9,7 @@ use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use function React\Promise\resolve;
 use Workflow\Serializers\Serializer;
-use Workflow\Signal;
+use Workflow\Timer;
 
 trait Timers
 {
@@ -66,7 +66,7 @@ trait Timers
                         ->create([
                             'index' => self::$context->index,
                             'now' => self::$context->now,
-                            'class' => Signal::class,
+                            'class' => Timer::class,
                             'result' => Serializer::serialize(true),
                         ]);
                 } catch (\Illuminate\Database\UniqueConstraintViolationException $exception) {
@@ -90,7 +90,12 @@ trait Timers
                 }
             }
 
-            Signal::dispatch(self::$context->storedWorkflow, self::connection(), self::queue())->delay($delay);
+            Timer::dispatch(
+                self::$context->storedWorkflow,
+                self::$context->index,
+                self::connection(),
+                self::queue()
+            )->delay($delay);
         }
 
         ++self::$context->index;
