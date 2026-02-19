@@ -5,16 +5,12 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use Illuminate\Support\Facades\Config;
-use Symfony\Component\Process\Process;
 use Tests\Fixtures\TestActivity;
 use Tests\Fixtures\TestChildWorkflow;
 use Tests\Fixtures\TestOtherActivity;
 use Tests\Fixtures\TestParentWorkflow;
-use Tests\Fixtures\TestSagaWorkflow;
-use Tests\Fixtures\TestUndoActivity;
 use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
-use Workflow\Exception;
 use Workflow\Signal;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\WorkflowStub;
@@ -26,6 +22,7 @@ final class DynamicConnectionQueueTest extends TestCase
         parent::$queueConnection = 'workflows';
         parent::setUpBeforeClass();
     }
+
     protected function setUp(): void
     {
         parent::setUp();

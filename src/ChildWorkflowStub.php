@@ -59,7 +59,9 @@ final class ChildWorkflowStub
             $childWorkflow = $storedChildWorkflow
                 ? $storedChildWorkflow->toWorkflow()
                 : WorkflowStub::make(
-                    $workflow, $context->storedWorkflow->queue_connection, $context->storedWorkflow->queue
+                    $workflow,
+                    $context->storedWorkflow->queue_connection,
+                    $context->storedWorkflow->queue
                 );
 
             if ($childWorkflow->running() && ! $childWorkflow->created()) {
