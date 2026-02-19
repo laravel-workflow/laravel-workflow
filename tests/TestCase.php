@@ -13,6 +13,8 @@ abstract class TestCase extends BaseTestCase
 {
     public const NUMBER_OF_WORKERS = 2;
 
+    public static string $queueConnection = 'redis';
+
     private static $workers = [];
 
     public static function setUpBeforeClass(): void
@@ -44,7 +46,9 @@ abstract class TestCase extends BaseTestCase
         }
 
         for ($i = 0; $i < self::NUMBER_OF_WORKERS; $i++) {
-            self::$workers[$i] = new Process(['php', __DIR__ . '/../vendor/bin/testbench', 'queue:work']);
+            self::$workers[$i] = new Process([
+                'php', __DIR__ . '/../vendor/bin/testbench', 'queue:work', self::$queueConnection
+            ]);
             self::$workers[$i]->disableOutput();
             self::$workers[$i]->start();
         }
