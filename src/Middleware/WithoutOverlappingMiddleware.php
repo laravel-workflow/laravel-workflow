@@ -177,7 +177,11 @@ class WithoutOverlappingMiddleware
                 $remaining = array_values(
                     array_diff($this->cache->get($this->getActivitySemaphoreKey(), []), [$job->key])
                 );
-                $this->cache->put($this->getActivitySemaphoreKey(), $remaining);
+                if ($this->expiresAfter) {
+                    $this->cache->put($this->getActivitySemaphoreKey(), $remaining, $this->expiresAfter);
+                } else {
+                    $this->cache->put($this->getActivitySemaphoreKey(), $remaining);
+                }
                 $this->cache->forget($job->key);
 
                 foreach ($remaining as $semaphore) {
