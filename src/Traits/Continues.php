@@ -22,7 +22,11 @@ trait Continues
                 ->withPivot('parent_index')
                 ->first();
 
-            $newWorkflow = self::make($context->storedWorkflow->class);
+            $newWorkflow = self::make(
+                $context->storedWorkflow->class,
+                $context->storedWorkflow->queue_connection,
+                $context->storedWorkflow->queue
+            );
 
             if ($parentWorkflow) {
                 $parentWorkflow->children()

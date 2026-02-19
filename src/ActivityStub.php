@@ -66,7 +66,9 @@ final class ActivityStub
             return resolve($result);
         }
 
-        $activity::dispatch($context->index, $context->now, $context->storedWorkflow, ...$arguments);
+        $activity::dispatch($context->index, $context->now, $context->storedWorkflow, ...$arguments)
+            ->onConnection($context->storedWorkflow->queue_connection)
+            ->onQueue($context->storedWorkflow->queue);
 
         ++$context->index;
         WorkflowStub::setContext($context);

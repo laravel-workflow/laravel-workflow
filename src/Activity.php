@@ -54,12 +54,12 @@ class Activity implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
     ) {
         $this->arguments = $arguments;
 
-        if (property_exists($this, 'connection')) {
-            $this->onConnection($this->connection);
+        if (property_exists($this, 'connection') || $this->storedWorkflow->queue_connection) {
+            $this->onConnection($this->storedWorkflow->queue_connection ?? $this->connection);
         }
 
-        if (property_exists($this, 'queue')) {
-            $this->onQueue($this->queue);
+        if (property_exists($this, 'queue') || $this->storedWorkflow->queue) {
+            $this->onConnection($this->storedWorkflow->queue ?? $this->queue);
         }
 
         $this->afterCommit = true;

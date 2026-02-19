@@ -76,12 +76,12 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 
         $this->arguments = $arguments;
 
-        if (property_exists($this, 'connection')) {
-            $this->onConnection($this->connection);
+        if (property_exists($this, 'connection') || $this->storedWorkflow->queue_connection) {
+            $this->onConnection($this->storedWorkflow->queue_connection ?? $this->connection);
         }
 
-        if (property_exists($this, 'queue')) {
-            $this->onQueue($this->queue);
+        if (property_exists($this, 'queue') || $this->storedWorkflow->queue) {
+            $this->onConnection($this->storedWorkflow->queue ?? $this->queue);
         }
 
         $this->afterCommit = true;
@@ -287,8 +287,10 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 
             if ($parentWorkflow) {
                 $properties = WorkflowStub::getDefaultProperties($parentWorkflow->class);
-                $connection = $properties['connection'] ?? config('queue.default');
-                $queue = $properties['queue'] ?? config('queue.connections.' . $connection . '.queue', 'default');
+                $connection = $parentWorkflow->queue_connection
+                    ?: ($properties['connection'] ?? config('queue.default'));
+                $queue = $parentWorkflow->queue
+                    ?: ($properties['queue'] ?? config('queue.connections.' . $connection . '.queue', 'default'));
 
                 ChildWorkflow::dispatch(
                     $parentWorkflow->pivot->parent_index,

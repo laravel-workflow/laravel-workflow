@@ -56,7 +56,11 @@ final class ChildWorkflowStub
                 ->wherePivot('parent_index', $context->index)
                 ->first();
 
-            $childWorkflow = $storedChildWorkflow ? $storedChildWorkflow->toWorkflow() : WorkflowStub::make($workflow);
+            $childWorkflow = $storedChildWorkflow
+                ? $storedChildWorkflow->toWorkflow()
+                : WorkflowStub::make(
+                    $workflow, $context->storedWorkflow->queue_connection, $context->storedWorkflow->queue
+                );
 
             if ($childWorkflow->running() && ! $childWorkflow->created()) {
                 try {

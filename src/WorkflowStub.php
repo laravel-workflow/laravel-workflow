@@ -123,12 +123,18 @@ final class WorkflowStub
 
     public static function connection()
     {
-        return Arr::get(self::getDefaultProperties(self::$context->storedWorkflow->class), 'connection');
+        return self::$context->storedWorkflow->queue_connection ?? Arr::get(
+            self::getDefaultProperties(self::$context->storedWorkflow->class),
+            'connection'
+        );
     }
 
     public static function queue()
     {
-        return Arr::get(self::getDefaultProperties(self::$context->storedWorkflow->class), 'queue');
+        return self::$context->storedWorkflow->queue ?? Arr::get(
+            self::getDefaultProperties(self::$context->storedWorkflow->class),
+            'queue'
+        );
     }
 
     public static function getDefaultProperties(string $class): array
@@ -140,10 +146,12 @@ final class WorkflowStub
         return self::$defaultPropertiesCache[$class];
     }
 
-    public static function make($class): static
+    public static function make($class, ?string $connection = null, ?string $queue = null): static
     {
         $storedWorkflow = config('workflows.stored_workflow_model', StoredWorkflow::class)::create([
             'class' => $class,
+            'queue_connection' => $connection,
+            'queue' => $queue,
         ]);
 
         return new self($storedWorkflow);
@@ -396,6 +404,6 @@ final class WorkflowStub
         $this->storedWorkflow->class::$dispatch(
             $this->storedWorkflow,
             ...Serializer::unserialize($this->storedWorkflow->arguments)
-        );
+        )->onConnection(self::connection())->onQueue(self::queue());
     }
 }
