@@ -81,7 +81,7 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
         }
 
         if (property_exists($this, 'queue') || $this->storedWorkflow->queue) {
-            $this->onConnection($this->storedWorkflow->queue ?? $this->queue);
+            $this->onQueue($this->storedWorkflow->queue ?? $this->queue);
         }
 
         $this->afterCommit = true;
