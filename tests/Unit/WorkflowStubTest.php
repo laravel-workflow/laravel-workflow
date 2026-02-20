@@ -57,6 +57,10 @@ final class WorkflowStubTest extends TestCase
         $this->assertTrue($workflow->failed());
         $this->assertTrue($parentWorkflow->failed());
 
+        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
+        $storedWorkflow->status = WorkflowCreatedStatus::class;
+        $storedWorkflow->save();
+
         $workflow->cancel();
         while (! $workflow->isCanceled());
 
@@ -77,6 +81,10 @@ final class WorkflowStubTest extends TestCase
         $workflow->start();
         $workflow->cancel();
         $workflow->fail(new Exception('resume'));
+
+        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
+        $storedWorkflow->status = WorkflowCreatedStatus::class;
+        $storedWorkflow->save();
 
         Cache::flush();
 
