@@ -8,6 +8,7 @@ use Tests\Fixtures\TestFailingWorkflow;
 use Tests\TestCase;
 use Workflow\Models\StoredWorkflow;
 use Workflow\States\WorkflowCompletedStatus;
+use Workflow\States\WorkflowCreatedStatus;
 use Workflow\States\WorkflowFailedStatus;
 use Workflow\WorkflowStub;
 
