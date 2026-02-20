@@ -14,6 +14,7 @@ use Tests\Fixtures\TestParentTimerWorkflow;
 use Tests\Fixtures\TestParentWorkflow;
 use Tests\TestCase;
 use Workflow\AsyncWorkflow;
+use Workflow\Models\StoredWorkflow;
 use Workflow\States\WorkflowCompletedStatus;
 use Workflow\States\WorkflowCreatedStatus;
 use Workflow\States\WorkflowFailedStatus;
