@@ -69,7 +69,7 @@ final class WithoutOverlappingMiddlewareTest extends TestCase
             });
         });
 
-        $this->assertSame(0, Cache::get($middleware1->getWorkflowSemaphoreKey()));
+        $this->assertNull(Cache::get($middleware1->getWorkflowSemaphoreKey()));
         $this->assertNull(Cache::get($middleware1->getActivitySemaphoreKey()));
     }
 
@@ -111,7 +111,7 @@ final class WithoutOverlappingMiddlewareTest extends TestCase
         });
 
         $this->assertNull(Cache::get($middleware1->getWorkflowSemaphoreKey()));
-        $this->assertSame(0, count(Cache::get($middleware1->getActivitySemaphoreKey())));
+        $this->assertSame(0, count(Cache::get($middleware1->getActivitySemaphoreKey(), [])));
     }
 
     public function testUnknownTypeDoesNotCallNext(): void
@@ -290,6 +290,41 @@ final class WithoutOverlappingMiddlewareTest extends TestCase
         $this->assertSame([], Cache::get($middleware->getActivitySemaphoreKey(), []));
     }
 
+    public function testUnlockActivityAppliesTtlWhenExpiresAfterIsConfigured(): void
+    {
+        $job = new \stdClass();
+        $job->key = 'test-activity-key';
+
+        $lock = $this->mock(Lock::class, static function (MockInterface $mock) {
+            $mock->shouldReceive('get')
+                ->once()
+                ->andReturn(true);
+            $mock->shouldReceive('release')
+                ->once();
+        });
+
+        $cache = $this->mock(Repository::class, static function (MockInterface $mock) use ($lock, $job) {
+            $mock->shouldReceive('lock')
+                ->once()
+                ->andReturn($lock);
+            $mock->shouldReceive('get')
+                ->with('laravel-workflow-overlap:1:activity', [])
+                ->andReturn([$job->key]);
+            $mock->shouldReceive('forget')
+                ->with('laravel-workflow-overlap:1:activity')
+                ->once();
+            $mock->shouldReceive('forget')
+                ->with($job->key)
+                ->once();
+        });
+
+        $middleware = new WithoutOverlappingMiddleware(1, WithoutOverlappingMiddleware::ACTIVITY, 0, 60);
+
+        $result = $middleware->unlock($job);
+
+        $this->assertTrue($result);
+    }
+
     public function testUnlockActivityRetriesOnLockFailure(): void
     {
         $job = new \stdClass();
@@ -315,8 +350,8 @@ final class WithoutOverlappingMiddlewareTest extends TestCase
             $mock->shouldReceive('get')
                 ->with('laravel-workflow-overlap:1:activity', [])
                 ->andReturn([$job->key]);
-            $mock->shouldReceive('put')
-                ->with('laravel-workflow-overlap:1:activity', [])
+            $mock->shouldReceive('forget')
+                ->with('laravel-workflow-overlap:1:activity')
                 ->once();
             $mock->shouldReceive('forget')
                 ->with($job->key)
@@ -425,5 +460,54 @@ final class WithoutOverlappingMiddlewareTest extends TestCase
         $middleware->handle($job, function ($job) {
             $this->fail('Should not call next when CAS value mismatch');
         });
+    }
+
+    public function testActivityLockAppliesTtlToSemaphoreKeyWhenConfigured(): void
+    {
+        $job = new \stdClass();
+
+        $lock = $this->mock(Lock::class, static function (MockInterface $mock) {
+            $mock->shouldReceive('get')
+                ->once()
+                ->andReturn(true);
+            $mock->shouldReceive('release')
+                ->once();
+        });
+
+        $cache = $this->mock(Repository::class, static function (MockInterface $mock) use ($lock) {
+            $mock->shouldReceive('get')
+                ->with('laravel-workflow-overlap:1:workflow', 0)
+                ->once()
+                ->andReturn(0);
+            $mock->shouldReceive('get')
+                ->with('laravel-workflow-overlap:1:activity', [])
+                ->twice()
+                ->andReturn([], []);
+            $mock->shouldReceive('lock')
+                ->with('laravel-workflow-overlap:1', 5)
+                ->once()
+                ->andReturn($lock);
+            $mock->shouldReceive('put')
+                ->withArgs(static fn ($key, $value, $ttl): bool => $key === 'laravel-workflow-overlap:1:activity'
+                    && is_array($value)
+                    && count($value) === 1
+                    && $ttl === 60)
+                ->once();
+            $mock->shouldReceive('put')
+                ->withArgs(
+                    static fn ($key, $value, $ttl): bool => str_starts_with(
+                        $key,
+                        'laravel-workflow-overlap:1:activity:'
+                    )
+                    && $value === 1
+                    && $ttl === 60
+                )
+                ->once();
+        });
+
+        $middleware = new WithoutOverlappingMiddleware(1, WithoutOverlappingMiddleware::ACTIVITY, 0, 60);
+
+        $this->assertTrue($middleware->lock($job));
+        $this->assertTrue(isset($job->key));
     }
 }

@@ -22,11 +22,11 @@ final class ExceptionTest extends TestCase
         ));
 
         $middleware = collect($exception->middleware())
-            ->map(static fn ($middleware) => is_object($middleware) ? get_class($middleware) : $middleware)
             ->values();
 
         $this->assertCount(1, $middleware);
-        $this->assertSame([WithoutOverlappingMiddleware::class], $middleware->all());
+        $this->assertSame(WithoutOverlappingMiddleware::class, get_class($middleware[0]));
+        $this->assertSame(15, $middleware[0]->expiresAfter);
     }
 
     public function testExceptionWorkflowRunning(): void

@@ -38,7 +38,12 @@ class Signal implements ShouldBeEncrypted, ShouldQueue
     public function middleware()
     {
         return [
-            new WithoutOverlappingMiddleware($this->storedWorkflow->id, WithoutOverlappingMiddleware::WORKFLOW),
+            new WithoutOverlappingMiddleware(
+                $this->storedWorkflow->id,
+                WithoutOverlappingMiddleware::WORKFLOW,
+                0,
+                15
+            ),
         ];
     }
 
