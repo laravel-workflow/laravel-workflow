@@ -112,7 +112,8 @@ class WithoutOverlappingMiddleware
                         $locked = $this->compareAndSet(
                             $this->getActivitySemaphoreKey(),
                             $activitySemaphores,
-                            array_merge($activitySemaphores, [$job->key])
+                            array_merge($activitySemaphores, [$job->key]),
+                            $this->expiresAfter
                         );
                         if ($locked) {
                             if ($this->expiresAfter) {
@@ -177,7 +178,9 @@ class WithoutOverlappingMiddleware
                 $remaining = array_values(
                     array_diff($this->cache->get($this->getActivitySemaphoreKey(), []), [$job->key])
                 );
-                if ($this->expiresAfter) {
+                if ($remaining === []) {
+                    $this->cache->forget($this->getActivitySemaphoreKey());
+                } elseif ($this->expiresAfter) {
                     $this->cache->put($this->getActivitySemaphoreKey(), $remaining, $this->expiresAfter);
                 } else {
                     $this->cache->put($this->getActivitySemaphoreKey(), $remaining);
@@ -214,7 +217,9 @@ class WithoutOverlappingMiddleware
                     $currentValue = is_int($expectedValue) ? (int) $currentValue : $currentValue;
 
                     if ($currentValue === $expectedValue) {
-                        if ($expiresAfter) {
+                        if ($newValue === 0 || $newValue === []) {
+                            $this->cache->forget($key);
+                        } elseif ($expiresAfter) {
                             $this->cache->put($key, $newValue, $expiresAfter);
                         } else {
                             $this->cache->put($key, $newValue);
