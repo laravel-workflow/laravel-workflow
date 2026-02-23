@@ -10,6 +10,7 @@ use React\Promise\PromiseInterface;
 use function React\Promise\resolve;
 use Workflow\Serializers\Serializer;
 use Workflow\Signal;
+use Workflow\Timer;
 
 trait AwaitWithTimeouts
 {
@@ -19,7 +20,14 @@ trait AwaitWithTimeouts
 
         if ($log) {
             ++self::$context->index;
-            return resolve(Serializer::unserialize($log->result));
+
+            $result = Serializer::unserialize($log->result);
+
+            if ($log->class === Timer::class) {
+                return resolve(! $result);
+            }
+
+            return resolve($result);
         }
 
         $result = $condition();

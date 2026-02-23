@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use Tests\Fixtures\TestAwaitWithTimeoutReplayWorkflow;
 use Tests\Fixtures\TestAwaitWithTimeoutWorkflow;
 use Tests\TestCase;
 use Workflow\States\WorkflowCompletedStatus;
@@ -39,5 +40,17 @@ final class AwaitWithTimeoutWorkflowTest extends TestCase
         $this->assertGreaterThanOrEqual(5, now()->diffInSeconds($now));
         $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
         $this->assertSame('workflow_timed_out', $workflow->output());
+    }
+
+    public function testTimedoutResultStaysFalseAfterReplay(): void
+    {
+        $workflow = WorkflowStub::make(TestAwaitWithTimeoutReplayWorkflow::class);
+
+        $workflow->start();
+
+        while ($workflow->running());
+
+        $this->assertSame(WorkflowCompletedStatus::class, $workflow->status());
+        $this->assertFalse($workflow->output());
     }
 }
