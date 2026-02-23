@@ -83,20 +83,14 @@ final class WorkflowStub
         if (self::isQueryMethod($this->storedWorkflow->class, $method)) {
             $activeWorkflow = $this->storedWorkflow->active();
 
-            return (new $activeWorkflow->class(
-                $activeWorkflow,
-                ...$activeWorkflow->workflowArguments(),
-            ))
+            return (new $activeWorkflow->class($activeWorkflow, ...$activeWorkflow->workflowArguments()))
                 ->query($method);
         }
 
         if (self::isUpdateMethod($this->storedWorkflow->class, $method)) {
             $activeWorkflow = $this->storedWorkflow->active();
 
-            $workflow = new $activeWorkflow->class(
-                $activeWorkflow,
-                ...$activeWorkflow->workflowArguments(),
-            );
+            $workflow = new $activeWorkflow->class($activeWorkflow, ...$activeWorkflow->workflowArguments());
             $result = $workflow->query($method);
 
             if ($workflow->outboxWasConsumed) {
@@ -306,11 +300,11 @@ final class WorkflowStub
     {
         try {
             $this->storedWorkflow->createLog([
-                    'index' => $index,
-                    'now' => $now,
-                    'class' => $class,
-                    'result' => Serializer::serialize($result),
-                ]);
+                'index' => $index,
+                'now' => $now,
+                'class' => $class,
+                'result' => Serializer::serialize($result),
+            ]);
         } catch (\Illuminate\Database\UniqueConstraintViolationException $exception) {
             // already logged
         }

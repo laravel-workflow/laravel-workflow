@@ -38,11 +38,11 @@ trait Versions
         if (! self::$context->replaying) {
             try {
                 self::$context->storedWorkflow->createLog([
-                        'index' => self::$context->index,
-                        'now' => self::$context->now,
-                        'class' => 'version:' . $changeId,
-                        'result' => Serializer::serialize($version),
-                    ]);
+                    'index' => self::$context->index,
+                    'now' => self::$context->now,
+                    'class' => 'version:' . $changeId,
+                    'result' => Serializer::serialize($version),
+                ]);
             } catch (QueryException $exception) {
                 $log = self::$context->storedWorkflow->findLogByIndex(self::$context->index, true);
 

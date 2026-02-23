@@ -258,11 +258,12 @@ final class StoredWorkflowTest extends TestCase
             'status' => 'running',
         ]);
 
-        $workflow->logs()->create([
-            'index' => 0,
-            'now' => now(),
-            'class' => 'test',
-        ]);
+        $workflow->logs()
+            ->create([
+                'index' => 0,
+                'now' => now(),
+                'class' => 'test',
+            ]);
 
         $workflow->load('logs');
 
@@ -306,10 +307,12 @@ final class StoredWorkflowTest extends TestCase
             'status' => 'running',
         ]);
 
-        $workflow->timers()->create([
-            'index' => 3,
-            'stop_at' => now()->addSecond(),
-        ]);
+        $workflow->timers()
+            ->create([
+                'index' => 3,
+                'stop_at' => now()
+                    ->addSecond(),
+            ]);
 
         $workflow->load('timers');
 
@@ -329,17 +332,20 @@ final class StoredWorkflowTest extends TestCase
             'status' => 'running',
         ]);
 
-        $workflow->signals()->create([
-            'method' => 'first',
-            'arguments' => serialize([]),
-            'created_at' => now()->subSecond(),
-        ]);
+        $workflow->signals()
+            ->create([
+                'method' => 'first',
+                'arguments' => serialize([]),
+                'created_at' => now()
+                    ->subSecond(),
+            ]);
 
-        $workflow->signals()->create([
-            'method' => 'second',
-            'arguments' => serialize([]),
-            'created_at' => now(),
-        ]);
+        $workflow->signals()
+            ->create([
+                'method' => 'second',
+                'arguments' => serialize([]),
+                'created_at' => now(),
+            ]);
 
         $workflow->load('signals');
 

@@ -291,7 +291,10 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 
             if ($parentWorkflow) {
                 $connection = $parentWorkflow->effectiveConnection() ?? config('queue.default');
-                $queue = $parentWorkflow->effectiveQueue() ?? config('queue.connections.' . $connection . '.queue', 'default');
+                $queue = $parentWorkflow->effectiveQueue() ?? config(
+                    'queue.connections.' . $connection . '.queue',
+                    'default'
+                );
 
                 ChildWorkflow::dispatch(
                     $parentWorkflow->pivot->parent_index,

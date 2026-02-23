@@ -37,13 +37,13 @@ final class ActivityStub
                 $result = $mocks[$activity];
 
                 $log = $context->storedWorkflow->createLog([
-                        'index' => $context->index,
-                        'now' => $context->now,
-                        'class' => $activity,
-                        'result' => Serializer::serialize(
-                            is_callable($result) ? $result($context, ...$arguments) : $result
-                        ),
-                    ]);
+                    'index' => $context->index,
+                    'now' => $context->now,
+                    'class' => $activity,
+                    'result' => Serializer::serialize(
+                        is_callable($result) ? $result($context, ...$arguments) : $result
+                    ),
+                ]);
 
                 WorkflowStub::recordDispatched($activity, $arguments);
             }

@@ -8,7 +8,7 @@ use Illuminate\Contracts\Foundation\Application;
 use Workflow\QueryMethod;
 use Workflow\SignalMethod;
 use Workflow\Workflow;
-use function Workflow\{activity, await};
+use function Workflow\{activity, await, sideEffect};
 
 class TestBadConnectionWorkflow extends Workflow
 {
@@ -35,13 +35,13 @@ class TestBadConnectionWorkflow extends Workflow
         assert($app->runningInConsole());
 
         if ($shouldAssert) {
-            assert(! $this->canceled);
+            assert(yield sideEffect(fn (): bool => ! $this->canceled));
         }
 
         $otherResult = yield activity(TestOtherActivity::class, 'other');
 
         if ($shouldAssert) {
-            assert(! $this->canceled);
+            assert(yield sideEffect(fn (): bool => ! $this->canceled));
         }
 
         yield await(fn (): bool => $this->canceled);

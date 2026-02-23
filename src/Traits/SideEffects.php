@@ -25,11 +25,11 @@ trait SideEffects
         if (! self::$context->replaying) {
             try {
                 self::$context->storedWorkflow->createLog([
-                        'index' => self::$context->index,
-                        'now' => self::$context->now,
-                        'class' => self::$context->storedWorkflow->class,
-                        'result' => Serializer::serialize($result),
-                    ]);
+                    'index' => self::$context->index,
+                    'now' => self::$context->now,
+                    'class' => self::$context->storedWorkflow->class,
+                    'result' => Serializer::serialize($result),
+                ]);
             } catch (QueryException $exception) {
                 $log = self::$context->storedWorkflow->findLogByIndex(self::$context->index, true);
 

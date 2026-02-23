@@ -9,7 +9,6 @@ use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use function React\Promise\resolve;
 use Workflow\Serializers\Serializer;
-use Workflow\WorkflowOptions;
 
 final class ChildWorkflowStub
 {
@@ -31,13 +30,13 @@ final class ChildWorkflowStub
                 $result = $mocks[$workflow];
 
                 $log = $context->storedWorkflow->createLog([
-                        'index' => $context->index,
-                        'now' => $context->now,
-                        'class' => $workflow,
-                        'result' => Serializer::serialize(
-                            is_callable($result) ? $result($context, ...$arguments) : $result
-                        ),
-                    ]);
+                    'index' => $context->index,
+                    'now' => $context->now,
+                    'class' => $workflow,
+                    'result' => Serializer::serialize(
+                        is_callable($result) ? $result($context, ...$arguments) : $result
+                    ),
+                ]);
 
                 WorkflowStub::recordDispatched($workflow, $arguments);
             }

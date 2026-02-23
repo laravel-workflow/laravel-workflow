@@ -17,9 +17,6 @@ final class WorkflowOptions
      */
     public static function set(array $options): self
     {
-        return new self(
-            $options['connection'] ?? null,
-            $options['queue'] ?? null,
-        );
+        return new self($options['connection'] ?? null, $options['queue'] ?? null);
     }
 }

@@ -12,32 +12,6 @@ abstract class AbstractSerializer implements SerializerInterface
 {
     use SerializesAndRestoresModelIdentifiers;
 
-    private function serializeValue(mixed $value): mixed
-    {
-        if (is_array($value)) {
-            foreach ($value as $key => $nested) {
-                $value[$key] = $this->serializeValue($nested);
-            }
-
-            return $value;
-        }
-
-        return $this->getSerializedPropertyValue($value);
-    }
-
-    private function unserializeValue(mixed $value): mixed
-    {
-        if (is_array($value)) {
-            foreach ($value as $key => $nested) {
-                $value[$key] = $this->unserializeValue($nested);
-            }
-
-            return $value;
-        }
-
-        return $this->getRestoredPropertyValue($value);
-    }
-
     abstract public static function getInstance(): self;
 
     abstract public static function encode(string $data): string;
@@ -98,5 +72,31 @@ abstract class AbstractSerializer implements SerializerInterface
             $unserialized = ($unserialized->getClosure())();
         }
         return static::unserializeModels($unserialized);
+    }
+
+    private function serializeValue(mixed $value): mixed
+    {
+        if (is_array($value)) {
+            foreach ($value as $key => $nested) {
+                $value[$key] = $this->serializeValue($nested);
+            }
+
+            return $value;
+        }
+
+        return $this->getSerializedPropertyValue($value);
+    }
+
+    private function unserializeValue(mixed $value): mixed
+    {
+        if (is_array($value)) {
+            foreach ($value as $key => $nested) {
+                $value[$key] = $this->unserializeValue($nested);
+            }
+
+            return $value;
+        }
+
+        return $this->getRestoredPropertyValue($value);
     }
 }

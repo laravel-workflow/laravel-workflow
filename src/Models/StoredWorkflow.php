@@ -7,9 +7,9 @@ namespace Workflow\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Arr;
 use Illuminate\Database\Eloquent\Prunable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Arr;
 use Spatie\ModelStates\HasStates;
 use Workflow\States\WorkflowContinuedStatus;
 use Workflow\States\WorkflowStatus;
@@ -56,7 +56,6 @@ class StoredWorkflow extends Model
         return WorkflowStub::fromStoredWorkflow($this);
     }
 
-
     public function workflowMetadata(): WorkflowMetadata
     {
         $arguments = $this->arguments;
@@ -75,17 +74,20 @@ class StoredWorkflow extends Model
      */
     public function workflowArguments(): array
     {
-        return $this->workflowMetadata()->arguments;
+        return $this->workflowMetadata()
+->arguments;
     }
 
     public function workflowOptions(): WorkflowOptions
     {
-        return $this->workflowMetadata()->options;
+        return $this->workflowMetadata()
+->options;
     }
 
     public function effectiveConnection(): ?string
     {
-        $connection = $this->workflowOptions()->connection;
+        $connection = $this->workflowOptions()
+->connection;
 
         if ($connection !== null) {
             return $connection;
@@ -100,7 +102,8 @@ class StoredWorkflow extends Model
 
     public function effectiveQueue(): ?string
     {
-        $queue = $this->workflowOptions()->queue;
+        $queue = $this->workflowOptions()
+->queue;
 
         if ($queue !== null) {
             return $queue;
@@ -165,7 +168,8 @@ class StoredWorkflow extends Model
     public function createLog(array $attributes): StoredWorkflowLog
     {
         /** @var StoredWorkflowLog $log */
-        $log = $this->logs()->create($attributes);
+        $log = $this->logs()
+            ->create($attributes);
 
         if ($this->relationLoaded('logs')) {
             /** @var Collection<int, StoredWorkflowLog> $logs */
@@ -204,7 +208,8 @@ class StoredWorkflow extends Model
     public function createTimer(array $attributes): StoredWorkflowTimer
     {
         /** @var StoredWorkflowTimer $timer */
-        $timer = $this->timers()->create($attributes);
+        $timer = $this->timers()
+            ->create($attributes);
 
         if ($this->relationLoaded('timers')) {
             /** @var Collection<int, StoredWorkflowTimer> $timers */
@@ -220,7 +225,8 @@ class StoredWorkflow extends Model
         if ($this->relationLoaded('signals')) {
             /** @var Collection<int, StoredWorkflowSignal> $signals */
             $signals = $this->getRelation('signals');
-            return $signals->sortBy('created_at')->values();
+            return $signals->sortBy('created_at')
+                ->values();
         }
 
         return $this->signals()

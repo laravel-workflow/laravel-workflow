@@ -43,9 +43,9 @@ trait Timers
 
             if (! self::$context->replaying) {
                 $timer = self::$context->storedWorkflow->createTimer([
-                        'index' => self::$context->index,
-                        'stop_at' => $when,
-                    ]);
+                    'index' => self::$context->index,
+                    'stop_at' => $when,
+                ]);
             } else {
                 ++self::$context->index;
                 $deferred = new Deferred();
@@ -60,11 +60,11 @@ trait Timers
             if (! self::$context->replaying) {
                 try {
                     self::$context->storedWorkflow->createLog([
-                            'index' => self::$context->index,
-                            'now' => self::$context->now,
-                            'class' => Timer::class,
-                            'result' => Serializer::serialize(true),
-                        ]);
+                        'index' => self::$context->index,
+                        'now' => self::$context->now,
+                        'class' => Timer::class,
+                        'result' => Serializer::serialize(true),
+                    ]);
                 } catch (\Illuminate\Database\UniqueConstraintViolationException $exception) {
                     // already logged
                 }

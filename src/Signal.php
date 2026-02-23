@@ -30,7 +30,10 @@ class Signal implements ShouldBeEncrypted, ShouldQueue
         $queue = null
     ) {
         $connection = $connection ?? $this->storedWorkflow->effectiveConnection() ?? config('queue.default');
-        $queue = $queue ?? $this->storedWorkflow->effectiveQueue() ?? config('queue.connections.' . $connection . '.queue', 'default');
+        $queue = $queue ?? $this->storedWorkflow->effectiveQueue() ?? config(
+            'queue.connections.' . $connection . '.queue',
+            'default'
+        );
         $this->onConnection($connection);
         $this->onQueue($queue);
     }
