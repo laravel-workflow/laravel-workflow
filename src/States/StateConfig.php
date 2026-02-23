@@ -13,7 +13,7 @@ final class StateConfig
     public ?string $defaultStateClass = null;
 
     /**
-     * @var array<string, null|string>
+     * @var array<string, bool>
      */
     public array $allowedTransitions = [];
 
@@ -43,11 +43,11 @@ final class StateConfig
         return $this;
     }
 
-    public function allowTransition($from, string $to, ?string $transition = null): self
+    public function allowTransition($from, string $to): self
     {
         if (is_array($from)) {
             foreach ($from as $fromState) {
-                $this->allowTransition($fromState, $to, $transition);
+                $this->allowTransition($fromState, $to);
             }
 
             return $this;
@@ -61,7 +61,7 @@ final class StateConfig
             throw new InvalidArgumentException("{$to} does not extend {$this->baseStateClass}.");
         }
 
-        $this->allowedTransitions[$this->createTransitionKey($from, $to)] = $transition;
+        $this->allowedTransitions[$this->createTransitionKey($from, $to)] = true;
 
         return $this;
     }
@@ -72,7 +72,7 @@ final class StateConfig
     public function allowTransitions(array $transitions): self
     {
         foreach ($transitions as $transition) {
-            $this->allowTransition($transition[0], $transition[1], $transition[2] ?? null);
+            $this->allowTransition($transition[0], $transition[1]);
         }
 
         return $this;

@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Tests\Unit\States;
 
 use Exception;
+use Illuminate\Support\Facades\Event;
 use InvalidArgumentException;
 use Tests\TestCase;
+use Workflow\Events\StateChanged;
 use Workflow\Exceptions\TransitionNotFound;
 use Workflow\States\State;
 use Workflow\States\StateCaster;
@@ -196,6 +198,8 @@ final class StateInfrastructureTest extends TestCase
 
     public function testStateTransitionsAndEqualityChecks(): void
     {
+        Event::fake([StateChanged::class]);
+
         $model = new StateInfraModel();
         $state = new StateInfraInitialState($model);
         $state->setField('status');
@@ -213,6 +217,12 @@ final class StateInfrastructureTest extends TestCase
         $this->assertTrue($model->saved);
         $this->assertInstanceOf(StateInfraNextState::class, $model->status);
         $this->assertSame('status', $model->status->getField());
+        Event::assertDispatched(StateChanged::class, static function (StateChanged $event) use ($model, $state) {
+            return $event->initialState === $state
+                && $event->finalState instanceof StateInfraNextState
+                && $event->model === $model
+                && $event->field === 'status';
+        });
 
         $model->saved = false;
         $nextState = $model->status;
@@ -220,6 +230,12 @@ final class StateInfrastructureTest extends TestCase
 
         $this->assertTrue($model->saved);
         $this->assertInstanceOf(StateInfraTerminalState::class, $model->status);
+        Event::assertDispatched(StateChanged::class, static function (StateChanged $event) use ($model, $nextState) {
+            return $event->initialState === $nextState
+                && $event->finalState instanceof StateInfraTerminalState
+                && $event->model === $model
+                && $event->field === 'status';
+        });
 
         try {
             $model->status->transitionTo(StateInfraInitialState::class);
