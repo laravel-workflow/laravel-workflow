@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Prunable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Arr;
-use Spatie\ModelStates\HasStates;
+use Workflow\States\HasStates;
 use Workflow\States\WorkflowContinuedStatus;
 use Workflow\States\WorkflowStatus;
 use Workflow\WorkflowMetadata;

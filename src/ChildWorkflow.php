@@ -11,6 +11,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Workflow\Exceptions\TransitionNotFound;
 use Workflow\Middleware\WithoutOverlappingMiddleware;
 use Workflow\Models\StoredWorkflow;
 
@@ -62,7 +63,7 @@ final class ChildWorkflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQu
             } else {
                 $workflow->next($this->index, $this->now, $this->storedWorkflow->class, $this->return);
             }
-        } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
+        } catch (TransitionNotFound) {
             if ($workflow->running()) {
                 $this->release();
             }

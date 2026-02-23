@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use Mockery;
-use Spatie\ModelStates\Exceptions\TransitionNotFound;
 use Tests\Fixtures\TestChildWorkflow;
 use Tests\Fixtures\TestParentWorkflow;
 use Tests\TestCase;
 use Workflow\ChildWorkflowStub;
+use Workflow\Exceptions\TransitionNotFound;
 use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Serializer;
 use Workflow\States\WorkflowPendingStatus;

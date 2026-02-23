@@ -8,6 +8,7 @@ use function React\Promise\all;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use function React\Promise\resolve;
+use Workflow\Exceptions\TransitionNotFound;
 use Workflow\Serializers\Serializer;
 
 final class ChildWorkflowStub
@@ -69,7 +70,7 @@ final class ChildWorkflowStub
             if ($childWorkflow->running() && ! $childWorkflow->created()) {
                 try {
                     $childWorkflow->resume();
-                } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
+                } catch (TransitionNotFound) {
                     // already running
                 }
             } elseif (! $childWorkflow->completed()) {

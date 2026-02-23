@@ -10,6 +10,7 @@ use SplFileObject;
 use Workflow\Events\ActivityCompleted;
 use Workflow\Events\ActivityFailed;
 use Workflow\Events\ActivityStarted;
+use Workflow\Exceptions\TransitionNotFound;
 
 final class ActivityMiddleware
 {
@@ -73,7 +74,7 @@ final class ActivityMiddleware
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $throwable) {
             $this->job->storedWorkflow->toWorkflow()
                 ->fail($throwable);
-        } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
+        } catch (TransitionNotFound) {
             if ($this->job->storedWorkflow->toWorkflow()->running()) {
                 $this->job->release();
             }

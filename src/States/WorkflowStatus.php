@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Workflow\States;
 
-use Spatie\ModelStates\State;
-use Spatie\ModelStates\StateConfig;
-
 abstract class WorkflowStatus extends State
 {
     public static function config(): StateConfig
