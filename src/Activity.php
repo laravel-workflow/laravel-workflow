@@ -54,7 +54,8 @@ class Activity implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
     ) {
         $this->arguments = $arguments;
 
-        $connection = $this->storedWorkflow->effectiveConnection();
+        $options = $this->storedWorkflow->workflowOptions();
+        $connection = $options->connection;
 
         if ($connection !== null) {
             $this->onConnection($connection);
@@ -62,7 +63,7 @@ class Activity implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
             $this->onConnection($this->connection);
         }
 
-        $queue = $this->storedWorkflow->effectiveQueue();
+        $queue = $options->queue;
 
         if ($queue !== null) {
             $this->onQueue($queue);
