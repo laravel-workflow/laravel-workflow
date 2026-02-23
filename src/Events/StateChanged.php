@@ -24,12 +24,8 @@ class StateChanged
      * @param  string|State|null  $finalState
      * @param  \Illuminate\Database\Eloquent\Model  $model
      */
-    public function __construct(
-        ?State $initialState,
-        ?State $finalState,
-        $model,
-        string $field
-    ) {
+    public function __construct(?State $initialState, ?State $finalState, $model, string $field)
+    {
         $this->initialState = $initialState;
         $this->finalState = $finalState;
         $this->model = $model;
