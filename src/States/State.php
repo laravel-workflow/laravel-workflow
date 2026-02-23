@@ -40,13 +40,7 @@ abstract class State implements Castable, JsonSerializable
         $reflection = new ReflectionClass(static::class);
         $baseClass = $reflection->name;
 
-        while ($reflection instanceof ReflectionClass && ! $reflection->isAbstract()) {
-            $parent = $reflection->getParentClass();
-
-            if (! $parent instanceof ReflectionClass) {
-                break;
-            }
-
+        while (! $reflection->isAbstract() && ($parent = $reflection->getParentClass()) instanceof ReflectionClass) {
             $reflection = $parent;
             $baseClass = $reflection->name;
         }
@@ -213,14 +207,8 @@ abstract class State implements Castable, JsonSerializable
         $reflection = new ReflectionClass(static::class);
         $stateConfig = static::config();
 
-        $fileName = $reflection->getFileName();
-
-        if (! is_string($fileName)) {
-            return [];
-        }
-
-        $directory = dirname($fileName);
-        $files = scandir($directory);
+        $fileName = (string) $reflection->getFileName();
+        $files = @scandir(dirname($fileName));
 
         if ($files === false) {
             return [];

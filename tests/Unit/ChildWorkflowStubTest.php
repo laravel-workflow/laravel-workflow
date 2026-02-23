@@ -93,15 +93,6 @@ final class ChildWorkflowStubTest extends TestCase
 
     public function testIgnoresTransitionNotFoundWhenChildResumeThrows(): void
     {
-        $logs = Mockery::mock();
-        $logs->shouldReceive('whereIndex')
-            ->once()
-            ->with(0)
-            ->andReturnSelf();
-        $logs->shouldReceive('first')
-            ->once()
-            ->andReturn(null);
-
         $childWorkflow = new class() {
             public function running(): bool
             {
@@ -143,12 +134,19 @@ final class ChildWorkflowStubTest extends TestCase
             ->andReturn($storedChildWorkflow);
 
         $storedWorkflow = Mockery::mock();
-        $storedWorkflow->shouldReceive('logs')
+        $storedWorkflow->shouldReceive('findLogByIndex')
             ->once()
-            ->andReturn($logs);
+            ->with(0)
+            ->andReturn(null);
         $storedWorkflow->shouldReceive('children')
             ->once()
             ->andReturn($children);
+        $storedWorkflow->shouldReceive('effectiveConnection')
+            ->once()
+            ->andReturn(null);
+        $storedWorkflow->shouldReceive('effectiveQueue')
+            ->once()
+            ->andReturn(null);
 
         WorkflowStub::setContext([
             'storedWorkflow' => $storedWorkflow,

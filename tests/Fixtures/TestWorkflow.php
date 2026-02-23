@@ -9,7 +9,7 @@ use Workflow\QueryMethod;
 use Workflow\SignalMethod;
 use Workflow\Webhook;
 use Workflow\Workflow;
-use function Workflow\{activity, await};
+use function Workflow\{activity, await, sideEffect};
 
 #[Webhook]
 class TestWorkflow extends Workflow
@@ -38,7 +38,7 @@ class TestWorkflow extends Workflow
         assert($app->runningInConsole());
 
         if ($shouldAssert) {
-            assert(! $this->canceled);
+            assert(yield sideEffect(fn (): bool => ! $this->canceled));
         }
 
         $otherResult = yield activity(TestOtherActivity::class, 'other');

@@ -77,11 +77,19 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 
         $this->arguments = $arguments;
 
-        if (property_exists($this, 'connection')) {
+        $connection = $this->storedWorkflow->effectiveConnection();
+
+        if ($connection !== null) {
+            $this->onConnection($connection);
+        } elseif (property_exists($this, 'connection')) {
             $this->onConnection($this->connection);
         }
 
-        if (property_exists($this, 'queue')) {
+        $queue = $this->storedWorkflow->effectiveQueue();
+
+        if ($queue !== null) {
+            $this->onQueue($queue);
+        } elseif (property_exists($this, 'queue')) {
             $this->onQueue($this->queue);
         }
 
@@ -180,9 +188,9 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
             ->wherePivot('parent_index', '!=', StoredWorkflow::ACTIVE_WORKFLOW_INDEX)
             ->first();
 
-        $log = $this->storedWorkflow->logs()
-            ->where('index', $this->index)
-            ->first();
+        $this->storedWorkflow->loadMissing(['logs', 'signals']);
+
+        $log = $this->storedWorkflow->findLogByIndex($this->index);
 
         $this->storedWorkflow
             ->signals()
@@ -217,11 +225,7 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
         while ($this->coroutine->valid()) {
             $this->index = WorkflowStub::getContext()->index;
 
-            $previousLog = $log;
-
-            $log = $this->storedWorkflow->logs()
-                ->where('index', $this->index)
-                ->first();
+            $log = $this->storedWorkflow->findLogByIndex($this->index);
 
             $this->now = $log ? $log->now : Carbon::now();
 
@@ -287,9 +291,11 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
             );
 
             if ($parentWorkflow) {
-                $properties = WorkflowStub::getDefaultProperties($parentWorkflow->class);
-                $connection = $properties['connection'] ?? config('queue.default');
-                $queue = $properties['queue'] ?? config('queue.connections.' . $connection . '.queue', 'default');
+                $connection = $parentWorkflow->effectiveConnection() ?? config('queue.default');
+                $queue = $parentWorkflow->effectiveQueue() ?? config(
+                    'queue.connections.' . $connection . '.queue',
+                    'default'
+                );
 
                 ChildWorkflow::dispatch(
                     $parentWorkflow->pivot->parent_index,
