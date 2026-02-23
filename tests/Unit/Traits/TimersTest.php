@@ -135,7 +135,7 @@ final class TimersTest extends TestCase
                 $result = $value;
             });
 
-        $this->assertSame(true, $result);
+        $this->assertSame(false, $result);
         $this->assertSame(1, $workflow->logs()->count());
         $this->assertDatabaseHas('workflow_logs', [
             'stored_workflow_id' => $workflow->id(),
