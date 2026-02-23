@@ -38,8 +38,11 @@ final class ChildWorkflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQu
         $connection = null,
         $queue = null
     ) {
-        $connection = $connection ?? config('queue.default');
-        $queue = $queue ?? config('queue.connections.' . $connection . '.queue', 'default');
+        $connection = $connection ?? $this->storedWorkflow->effectiveConnection() ?? config('queue.default');
+        $queue = $queue ?? $this->storedWorkflow->effectiveQueue() ?? config(
+            'queue.connections.' . $connection . '.queue',
+            'default'
+        );
         $this->onConnection($connection);
         $this->onQueue($queue);
     }
@@ -54,7 +57,7 @@ final class ChildWorkflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQu
         $workflow = $this->parentWorkflow->toWorkflow();
 
         try {
-            if ($this->parentWorkflow->logs()->whereIndex($this->index)->exists()) {
+            if ($this->parentWorkflow->hasLogByIndex($this->index)) {
                 $workflow->resume();
             } else {
                 $workflow->next($this->index, $this->now, $this->storedWorkflow->class, $this->return);

@@ -21,9 +21,7 @@ final class ChildWorkflowStub
     {
         $context = WorkflowStub::getContext();
 
-        $log = $context->storedWorkflow->logs()
-            ->whereIndex($context->index)
-            ->first();
+        $log = $context->storedWorkflow->findLogByIndex($context->index);
 
         if (WorkflowStub::faked()) {
             $mocks = WorkflowStub::mocks();
@@ -31,15 +29,14 @@ final class ChildWorkflowStub
             if (! $log && array_key_exists($workflow, $mocks)) {
                 $result = $mocks[$workflow];
 
-                $log = $context->storedWorkflow->logs()
-                    ->create([
-                        'index' => $context->index,
-                        'now' => $context->now,
-                        'class' => $workflow,
-                        'result' => Serializer::serialize(
-                            is_callable($result) ? $result($context, ...$arguments) : $result
-                        ),
-                    ]);
+                $log = $context->storedWorkflow->createLog([
+                    'index' => $context->index,
+                    'now' => $context->now,
+                    'class' => $workflow,
+                    'result' => Serializer::serialize(
+                        is_callable($result) ? $result($context, ...$arguments) : $result
+                    ),
+                ]);
 
                 WorkflowStub::recordDispatched($workflow, $arguments);
             }
@@ -57,6 +54,17 @@ final class ChildWorkflowStub
                 ->first();
 
             $childWorkflow = $storedChildWorkflow ? $storedChildWorkflow->toWorkflow() : WorkflowStub::make($workflow);
+
+            $hasOptions = collect($arguments)
+                ->contains(static fn ($argument): bool => $argument instanceof WorkflowOptions);
+
+            if (! $hasOptions) {
+                $options = new WorkflowOptions(WorkflowStub::connection(), WorkflowStub::queue());
+
+                if ($options->connection !== null || $options->queue !== null) {
+                    $arguments[] = $options;
+                }
+            }
 
             if ($childWorkflow->running() && ! $childWorkflow->created()) {
                 try {

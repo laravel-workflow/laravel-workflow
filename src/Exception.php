@@ -36,8 +36,11 @@ final class Exception implements ShouldBeEncrypted, ShouldQueue
         $connection = null,
         $queue = null
     ) {
-        $connection = $connection ?? config('queue.default');
-        $queue = $queue ?? config('queue.connections.' . $connection . '.queue', 'default');
+        $connection = $connection ?? $this->storedWorkflow->effectiveConnection() ?? config('queue.default');
+        $queue = $queue ?? $this->storedWorkflow->effectiveQueue() ?? config(
+            'queue.connections.' . $connection . '.queue',
+            'default'
+        );
         $this->onConnection($connection);
         $this->onQueue($queue);
     }
@@ -47,7 +50,7 @@ final class Exception implements ShouldBeEncrypted, ShouldQueue
         $workflow = $this->storedWorkflow->toWorkflow();
 
         try {
-            if ($this->storedWorkflow->logs()->whereIndex($this->index)->exists()) {
+            if ($this->storedWorkflow->hasLogByIndex($this->index)) {
                 $workflow->resume();
             } else {
                 $workflow->next($this->index, $this->now, self::class, $this->exception);

@@ -28,9 +28,7 @@ final class ActivityStub
     {
         $context = WorkflowStub::getContext();
 
-        $log = $context->storedWorkflow->logs()
-            ->whereIndex($context->index)
-            ->first();
+        $log = $context->storedWorkflow->findLogByIndex($context->index);
 
         if (WorkflowStub::faked()) {
             $mocks = WorkflowStub::mocks();
@@ -38,15 +36,14 @@ final class ActivityStub
             if (! $log && array_key_exists($activity, $mocks)) {
                 $result = $mocks[$activity];
 
-                $log = $context->storedWorkflow->logs()
-                    ->create([
-                        'index' => $context->index,
-                        'now' => $context->now,
-                        'class' => $activity,
-                        'result' => Serializer::serialize(
-                            is_callable($result) ? $result($context, ...$arguments) : $result
-                        ),
-                    ]);
+                $log = $context->storedWorkflow->createLog([
+                    'index' => $context->index,
+                    'now' => $context->now,
+                    'class' => $activity,
+                    'result' => Serializer::serialize(
+                        is_callable($result) ? $result($context, ...$arguments) : $result
+                    ),
+                ]);
 
                 WorkflowStub::recordDispatched($activity, $arguments);
             }

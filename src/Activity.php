@@ -54,11 +54,20 @@ class Activity implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
     ) {
         $this->arguments = $arguments;
 
-        if (property_exists($this, 'connection')) {
+        $options = $this->storedWorkflow->workflowOptions();
+        $connection = $options->connection;
+
+        if ($connection !== null) {
+            $this->onConnection($connection);
+        } elseif (property_exists($this, 'connection')) {
             $this->onConnection($this->connection);
         }
 
-        if (property_exists($this, 'queue')) {
+        $queue = $options->queue;
+
+        if ($queue !== null) {
+            $this->onQueue($queue);
+        } elseif (property_exists($this, 'queue')) {
             $this->onQueue($this->queue);
         }
 
@@ -102,7 +111,7 @@ class Activity implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 
         $this->container = App::make(Container::class);
 
-        if ($this->storedWorkflow->logs()->whereIndex($this->index)->exists()) {
+        if ($this->storedWorkflow->hasLogByIndex($this->index)) {
             return;
         }
 
