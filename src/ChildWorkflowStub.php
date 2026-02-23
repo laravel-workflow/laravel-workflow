@@ -9,6 +9,7 @@ use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use function React\Promise\resolve;
 use Workflow\Serializers\Serializer;
+use Workflow\WorkflowOptions;
 
 final class ChildWorkflowStub
 {
@@ -21,9 +22,7 @@ final class ChildWorkflowStub
     {
         $context = WorkflowStub::getContext();
 
-        $log = $context->storedWorkflow->logs()
-            ->whereIndex($context->index)
-            ->first();
+        $log = $context->storedWorkflow->findLogByIndex($context->index);
 
         if (WorkflowStub::faked()) {
             $mocks = WorkflowStub::mocks();
@@ -31,8 +30,7 @@ final class ChildWorkflowStub
             if (! $log && array_key_exists($workflow, $mocks)) {
                 $result = $mocks[$workflow];
 
-                $log = $context->storedWorkflow->logs()
-                    ->create([
+                $log = $context->storedWorkflow->createLog([
                         'index' => $context->index,
                         'now' => $context->now,
                         'class' => $workflow,
@@ -57,6 +55,17 @@ final class ChildWorkflowStub
                 ->first();
 
             $childWorkflow = $storedChildWorkflow ? $storedChildWorkflow->toWorkflow() : WorkflowStub::make($workflow);
+
+            $hasOptions = collect($arguments)
+                ->contains(static fn ($argument): bool => $argument instanceof WorkflowOptions);
+
+            if (! $hasOptions) {
+                $options = new WorkflowOptions(WorkflowStub::connection(), WorkflowStub::queue());
+
+                if ($options->connection !== null || $options->queue !== null) {
+                    $arguments[] = $options;
+                }
+            }
 
             if ($childWorkflow->running() && ! $childWorkflow->created()) {
                 try {

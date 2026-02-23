@@ -12,6 +12,32 @@ abstract class AbstractSerializer implements SerializerInterface
 {
     use SerializesAndRestoresModelIdentifiers;
 
+    private function serializeValue(mixed $value): mixed
+    {
+        if (is_array($value)) {
+            foreach ($value as $key => $nested) {
+                $value[$key] = $this->serializeValue($nested);
+            }
+
+            return $value;
+        }
+
+        return $this->getSerializedPropertyValue($value);
+    }
+
+    private function unserializeValue(mixed $value): mixed
+    {
+        if (is_array($value)) {
+            foreach ($value as $key => $nested) {
+                $value[$key] = $this->unserializeValue($nested);
+            }
+
+            return $value;
+        }
+
+        return $this->getRestoredPropertyValue($value);
+    }
+
     abstract public static function getInstance(): self;
 
     abstract public static function encode(string $data): string;
@@ -32,9 +58,7 @@ abstract class AbstractSerializer implements SerializerInterface
     {
         if (is_array($data)) {
             $self = static::getInstance();
-            foreach ($data as $key => $value) {
-                $data[$key] = $self->getSerializedPropertyValue($value);
-            }
+            $data = $self->serializeValue($data);
         } elseif ($data instanceof Throwable) {
             $data = [
                 'class' => get_class($data),
@@ -54,9 +78,7 @@ abstract class AbstractSerializer implements SerializerInterface
     {
         if (is_array($data)) {
             $self = static::getInstance();
-            foreach ($data as $key => $value) {
-                $data[$key] = $self->getRestoredPropertyValue($value);
-            }
+            $data = $self->unserializeValue($data);
         }
         return $data;
     }

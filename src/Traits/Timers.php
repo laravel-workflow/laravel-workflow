@@ -26,26 +26,23 @@ trait Timers
             return resolve(true);
         }
 
-        $log = self::$context->storedWorkflow->logs()
-            ->whereIndex(self::$context->index)
-            ->first();
+        $log = self::$context->storedWorkflow->findLogByIndex(self::$context->index);
 
         if ($log) {
             ++self::$context->index;
             return resolve(Serializer::unserialize($log->result));
         }
 
-        $timer = self::$context->storedWorkflow->timers()
-            ->whereIndex(self::$context->index)
-            ->first();
+        self::$context->storedWorkflow->loadMissing('timers');
+
+        $timer = self::$context->storedWorkflow->findTimerByIndex(self::$context->index);
 
         if ($timer === null) {
             $when = self::$context->now->copy()
                 ->addSeconds($seconds);
 
             if (! self::$context->replaying) {
-                $timer = self::$context->storedWorkflow->timers()
-                    ->create([
+                $timer = self::$context->storedWorkflow->createTimer([
                         'index' => self::$context->index,
                         'stop_at' => $when,
                     ]);
@@ -62,8 +59,7 @@ trait Timers
         if ($result === true) {
             if (! self::$context->replaying) {
                 try {
-                    self::$context->storedWorkflow->logs()
-                        ->create([
+                    self::$context->storedWorkflow->createLog([
                             'index' => self::$context->index,
                             'now' => self::$context->now,
                             'class' => Timer::class,

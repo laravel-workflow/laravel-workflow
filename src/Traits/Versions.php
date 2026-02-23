@@ -17,9 +17,7 @@ trait Versions
         int $minSupported = self::DEFAULT_VERSION,
         int $maxSupported = 1
     ): PromiseInterface {
-        $log = self::$context->storedWorkflow->logs()
-            ->whereIndex(self::$context->index)
-            ->first();
+        $log = self::$context->storedWorkflow->findLogByIndex(self::$context->index);
 
         if ($log) {
             $version = Serializer::unserialize($log->result);
@@ -39,17 +37,14 @@ trait Versions
 
         if (! self::$context->replaying) {
             try {
-                self::$context->storedWorkflow->logs()
-                    ->create([
+                self::$context->storedWorkflow->createLog([
                         'index' => self::$context->index,
                         'now' => self::$context->now,
                         'class' => 'version:' . $changeId,
                         'result' => Serializer::serialize($version),
                     ]);
             } catch (QueryException $exception) {
-                $log = self::$context->storedWorkflow->logs()
-                    ->whereIndex(self::$context->index)
-                    ->first();
+                $log = self::$context->storedWorkflow->findLogByIndex(self::$context->index, true);
 
                 if ($log) {
                     $version = Serializer::unserialize($log->result);

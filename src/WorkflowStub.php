@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Workflow;
 
-use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Traits\Macroable;
 use LimitIterator;
@@ -86,7 +85,7 @@ final class WorkflowStub
 
             return (new $activeWorkflow->class(
                 $activeWorkflow,
-                ...Serializer::unserialize($activeWorkflow->arguments),
+                ...$activeWorkflow->workflowArguments(),
             ))
                 ->query($method);
         }
@@ -96,7 +95,7 @@ final class WorkflowStub
 
             $workflow = new $activeWorkflow->class(
                 $activeWorkflow,
-                ...Serializer::unserialize($activeWorkflow->arguments),
+                ...$activeWorkflow->workflowArguments(),
             );
             $result = $workflow->query($method);
 
@@ -123,12 +122,12 @@ final class WorkflowStub
 
     public static function connection()
     {
-        return Arr::get(self::getDefaultProperties(self::$context->storedWorkflow->class), 'connection');
+        return self::$context->storedWorkflow->effectiveConnection();
     }
 
     public static function queue()
     {
-        return Arr::get(self::getDefaultProperties(self::$context->storedWorkflow->class), 'queue');
+        return self::$context->storedWorkflow->effectiveQueue();
     }
 
     public static function getDefaultProperties(string $class): array
@@ -245,7 +244,11 @@ final class WorkflowStub
 
     public function start(...$arguments): void
     {
-        $this->storedWorkflow->arguments = Serializer::serialize($arguments);
+        $fallbackOptions = $this->storedWorkflow->workflowOptions();
+
+        $metadata = WorkflowMetadata::fromStartArguments($arguments, $fallbackOptions);
+
+        $this->storedWorkflow->arguments = Serializer::serialize($metadata->toArray());
 
         $this->dispatch();
     }
@@ -302,8 +305,7 @@ final class WorkflowStub
     public function next($index, $now, $class, $result, bool $shouldSignal = true): void
     {
         try {
-            $this->storedWorkflow->logs()
-                ->create([
+            $this->storedWorkflow->createLog([
                     'index' => $index,
                     'now' => $now,
                     'class' => $class,
@@ -375,7 +377,7 @@ final class WorkflowStub
             WorkflowStarted::dispatch(
                 $this->storedWorkflow->id,
                 $this->storedWorkflow->class,
-                json_encode(Serializer::unserialize($this->storedWorkflow->arguments)),
+                json_encode($this->storedWorkflow->workflowArguments()),
                 now()
                     ->format('Y-m-d\TH:i:s.u\Z')
             );
@@ -395,7 +397,7 @@ final class WorkflowStub
 
         $this->storedWorkflow->class::$dispatch(
             $this->storedWorkflow,
-            ...Serializer::unserialize($this->storedWorkflow->arguments)
+            ...$this->storedWorkflow->workflowArguments()
         );
     }
 }

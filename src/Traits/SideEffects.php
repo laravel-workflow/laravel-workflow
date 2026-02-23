@@ -13,9 +13,7 @@ trait SideEffects
 {
     public static function sideEffect($callable): PromiseInterface
     {
-        $log = self::$context->storedWorkflow->logs()
-            ->whereIndex(self::$context->index)
-            ->first();
+        $log = self::$context->storedWorkflow->findLogByIndex(self::$context->index);
 
         if ($log) {
             ++self::$context->index;
@@ -26,17 +24,14 @@ trait SideEffects
 
         if (! self::$context->replaying) {
             try {
-                self::$context->storedWorkflow->logs()
-                    ->create([
+                self::$context->storedWorkflow->createLog([
                         'index' => self::$context->index,
                         'now' => self::$context->now,
                         'class' => self::$context->storedWorkflow->class,
                         'result' => Serializer::serialize($result),
                     ]);
             } catch (QueryException $exception) {
-                $log = self::$context->storedWorkflow->logs()
-                    ->whereIndex(self::$context->index)
-                    ->first();
+                $log = self::$context->storedWorkflow->findLogByIndex(self::$context->index, true);
 
                 if ($log) {
                     ++self::$context->index;

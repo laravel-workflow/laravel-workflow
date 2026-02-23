@@ -9,6 +9,7 @@ use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
 use Workflow\Exceptions\VersionNotSupportedException;
 use Workflow\Models\StoredWorkflow;
+use Workflow\Models\StoredWorkflowLog;
 use Workflow\Serializers\Serializer;
 use Workflow\WorkflowStub;
 
@@ -121,29 +122,20 @@ final class VersionsTest extends TestCase
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
 
-        $mockLogs = Mockery::mock(\Illuminate\Database\Eloquent\Relations\HasMany::class)
-            ->shouldReceive('whereIndex')
-            ->andReturnSelf()
-            ->shouldReceive('first')
-            ->once()
-            ->andReturn(null)
-            ->shouldReceive('create')
-            ->andThrow(new \Illuminate\Database\QueryException('', '', [], new \Exception('Duplicate entry')))
-            ->shouldReceive('first')
-            ->once()
-            ->andReturn((object) [
-                'result' => Serializer::serialize(1),
-            ])
-            ->getMock();
-
         $mockStoredWorkflow = Mockery::spy($storedWorkflow);
-
-        $mockStoredWorkflow->shouldReceive('logs')
-            ->andReturnUsing(static function () use ($mockLogs) {
-                return $mockLogs;
-            });
-
-        $mockStoredWorkflow->class = TestWorkflow::class;
+        $mockStoredWorkflow->shouldReceive('findLogByIndex')
+            ->once()
+            ->with(0)
+            ->andReturn(null);
+        $mockStoredWorkflow->shouldReceive('createLog')
+            ->once()
+            ->andThrow(new \Illuminate\Database\QueryException('', '', [], new \Exception('Duplicate entry')));
+        $mockStoredWorkflow->shouldReceive('findLogByIndex')
+            ->once()
+            ->with(0, true)
+            ->andReturn(new StoredWorkflowLog([
+                'result' => Serializer::serialize(1),
+            ]));
 
         WorkflowStub::setContext([
             'storedWorkflow' => $mockStoredWorkflow,
@@ -167,29 +159,20 @@ final class VersionsTest extends TestCase
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
 
-        $mockLogs = Mockery::mock(\Illuminate\Database\Eloquent\Relations\HasMany::class)
-            ->shouldReceive('whereIndex')
-            ->andReturnSelf()
-            ->shouldReceive('first')
-            ->once()
-            ->andReturn(null)
-            ->shouldReceive('create')
-            ->andThrow(new \Illuminate\Database\QueryException('', '', [], new \Exception('Duplicate entry')))
-            ->shouldReceive('first')
-            ->once()
-            ->andReturn((object) [
-                'result' => Serializer::serialize(99),
-            ])
-            ->getMock();
-
         $mockStoredWorkflow = Mockery::spy($storedWorkflow);
-
-        $mockStoredWorkflow->shouldReceive('logs')
-            ->andReturnUsing(static function () use ($mockLogs) {
-                return $mockLogs;
-            });
-
-        $mockStoredWorkflow->class = TestWorkflow::class;
+        $mockStoredWorkflow->shouldReceive('findLogByIndex')
+            ->once()
+            ->with(0)
+            ->andReturn(null);
+        $mockStoredWorkflow->shouldReceive('createLog')
+            ->once()
+            ->andThrow(new \Illuminate\Database\QueryException('', '', [], new \Exception('Duplicate entry')));
+        $mockStoredWorkflow->shouldReceive('findLogByIndex')
+            ->once()
+            ->with(0, true)
+            ->andReturn(new StoredWorkflowLog([
+                'result' => Serializer::serialize(99),
+            ]));
 
         WorkflowStub::setContext([
             'storedWorkflow' => $mockStoredWorkflow,
@@ -213,25 +196,18 @@ final class VersionsTest extends TestCase
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
         $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
 
-        $mockLogs = Mockery::mock(\Illuminate\Database\Eloquent\Relations\HasMany::class)
-            ->shouldReceive('whereIndex')
-            ->twice()
-            ->andReturnSelf()
-            ->shouldReceive('first')
-            ->twice()
-            ->andReturn(null)
-            ->shouldReceive('create')
-            ->andThrow(new \Illuminate\Database\QueryException('', '', [], new \Exception('Some other error')))
-            ->getMock();
-
         $mockStoredWorkflow = Mockery::spy($storedWorkflow);
-
-        $mockStoredWorkflow->shouldReceive('logs')
-            ->andReturnUsing(static function () use ($mockLogs) {
-                return $mockLogs;
-            });
-
-        $mockStoredWorkflow->class = TestWorkflow::class;
+        $mockStoredWorkflow->shouldReceive('findLogByIndex')
+            ->once()
+            ->with(0)
+            ->andReturn(null);
+        $mockStoredWorkflow->shouldReceive('createLog')
+            ->once()
+            ->andThrow(new \Illuminate\Database\QueryException('', '', [], new \Exception('Some other error')));
+        $mockStoredWorkflow->shouldReceive('findLogByIndex')
+            ->once()
+            ->with(0, true)
+            ->andReturn(null);
 
         WorkflowStub::setContext([
             'storedWorkflow' => $mockStoredWorkflow,
