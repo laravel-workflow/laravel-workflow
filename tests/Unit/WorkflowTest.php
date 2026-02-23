@@ -463,7 +463,8 @@ final class WorkflowTest extends TestCase
         $workflow = new TestContinueAsNewWorkflow($storedWorkflow);
         $workflow->handle();
 
-        $continuedWorkflow = $storedWorkflow->continuedWorkflows()->first();
+        $continuedWorkflow = $storedWorkflow->continuedWorkflows()
+            ->first();
 
         $this->assertNotNull($continuedWorkflow);
         $this->assertSame('sync', $continuedWorkflow->workflowOptions()->connection);

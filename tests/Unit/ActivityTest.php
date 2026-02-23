@@ -52,9 +52,7 @@ final class ActivityTest extends TestCase
         ]);
         $storedWorkflow->save();
 
-        $activity = new TestOtherActivity(0, now()->toDateTimeString(), $storedWorkflow, [
-            'other',
-        ]);
+        $activity = new TestOtherActivity(0, now()->toDateTimeString(), $storedWorkflow, ['other']);
 
         $this->assertSame('sync', $activity->connection);
     }
