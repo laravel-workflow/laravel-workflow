@@ -9,6 +9,7 @@ use Illuminate\Support\Collection;
 use InvalidArgumentException;
 use JsonSerializable;
 use ReflectionClass;
+use Workflow\Events\StateChanged;
 use Workflow\Exceptions\TransitionNotFound;
 
 abstract class State implements Castable, JsonSerializable
@@ -140,14 +141,21 @@ abstract class State implements Castable, JsonSerializable
 
         $this->model->{$this->field} = $newState;
         $this->model->save();
-
-        $currentState = $this->model->{$this->field};
+        $model = $this->model;
+        $currentState = $model->{$this->field} ?? null;
 
         if ($currentState instanceof self) {
             $currentState->setField($this->field);
         }
 
-        return $this->model;
+        event(new StateChanged(
+            $this,
+            $currentState instanceof self ? $currentState : null,
+            $this->model,
+            $this->field
+        ));
+
+        return $model;
     }
 
     public function canTransitionTo($newState, ...$transitionArgs): bool
