@@ -80,10 +80,7 @@ final class StateInfrastructureTest extends TestCase
         );
         $this->assertSame(
             $config,
-            $config->registerState([
-                StateInfraInitialState::class,
-                StateInfraNextState::class,
-            ])
+            $config->registerState([StateInfraInitialState::class, StateInfraNextState::class])
         );
 
         $this->assertTrue($config->isTransitionAllowed(StateInfraInitialState::$name, StateInfraInitialState::$name));
