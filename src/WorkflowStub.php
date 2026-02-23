@@ -12,6 +12,7 @@ use ReflectionClass;
 use SplFileObject;
 use Workflow\Events\WorkflowFailed;
 use Workflow\Events\WorkflowStarted;
+use Workflow\Exceptions\TransitionNotFound;
 use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Serializer;
 use Workflow\States\WorkflowCompletedStatus;
@@ -293,7 +294,7 @@ final class WorkflowStub
                 try {
                     $parentWorkflow->toWorkflow()
                         ->fail($exception);
-                } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
+                } catch (TransitionNotFound) {
                     return;
                 }
             });
@@ -383,7 +384,7 @@ final class WorkflowStub
 
         try {
             $this->storedWorkflow->status->transitionTo(WorkflowPendingStatus::class);
-        } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound $exception) {
+        } catch (TransitionNotFound $exception) {
             $this->storedWorkflow->refresh();
 
             if ($this->status() !== WorkflowPendingStatus::class) {

@@ -7,6 +7,7 @@ namespace Tests\Fixtures;
 use function Workflow\await;
 use Workflow\Models\StoredWorkflow;
 use Workflow\SignalMethod;
+use Workflow\States\StateMachine;
 use Workflow\Workflow;
 
 class TestStateMachineWorkflow extends Workflow

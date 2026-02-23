@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\App;
 use React\Promise\PromiseInterface;
 use Throwable;
 use Workflow\Events\WorkflowCompleted;
+use Workflow\Exceptions\TransitionNotFound;
 use Workflow\Middleware\WithoutOverlappingMiddleware;
 use Workflow\Models\StoredWorkflow;
 use Workflow\Serializers\Serializer;
@@ -150,7 +151,7 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
         try {
             $this->storedWorkflow->toWorkflow()
                 ->fail($throwable);
-        } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
+        } catch (TransitionNotFound) {
             return;
         }
     }
@@ -167,7 +168,7 @@ class Workflow implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
             if (! $this->replaying) {
                 $this->storedWorkflow->status->transitionTo(WorkflowRunningStatus::class);
             }
-        } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
+        } catch (TransitionNotFound) {
             if ($this->storedWorkflow->toWorkflow()->running()) {
                 $this->release();
             }
