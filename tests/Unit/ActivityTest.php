@@ -39,6 +39,26 @@ final class ActivityTest extends TestCase
         $this->assertSame($activity->timeout, pcntl_alarm(0));
     }
 
+    public function testActivityUsesWorkflowOptionConnection(): void
+    {
+        $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
+        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
+        $storedWorkflow->arguments = Serializer::serialize([
+            'arguments' => [],
+            'options' => [
+                'connection' => 'sync',
+                'queue' => null,
+            ],
+        ]);
+        $storedWorkflow->save();
+
+        $activity = new TestOtherActivity(0, now()->toDateTimeString(), $storedWorkflow, [
+            'other',
+        ]);
+
+        $this->assertSame('sync', $activity->connection);
+    }
+
     public function testInvalidActivity(): void
     {
         $this->expectException(BadMethodCallException::class);

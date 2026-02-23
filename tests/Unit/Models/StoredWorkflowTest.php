@@ -251,6 +251,53 @@ final class StoredWorkflowTest extends TestCase
         $this->assertSame($workflow->id, $active->id);
     }
 
+    public function testEffectiveConnectionUsesWorkflowOptionConnection(): void
+    {
+        $workflow = StoredWorkflow::create([
+            'class' => TestWorkflow::class,
+            'status' => 'running',
+            'arguments' => Serializer::serialize([
+                'arguments' => [],
+                'options' => [
+                    'connection' => 'sync',
+                    'queue' => null,
+                ],
+            ]),
+        ]);
+
+        $this->assertSame('sync', $workflow->effectiveConnection());
+    }
+
+    public function testFindLogByIndexFreshSyncsLoadedLogsRelation(): void
+    {
+        $workflow = StoredWorkflow::create([
+            'class' => 'TestWorkflow',
+            'status' => 'running',
+        ]);
+
+        $existingLog = $workflow->logs()
+            ->create([
+                'index' => 0,
+                'now' => now(),
+                'class' => 'test',
+            ]);
+
+        $freshLog = $workflow->logs()
+            ->create([
+                'index' => 1,
+                'now' => now(),
+                'class' => 'test',
+            ]);
+
+        $workflow->setRelation('logs', $workflow->logs()->whereKey($existingLog->id)->get());
+
+        $log = $workflow->findLogByIndex(1, true);
+
+        $this->assertNotNull($log);
+        $this->assertSame($freshLog->id, $log->id);
+        $this->assertSame([$existingLog->id, $freshLog->id], $workflow->getRelation('logs')->pluck('id')->toArray());
+    }
+
     public function testFindLogByIndexUsesLoadedLogsRelation(): void
     {
         $workflow = StoredWorkflow::create([
@@ -325,6 +372,29 @@ final class StoredWorkflowTest extends TestCase
         $this->assertCount(0, DB::getQueryLog());
     }
 
+    public function testFindTimerByIndexQueriesWhenTimersRelationIsNotLoaded(): void
+    {
+        $workflow = StoredWorkflow::create([
+            'class' => 'TestWorkflow',
+            'status' => 'running',
+        ]);
+
+        $workflow->timers()
+            ->create([
+                'index' => 3,
+                'stop_at' => now()
+                    ->addSecond(),
+            ]);
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+
+        $timer = $workflow->findTimerByIndex(3);
+
+        $this->assertNotNull($timer);
+        $this->assertGreaterThan(0, count(DB::getQueryLog()));
+    }
+
     public function testOrderedSignalsUsesLoadedSignalsRelation(): void
     {
         $workflow = StoredWorkflow::create([
@@ -356,5 +426,36 @@ final class StoredWorkflowTest extends TestCase
 
         $this->assertSame(['first', 'second'], $signals->pluck('method')->toArray());
         $this->assertCount(0, DB::getQueryLog());
+    }
+
+    public function testOrderedSignalsQueriesWhenSignalsRelationIsNotLoaded(): void
+    {
+        $workflow = StoredWorkflow::create([
+            'class' => 'TestWorkflow',
+            'status' => 'running',
+        ]);
+
+        $workflow->signals()
+            ->create([
+                'method' => 'first',
+                'arguments' => serialize([]),
+                'created_at' => now()
+                    ->subSecond(),
+            ]);
+
+        $workflow->signals()
+            ->create([
+                'method' => 'second',
+                'arguments' => serialize([]),
+                'created_at' => now(),
+            ]);
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+
+        $signals = $workflow->orderedSignals();
+
+        $this->assertSame(['first', 'second'], $signals->pluck('method')->toArray());
+        $this->assertGreaterThan(0, count(DB::getQueryLog()));
     }
 }
