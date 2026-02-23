@@ -25,7 +25,7 @@ trait HasStates
 
     public static function getStates(): Collection
     {
-        $model = new static();
+        $model = static::make();
 
         return collect($model->getStateConfigs())
             ->map(static function (StateConfig $stateConfig) {
@@ -35,7 +35,7 @@ trait HasStates
 
     public static function getDefaultStates(): Collection
     {
-        $model = new static();
+        $model = static::make();
 
         return collect($model->getStateConfigs())
             ->map(static function (StateConfig $stateConfig) {
