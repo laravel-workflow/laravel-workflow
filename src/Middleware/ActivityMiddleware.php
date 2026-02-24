@@ -10,6 +10,7 @@ use SplFileObject;
 use Workflow\Events\ActivityCompleted;
 use Workflow\Events\ActivityFailed;
 use Workflow\Events\ActivityStarted;
+use Workflow\Exceptions\TransitionNotFound;
 
 final class ActivityMiddleware
 {
@@ -45,8 +46,6 @@ final class ActivityMiddleware
             ActivityFailed::dispatch(
                 $job->storedWorkflow->id,
                 $this->uuid,
-                $job::class,
-                $job->index,
                 json_encode([
                     'class' => get_class($throwable),
                     'message' => $throwable->getMessage(),
@@ -57,7 +56,9 @@ final class ActivityMiddleware
                     'snippet' => array_slice(iterator_to_array($iterator), 0, 7),
                 ]),
                 now()
-                    ->format('Y-m-d\TH:i:s.u\Z')
+                    ->format('Y-m-d\TH:i:s.u\Z'),
+                $job::class,
+                $job->index
             );
 
             throw $throwable;
@@ -73,16 +74,16 @@ final class ActivityMiddleware
             ActivityCompleted::dispatch(
                 $this->job->storedWorkflow->id,
                 $this->uuid,
-                $this->job::class,
-                $this->job->index,
                 json_encode($this->result),
                 now()
-                    ->format('Y-m-d\TH:i:s.u\Z')
+                    ->format('Y-m-d\TH:i:s.u\Z'),
+                $this->job::class,
+                $this->job->index
             );
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $throwable) {
             $this->job->storedWorkflow->toWorkflow()
                 ->fail($throwable);
-        } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
+        } catch (TransitionNotFound) {
             if ($this->job->storedWorkflow->toWorkflow()->running()) {
                 $this->job->release();
             }

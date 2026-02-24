@@ -15,10 +15,10 @@ class ActivityFailed
     public function __construct(
         public int|string $workflowId,
         public string $activityId,
-        public string $class,
-        public int $index,
         public string $output,
         public string $timestamp,
+        public string $class,
+        public int $index
     ) {
     }
 }
