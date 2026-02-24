@@ -55,7 +55,7 @@ final class ActivityMiddleware
                     'file' => $throwable->getFile(),
                     'trace' => $throwable->getTrace(),
                     'snippet' => array_slice(iterator_to_array($iterator), 0, 7),
-                ]), 
+                ]),
                 now()
                     ->format('Y-m-d\TH:i:s.u\Z')
             );
