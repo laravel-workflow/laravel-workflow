@@ -10,7 +10,6 @@ use SplFileObject;
 use Workflow\Events\ActivityCompleted;
 use Workflow\Events\ActivityFailed;
 use Workflow\Events\ActivityStarted;
-use Workflow\Exceptions\TransitionNotFound;
 
 final class ActivityMiddleware
 {
@@ -31,8 +30,7 @@ final class ActivityMiddleware
             $job::class,
             $job->index,
             json_encode($job->arguments),
-            now()
-                ->format('Y-m-d\TH:i:s.u\Z')
+            now()->format('Y-m-d\TH:i:s.u\Z')
         );
 
         try {
@@ -43,7 +41,12 @@ final class ActivityMiddleware
             $file = new SplFileObject($throwable->getFile());
             $iterator = new LimitIterator($file, max(0, $throwable->getLine() - 4), 7);
 
-            ActivityFailed::dispatch($job->storedWorkflow->id, $this->uuid, json_encode([
+            ActivityFailed::dispatch(
+                $job->storedWorkflow->id, 
+                $this->uuid,
+                $job::class,
+                $job->index,
+                json_encode([
                 'class' => get_class($throwable),
                 'message' => $throwable->getMessage(),
                 'code' => $throwable->getCode(),
@@ -51,8 +54,9 @@ final class ActivityMiddleware
                 'file' => $throwable->getFile(),
                 'trace' => $throwable->getTrace(),
                 'snippet' => array_slice(iterator_to_array($iterator), 0, 7),
-            ]), now()
-                ->format('Y-m-d\TH:i:s.u\Z'));
+                ]), 
+                now()->format('Y-m-d\TH:i:s.u\Z')
+            );
 
             throw $throwable;
         }
@@ -67,14 +71,15 @@ final class ActivityMiddleware
             ActivityCompleted::dispatch(
                 $this->job->storedWorkflow->id,
                 $this->uuid,
+                $this->job::class,
+                $this->job->index,
                 json_encode($this->result),
-                now()
-                    ->format('Y-m-d\TH:i:s.u\Z')
+                now()->format('Y-m-d\TH:i:s.u\Z')
             );
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $throwable) {
             $this->job->storedWorkflow->toWorkflow()
                 ->fail($throwable);
-        } catch (TransitionNotFound) {
+        } catch (\Spatie\ModelStates\Exceptions\TransitionNotFound) {
             if ($this->job->storedWorkflow->toWorkflow()->running()) {
                 $this->job->release();
             }
