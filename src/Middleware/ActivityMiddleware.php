@@ -30,7 +30,8 @@ final class ActivityMiddleware
             $job::class,
             $job->index,
             json_encode($job->arguments),
-            now()->format('Y-m-d\TH:i:s.u\Z')
+            now()
+                ->format('Y-m-d\TH:i:s.u\Z')
         );
 
         try {
@@ -42,20 +43,21 @@ final class ActivityMiddleware
             $iterator = new LimitIterator($file, max(0, $throwable->getLine() - 4), 7);
 
             ActivityFailed::dispatch(
-                $job->storedWorkflow->id, 
+                $job->storedWorkflow->id,
                 $this->uuid,
                 $job::class,
                 $job->index,
                 json_encode([
-                'class' => get_class($throwable),
-                'message' => $throwable->getMessage(),
-                'code' => $throwable->getCode(),
-                'line' => $throwable->getLine(),
-                'file' => $throwable->getFile(),
-                'trace' => $throwable->getTrace(),
-                'snippet' => array_slice(iterator_to_array($iterator), 0, 7),
+                    'class' => get_class($throwable),
+                    'message' => $throwable->getMessage(),
+                    'code' => $throwable->getCode(),
+                    'line' => $throwable->getLine(),
+                    'file' => $throwable->getFile(),
+                    'trace' => $throwable->getTrace(),
+                    'snippet' => array_slice(iterator_to_array($iterator), 0, 7),
                 ]), 
-                now()->format('Y-m-d\TH:i:s.u\Z')
+                now()
+                    ->format('Y-m-d\TH:i:s.u\Z')
             );
 
             throw $throwable;
@@ -74,7 +76,8 @@ final class ActivityMiddleware
                 $this->job::class,
                 $this->job->index,
                 json_encode($this->result),
-                now()->format('Y-m-d\TH:i:s.u\Z')
+                now()
+                    ->format('Y-m-d\TH:i:s.u\Z')
             );
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $throwable) {
             $this->job->storedWorkflow->toWorkflow()
