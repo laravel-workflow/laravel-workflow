@@ -9,6 +9,7 @@ use function React\Promise\all;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use function React\Promise\resolve;
+use RuntimeException;
 use Throwable;
 use Workflow\Serializers\Serializer;
 
@@ -58,7 +59,17 @@ final class ActivityStub
                 array_key_exists('class', $result) &&
                 is_subclass_of($result['class'], Throwable::class)
             ) {
-                throw new $result['class']($result['message'], (int) $result['code']);
+                try {
+                    $throwable = new $result['class']($result['message'] ?? '', (int) ($result['code'] ?? 0));
+                } catch (Throwable $throwable) {
+                    throw new RuntimeException(
+                        sprintf('[%s] %s', $result['class'], (string) ($result['message'] ?? '')),
+                        (int) ($result['code'] ?? 0),
+                        $throwable
+                    );
+                }
+
+                throw $throwable;
             }
             return resolve($result);
         }
