@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use Exception;
+use RuntimeException;
 use Tests\Fixtures\TestActivity;
 use Tests\Fixtures\TestWorkflow;
 use Tests\TestCase;
@@ -92,6 +93,36 @@ final class ActivityStubTest extends TestCase
         $this->assertSame('test', $result['message']);
     }
 
+    public function testLoadsStoredExceptionWithNonStandardConstructor(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage(
+            '[' . ActivityStubNonStandardConstructorException::class . '] test from context (1)'
+        );
+        $this->expectExceptionCode(123);
+
+        $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
+        $storedWorkflow = StoredWorkflow::findOrFail($workflow->id());
+        $storedWorkflow->update([
+            'arguments' => Serializer::serialize([]),
+            'status' => WorkflowPendingStatus::$name,
+        ]);
+        $storedWorkflow->logs()
+            ->create([
+                'index' => 0,
+                'now' => WorkflowStub::now(),
+                'class' => TestActivity::class,
+                'result' => Serializer::serialize(
+                    new ActivityStubNonStandardConstructorException('context', 'test', ['binding'], 123)
+                ),
+            ]);
+
+        ActivityStub::make(TestActivity::class)
+            ->then(static function ($value) use (&$result) {
+                $result = $value;
+            });
+    }
+
     public function testAll(): void
     {
         $workflow = WorkflowStub::load(WorkflowStub::make(TestWorkflow::class)->id());
@@ -140,5 +171,13 @@ final class ActivityStubTest extends TestCase
             });
 
         $this->assertSame('test', $result);
+    }
+}
+
+final class ActivityStubNonStandardConstructorException extends Exception
+{
+    public function __construct(string $connection, string $message, array $bindings, int $code)
+    {
+        parent::__construct($message . ' from ' . $connection . ' (' . count($bindings) . ')', $code);
     }
 }
