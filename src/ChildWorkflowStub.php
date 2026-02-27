@@ -60,10 +60,7 @@ final class ChildWorkflowStub
                 ->contains(static fn ($argument): bool => $argument instanceof WorkflowOptions);
 
             if (! $hasOptions) {
-                $options = new WorkflowOptions(
-                    $context->storedWorkflow->effectiveConnection(),
-                    $context->storedWorkflow->effectiveQueue()
-                );
+                $options = $context->storedWorkflow->workflowOptions();
 
                 if ($options->connection !== null || $options->queue !== null) {
                     $arguments[] = $options;

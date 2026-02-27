@@ -142,12 +142,9 @@ final class ChildWorkflowStubTest extends TestCase
         $storedWorkflow->shouldReceive('children')
             ->once()
             ->andReturn($children);
-        $storedWorkflow->shouldReceive('effectiveConnection')
+        $storedWorkflow->shouldReceive('workflowOptions')
             ->once()
-            ->andReturn(null);
-        $storedWorkflow->shouldReceive('effectiveQueue')
-            ->once()
-            ->andReturn(null);
+            ->andReturn(new WorkflowOptions());
 
         WorkflowStub::setContext([
             'storedWorkflow' => $storedWorkflow,
@@ -164,20 +161,16 @@ final class ChildWorkflowStubTest extends TestCase
     public function testUsesParentContextForInheritedWorkflowOptions(): void
     {
         $childContextStoredWorkflow = Mockery::mock();
-        $childContextStoredWorkflow->shouldNotReceive('effectiveConnection');
-        $childContextStoredWorkflow->shouldNotReceive('effectiveQueue');
+        $childContextStoredWorkflow->shouldNotReceive('workflowOptions');
 
         $parentStoredWorkflow = Mockery::mock();
         $parentStoredWorkflow->shouldReceive('findLogByIndex')
             ->once()
             ->with(0)
             ->andReturn(null);
-        $parentStoredWorkflow->shouldReceive('effectiveConnection')
+        $parentStoredWorkflow->shouldReceive('workflowOptions')
             ->once()
-            ->andReturn('sync');
-        $parentStoredWorkflow->shouldReceive('effectiveQueue')
-            ->once()
-            ->andReturn('parent-queue');
+            ->andReturn(new WorkflowOptions('sync', 'parent-queue'));
 
         $childWorkflow = Mockery::mock();
         $childWorkflow->shouldReceive('running')
@@ -217,6 +210,70 @@ final class ChildWorkflowStubTest extends TestCase
 
                 return $childWorkflow;
             });
+
+        $children = Mockery::mock();
+        $children->shouldReceive('wherePivot')
+            ->once()
+            ->with('parent_index', 0)
+            ->andReturnSelf();
+        $children->shouldReceive('first')
+            ->once()
+            ->andReturn($storedChildWorkflow);
+
+        $parentStoredWorkflow->shouldReceive('children')
+            ->once()
+            ->andReturn($children);
+
+        WorkflowStub::setContext([
+            'storedWorkflow' => $parentStoredWorkflow,
+            'index' => 0,
+            'now' => now(),
+            'replaying' => false,
+        ]);
+
+        ChildWorkflowStub::make(TestChildWorkflow::class);
+
+        $this->assertSame(1, WorkflowStub::getContext()->index);
+        $this->assertSame($parentStoredWorkflow, WorkflowStub::getContext()->storedWorkflow);
+    }
+
+    public function testDoesNotPassWorkflowOptionsWhenParentOptionsAreUnset(): void
+    {
+        $parentStoredWorkflow = Mockery::mock();
+        $parentStoredWorkflow->shouldReceive('findLogByIndex')
+            ->once()
+            ->with(0)
+            ->andReturn(null);
+        $parentStoredWorkflow->shouldReceive('workflowOptions')
+            ->once()
+            ->andReturn(new WorkflowOptions());
+
+        $childWorkflow = Mockery::mock();
+        $childWorkflow->shouldReceive('running')
+            ->once()
+            ->andReturn(false);
+        $childWorkflow->shouldReceive('completed')
+            ->once()
+            ->andReturn(false);
+        $childWorkflow->shouldReceive('startAsChild')
+            ->once()
+            ->withArgs(
+                static function (...$arguments) use ($parentStoredWorkflow): bool {
+                    if (count($arguments) !== 3) {
+                        return false;
+                    }
+
+                    [$parentWorkflow, $index, $_now] = $arguments;
+
+                    return $parentWorkflow === $parentStoredWorkflow
+                        && $index === 0;
+                }
+            );
+
+        $storedChildWorkflow = Mockery::mock();
+        $storedChildWorkflow->shouldReceive('toWorkflow')
+            ->once()
+            ->andReturn($childWorkflow);
 
         $children = Mockery::mock();
         $children->shouldReceive('wherePivot')
